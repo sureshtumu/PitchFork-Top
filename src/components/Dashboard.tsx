@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, Filter, Calendar, Building2, ChevronDown, User, FileText, Settings, HelpCircle, ChevronRight } from 'lucide-react';
+import { signOut, getCurrentUser } from '../lib/supabase';
 
 interface DashboardProps {
   isDark: boolean;
@@ -8,6 +9,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
+  const navigate = useNavigate();
   const [filters, setFilters] = React.useState({
     submitted: false,
     analyzed: false,
@@ -20,6 +22,21 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const [sortBy, setSortBy] = React.useState('Recent');
   const [showUserMenu, setShowUserMenu] = React.useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = React.useState(false);
+  const [user, setUser] = React.useState<any>(null);
+
+  // Check authentication on component mount
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+      setUser(currentUser);
+    };
+    
+    checkAuth();
+  }, [navigate]);
 
   const handleAnalyze = (ventureId: number, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -39,6 +56,13 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
       ...prev,
       [filterName]: !prev[filterName]
     }));
+  };
+
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (!error) {
+      navigate('/');
+    }
   };
 
   // Function to determine recommendation based on score
@@ -192,9 +216,12 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                       <Link to="/account" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
                         Account
                       </Link>
-                      <Link to="/" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                      <button 
+                        onClick={handleLogout}
+                        className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
+                      >
                         Logout
-                      </Link>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -239,7 +266,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-blue-600 mb-2">Investment Dashboard</h1>
           <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-            Welcome back! Here's your investment portfolio overview.
+            Welcome back{user?.user_metadata?.first_name ? `, ${user.user_metadata.first_name}` : ''}! Here's your investment portfolio overview.
           </p>
         </div>
 

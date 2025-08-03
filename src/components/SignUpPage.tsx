@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { signUp } from '../lib/supabase';
 
 interface SignUpPageProps {
   isDark: boolean;
@@ -18,6 +19,9 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
 
   const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     const { name, value } = e.currentTarget;
@@ -29,20 +33,49 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
     
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
       return;
     }
 
     setIsLoading(true);
     
-    // Simulate sign up process
-    setTimeout(() => {
+    try {
+      const { data, error } = await signUp(
+        formData.email, 
+        formData.password, 
+        formData.firstName, 
+        formData.lastName
+      );
+      
+      if (error) {
+        setError(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Check if email confirmation is required
+        if (!data.session) {
+          setSuccess('Please check your email to confirm your account before signing in.');
+          setIsLoading(false);
+        } else {
+          // Auto sign-in successful - redirect to dashboard
+          navigate('/dashboard');
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
-      // Redirect to dashboard on successful signup
-      window.location.href = '/dashboard';
-    }, 1500);
+    }
   };
 
   return (
@@ -91,6 +124,20 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
 
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} py-8 px-6 shadow-lg rounded-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <form onSubmit={handleSignUp} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
+
+              {/* Success Message */}
+              {success && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                  {success}
+                </div>
+              )}
+
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div>

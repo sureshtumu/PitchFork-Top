@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { signIn } from '../lib/supabase';
 
 interface LoginPageProps {
   isDark: boolean;
@@ -12,17 +13,31 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
     
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      const { data, error } = await signIn(email, password);
+      
+      if (error) {
+        setError(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Successful login - redirect to dashboard
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
-      // Redirect to dashboard on successful login
-      window.location.href = '/dashboard';
-    }, 1500);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -75,6 +90,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
 
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} py-8 px-6 shadow-lg rounded-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <form onSubmit={handleLogin} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
+
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
