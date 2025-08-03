@@ -125,7 +125,7 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
         .from('companies')
         .select('*')
         .ilike('name', newCompanyData.name.trim())
-        .single();
+        .maybeSingle();
 
       if (existingCompany) {
         setSelectedCompany(existingCompany);
