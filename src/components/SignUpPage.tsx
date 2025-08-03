@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { signUp } from '../lib/supabase';
+import { signUp } from '../lib/supabase';
 
 interface SignUpPageProps {
   isDark: boolean;
@@ -21,6 +22,9 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -36,10 +40,45 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
     setError('');
     setSuccess('');
     
+    setSuccess('');
+    
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await signUp(
+        formData.email, 
+        formData.password, 
+        formData.firstName, 
+        formData.lastName
+      );
+      
+      if (error) {
+        setError(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Check if email confirmation is required
+        if (!data.session) {
+          setSuccess('Please check your email to confirm your account before signing in.');
+          setIsLoading(false);
+        } else {
+          // Auto sign-in successful - redirect to dashboard
+          navigate('/dashboard');
+        }
+      }
+    } catch (err) {
 
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
@@ -124,6 +163,20 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
 
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} py-8 px-6 shadow-lg rounded-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <form onSubmit={handleSignUp} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
+
+              {/* Success Message */}
+              {success && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                  {success}
+                </div>
+              )}
+
               {/* Error Message */}
               {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -264,6 +317,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
               {/* Sign Up Button */}
               <button
                 type="submit"
+                disabled={isLoading}
                 disabled={isLoading}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >

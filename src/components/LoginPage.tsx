@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { signIn } from '../lib/supabase';
+import { signIn } from '../lib/supabase';
 
 interface LoginPageProps {
   isDark: boolean;
@@ -14,6 +15,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -22,6 +25,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
     setIsLoading(true);
     
     try {
+      const { data, error } = await signIn(email, password);
+      
+      if (error) {
+        setError(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Successful login - redirect to dashboard
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      setIsLoading(false);
+    }
       const { data, error } = await signIn(email, password);
       
       if (error) {
@@ -97,6 +116,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
                 </div>
               )}
 
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
+
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -151,6 +177,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
               {/* Login Button */}
               <button
                 type="submit"
+                disabled={isLoading}
                 disabled={isLoading}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
