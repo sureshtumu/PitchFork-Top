@@ -205,6 +205,28 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
       });
       setDocumentMetadata(newMetadata);
     }
+    
+    // Initialize metadata for new files
+    if (e.target.files) {
+      const newMetadata: {[key: string]: {name: string, description: string}} = {};
+      Array.from(e.target.files).forEach(file => {
+        newMetadata[file.name] = {
+          name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for default name
+          description: ''
+        };
+      });
+      setDocumentMetadata(newMetadata);
+    }
+  };
+
+  const handleMetadataChange = (filename: string, field: 'name' | 'description', value: string) => {
+    setDocumentMetadata(prev => ({
+      ...prev,
+      [filename]: {
+        ...prev[filename],
+        [field]: value
+      }
+    }));
   };
 
   const handleMetadataChange = (filename: string, field: 'name' | 'description', value: string) => {
@@ -251,6 +273,27 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
           company_id: selectedCompany.id,
           filename: file.name,
           document_name: metadata.name,
+      const uploadPromises = [];
+      const documentRecords = [];
+          path: filePath
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const filePath = `${selectedCompany.id}/${file.name}`;
+        const metadata = documentMetadata[file.name] || { name: file.name, description: '' };
+      const failedUploads = uploadResults.filter(result => result.error);
+        // Upload file to Supabase Storage
+        const uploadPromise = supabase.storage
+          .from('company-documents')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        uploadPromises.push(uploadPromise);
+        documentRecords.push({
+          company_id: selectedCompany.id,
+          filename: file.name,
+          document_name: metadata.name,
           description: metadata.description,
           path: filePath
         });
@@ -272,14 +315,9 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
         .from('documents')
         .insert(documentRecords);
 
-      if (dbError) {
-        console.error('Database error:', dbError);
-        setMessage({ type: 'error', text: 'Files uploaded but failed to save records' });
-        return;
-      }
-
       setMessage({ type: 'success', text: 'Files uploaded successfully!' });
       setFiles(null);
+      setDocumentMetadata({});
       setDocumentMetadata({});
       // Reset file input
       const fileInput = document.getElementById('file-input') as HTMLInputElement;
@@ -784,6 +822,42 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                         {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                            Document Name
+                          </label>
+                          <input
+                            type="text"
+                            value={documentMetadata[file.name]?.name || ''}
+                            onChange={(e) => handleMetadataChange(file.name, 'name', e.target.value)}
+                            placeholder="Document name"
+                            className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                              isDark 
+                                ? 'bg-gray-700 border-gray-500 text-white placeholder-gray-400' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className={`block text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                            Description
+                          </label>
+                          <input
+                            type="text"
+                            value={documentMetadata[file.name]?.description || ''}
+                            onChange={(e) => handleMetadataChange(file.name, 'description', e.target.value)}
+                            placeholder="Document description"
+                            className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                              isDark 
+                                ? 'bg-gray-700 border-gray-500 text-white placeholder-gray-400' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                         <div>
                           <label className={`block text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
                             Document Name

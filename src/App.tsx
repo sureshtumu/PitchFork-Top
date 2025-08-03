@@ -446,6 +446,10 @@ function App() {
           path="/edit-company" 
           element={<EditCompany isDark={isDark} toggleTheme={toggleTheme} />} 
         />
+        <Route 
+          path="/edit-company" 
+          element={<EditCompany isDark={isDark} toggleTheme={toggleTheme} />} 
+        />
       </Routes>
     </Router>
   );
