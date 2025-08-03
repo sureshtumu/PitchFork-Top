@@ -90,13 +90,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     }
   };
 
-  const handleLogout = async () => {
-    const { error } = await signOut();
-    if (!error) {
-      navigate('/');
-    }
-  };
-
   const handleDownloadReport = () => {
     // In real app, this would download the actual PDF report
     alert('PDF report download would be triggered here');
