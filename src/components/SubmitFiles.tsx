@@ -11,6 +11,19 @@ interface SubmitFilesProps {
 interface Company {
   id: string;
   name: string;
+  industry?: string;
+  address?: string;
+  country?: string;
+  contact_name_1?: string;
+  title_1?: string;
+  email_1?: string;
+  phone_1?: string;
+  contact_name_2?: string;
+  title_2?: string;
+  email_2?: string;
+  phone_2?: string;
+  description?: string;
+  funding_sought?: string;
   created_at: string;
 }
 
@@ -20,8 +33,24 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showAddCompany, setShowAddCompany] = useState(false);
-  const [newCompanyName, setNewCompanyName] = useState('');
+  const [newCompanyData, setNewCompanyData] = useState({
+    name: '',
+    industry: '',
+    address: '',
+    country: '',
+    contact_name_1: '',
+    title_1: '',
+    email_1: '',
+    phone_1: '',
+    contact_name_2: '',
+    title_2: '',
+    email_2: '',
+    phone_2: '',
+    description: '',
+    funding_sought: ''
+  });
   const [files, setFiles] = useState<FileList | null>(null);
+  const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -83,7 +112,7 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
   };
 
   const handleAddCompany = async () => {
-    if (!newCompanyName.trim()) {
+    if (!newCompanyData.name.trim()) {
       setMessage({ type: 'error', text: 'Please enter a company name' });
       return;
     }
@@ -95,13 +124,28 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
       const { data: existingCompany } = await supabase
         .from('companies')
         .select('*')
-        .ilike('name', newCompanyName.trim())
+        .ilike('name', newCompanyData.name.trim())
         .single();
 
       if (existingCompany) {
         setSelectedCompany(existingCompany);
         setShowAddCompany(false);
-        setNewCompanyName('');
+        setNewCompanyData({
+          name: '',
+          industry: '',
+          address: '',
+          country: '',
+          contact_name_1: '',
+          title_1: '',
+          email_1: '',
+          phone_1: '',
+          contact_name_2: '',
+          title_2: '',
+          email_2: '',
+          phone_2: '',
+          description: '',
+          funding_sought: ''
+        });
         setMessage({ type: 'success', text: 'Company already exists and has been selected' });
         return;
       }
@@ -109,7 +153,7 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
       // Insert new company
       const { data, error } = await supabase
         .from('companies')
-        .insert([{ name: newCompanyName.trim() }])
+        .insert([newCompanyData])
         .select()
         .single();
 
@@ -122,7 +166,22 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
       setSelectedCompany(data);
       setCompanies(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
       setShowAddCompany(false);
-      setNewCompanyName('');
+      setNewCompanyData({
+        name: '',
+        industry: '',
+        address: '',
+        country: '',
+        contact_name_1: '',
+        title_1: '',
+        email_1: '',
+        phone_1: '',
+        contact_name_2: '',
+        title_2: '',
+        email_2: '',
+        phone_2: '',
+        description: '',
+        funding_sought: ''
+      });
       setMessage({ type: 'success', text: 'Company added successfully' });
     } catch (error) {
       console.error('Error adding company:', error);
@@ -134,6 +193,28 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files);
+    
+    // Initialize metadata for new files
+    if (e.target.files) {
+      const newMetadata: {[key: string]: {name: string, description: string}} = {};
+      Array.from(e.target.files).forEach(file => {
+        newMetadata[file.name] = {
+          name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for default name
+          description: ''
+        };
+      });
+      setDocumentMetadata(newMetadata);
+    }
+  };
+
+  const handleMetadataChange = (filename: string, field: 'name' | 'description', value: string) => {
+    setDocumentMetadata(prev => ({
+      ...prev,
+      [filename]: {
+        ...prev[filename],
+        [field]: value
+      }
+    }));
   };
 
   const handleFileUpload = async () => {
@@ -155,6 +236,7 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const filePath = `${selectedCompany.id}/${file.name}`;
+        const metadata = documentMetadata[file.name] || { name: file.name, description: '' };
 
         // Upload file to Supabase Storage
         const uploadPromise = supabase.storage
@@ -168,6 +250,8 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
         documentRecords.push({
           company_id: selectedCompany.id,
           filename: file.name,
+          document_name: metadata.name,
+          description: metadata.description,
           path: filePath
         });
       }
@@ -196,6 +280,7 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
 
       setMessage({ type: 'success', text: 'Files uploaded successfully!' });
       setFiles(null);
+      setDocumentMetadata({});
       // Reset file input
       const fileInput = document.getElementById('file-input') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
@@ -381,8 +466,217 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
 
             {/* Add New Company Section */}
             {showAddCompany && (
-              <div className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex items-center space-x-3">
+              <div className={`p-6 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                <h3 className="text-lg font-semibold mb-4">Add New Company</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Basic Information */}
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Company Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={newCompanyData.name}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter company name"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Industry
+                    </label>
+                    <input
+                      type="text"
+                      value={newCompanyData.industry}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, industry: e.target.value }))}
+                      placeholder="e.g., Technology, Healthcare"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={newCompanyData.address}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Company address"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      value={newCompanyData.country}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, country: e.target.value }))}
+                      placeholder="Country"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  {/* Contact 1 */}
+                  <div className="md:col-span-2">
+                    <h4 className="font-medium mb-2">Primary Contact</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        value={newCompanyData.contact_name_1}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_name_1: e.target.value }))}
+                        placeholder="Contact name"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="text"
+                        value={newCompanyData.title_1}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, title_1: e.target.value }))}
+                        placeholder="Title"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="email"
+                        value={newCompanyData.email_1}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, email_1: e.target.value }))}
+                        placeholder="Email"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="tel"
+                        value={newCompanyData.phone_1}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone_1: e.target.value }))}
+                        placeholder="Phone"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Contact 2 */}
+                  <div className="md:col-span-2">
+                    <h4 className="font-medium mb-2">Secondary Contact (Optional)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        value={newCompanyData.contact_name_2}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_name_2: e.target.value }))}
+                        placeholder="Contact name"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="text"
+                        value={newCompanyData.title_2}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, title_2: e.target.value }))}
+                        placeholder="Title"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="email"
+                        value={newCompanyData.email_2}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, email_2: e.target.value }))}
+                        placeholder="Email"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="tel"
+                        value={newCompanyData.phone_2}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone_2: e.target.value }))}
+                        placeholder="Phone"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Description and Funding */}
+                  <div className="md:col-span-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Company Description
+                    </label>
+                    <textarea
+                      value={newCompanyData.description}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Brief description of the company"
+                      rows={3}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Funding Sought
+                    </label>
+                    <input
+                      type="text"
+                      value={newCompanyData.funding_sought}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, funding_sought: e.target.value }))}
+                      placeholder="e.g., $500K Series A"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3 mt-6">
                   <input
                     type="text"
                     value={newCompanyName}
@@ -396,7 +690,7 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                   />
                   <button
                     onClick={handleAddCompany}
-                    disabled={isLoading || !newCompanyName.trim()}
+                    disabled={isLoading || !newCompanyData.name.trim()}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -405,7 +699,22 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                   <button
                     onClick={() => {
                       setShowAddCompany(false);
-                      setNewCompanyName('');
+                      setNewCompanyData({
+                        name: '',
+                        industry: '',
+                        address: '',
+                        country: '',
+                        contact_name_1: '',
+                        title_1: '',
+                        email_1: '',
+                        phone_1: '',
+                        contact_name_2: '',
+                        title_2: '',
+                        email_2: '',
+                        phone_2: '',
+                        description: '',
+                        funding_sought: ''
+                      });
                     }}
                     className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                       isDark 
@@ -467,14 +776,50 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                 <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                   Selected Files ({files.length}):
                 </h3>
-                <ul className="space-y-1">
+                <div className="space-y-4">
                   {Array.from(files).map((file, index) => (
-                    <li key={index} className={`flex items-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                      <FileText className="w-4 h-4 mr-2" />
-                      {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                    </li>
+                    <div key={index} className={`p-3 rounded border ${isDark ? 'border-gray-600 bg-gray-600' : 'border-gray-300 bg-white'}`}>
+                      <div className={`flex items-center text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className={`block text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                            Document Name
+                          </label>
+                          <input
+                            type="text"
+                            value={documentMetadata[file.name]?.name || ''}
+                            onChange={(e) => handleMetadataChange(file.name, 'name', e.target.value)}
+                            placeholder="Document name"
+                            className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                              isDark 
+                                ? 'bg-gray-700 border-gray-500 text-white placeholder-gray-400' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className={`block text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                            Description
+                          </label>
+                          <input
+                            type="text"
+                            value={documentMetadata[file.name]?.description || ''}
+                            onChange={(e) => handleMetadataChange(file.name, 'description', e.target.value)}
+                            placeholder="Document description"
+                            className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                              isDark 
+                                ? 'bg-gray-700 border-gray-500 text-white placeholder-gray-400' 
+                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 

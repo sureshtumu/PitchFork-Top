@@ -6,6 +6,7 @@ import SignUpPage from './components/SignUpPage';
 import Dashboard from './components/Dashboard';
 import VentureDetail from './components/VentureDetail';
 import SubmitFiles from './components/SubmitFiles';
+import EditCompany from './components/EditCompany';
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
   isDark: boolean;
@@ -440,6 +441,10 @@ function App() {
         <Route 
           path="/submit-files" 
           element={<SubmitFiles isDark={isDark} toggleTheme={toggleTheme} />} 
+        />
+        <Route 
+          path="/edit-company" 
+          element={<EditCompany isDark={isDark} toggleTheme={toggleTheme} />} 
         />
       </Routes>
     </Router>
