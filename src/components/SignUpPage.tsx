@@ -21,9 +21,6 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (e: React.FormEvent<HTMLInputElement>) => {

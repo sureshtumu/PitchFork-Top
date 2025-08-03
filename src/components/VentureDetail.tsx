@@ -29,21 +29,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     
     checkAuth();
   }, [navigate]);
-  const [user, setUser] = useState<any>(null);
-
-  // Check authentication on component mount
-  React.useEffect(() => {
-    const checkAuth = async () => {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        navigate('/login');
-        return;
-      }
-      setUser(currentUser);
-    };
-    
-    checkAuth();
-  }, [navigate]);
 
   // Mock venture data - in real app, this would be fetched based on ID
   const venture = {
