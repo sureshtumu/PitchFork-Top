@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Calendar, User, Mail, Phone, BarChart3, TrendingUp, Users, Target, Zap, DollarSign, FileText, Download, MessageCircle, ChevronDown } from 'lucide-react';
 import { signOut, getCurrentUser } from '../lib/supabase';
+import { signOut, getCurrentUser } from '../lib/supabase';
 
 interface VentureDetailProps {
   isDark: boolean;
@@ -14,6 +15,21 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const [currentStatus, setCurrentStatus] = useState('Analyzed');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  // Check authentication on component mount
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+      setUser(currentUser);
+    };
+    
+    checkAuth();
+  }, [navigate]);
   const [user, setUser] = useState<any>(null);
 
   // Check authentication on component mount
@@ -81,6 +97,13 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     setCurrentStatus(newStatus);
     // In real app, this would make an API call to update the status
     console.log(`Status changed to: ${newStatus}`);
+  };
+
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (!error) {
+      navigate('/');
+    }
   };
 
   const handleLogout = async () => {
@@ -163,6 +186,9 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                         Account
                       </Link>
                       <button 
+                        onClick={handleLogout}
+                        className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
+                      >
                         onClick={handleLogout}
                         className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
                       >
