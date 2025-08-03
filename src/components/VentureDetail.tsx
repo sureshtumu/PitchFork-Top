@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Calendar, User, Mail, Phone, BarChart3, TrendingUp, Users, Target, Zap, DollarSign, FileText, Download, MessageCircle, ChevronDown } from 'lucide-react';
 import { signOut, getCurrentUser } from '../lib/supabase';
-import { signOut, getCurrentUser } from '../lib/supabase';
 
 interface VentureDetailProps {
   isDark: boolean;
