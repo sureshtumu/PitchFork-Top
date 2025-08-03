@@ -679,8 +679,8 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                 <div className="flex items-center space-x-3 mt-6">
                   <input
                     type="text"
-                    value={newCompanyName}
-                    onChange={(e) => setNewCompanyName(e.target.value)}
+                    value={newCompanyData.name}
+                    onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Enter company name"
                     className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDark 
