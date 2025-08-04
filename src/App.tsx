@@ -189,7 +189,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                 Founders: Submit Pitch Deck
               </Link>
               <Link to="/login" className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 block text-center">
-                Investor: Login/Register
+                Investor: Login/Sign-Up
               </Link>
             </div>
           </div>
