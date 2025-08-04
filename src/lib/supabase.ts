@@ -6,7 +6,15 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Auth helper functions
-export const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+export const signUp = async (
+  email: string, 
+  password: string, 
+  firstName: string, 
+  lastName: string,
+  companyName: string = '',
+  phoneNumber: string = '',
+  userType: string = 'investor'
+) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -14,7 +22,10 @@ export const signUp = async (email: string, password: string, firstName: string,
       data: {
         first_name: firstName,
         last_name: lastName,
-        full_name: `${firstName} ${lastName}`
+        full_name: `${firstName} ${lastName}`,
+        company_name: companyName,
+        phone_number: phoneNumber,
+        user_type: userType
       }
     }
   })
