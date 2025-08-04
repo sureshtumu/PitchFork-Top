@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import VentureDetail from './components/VentureDetail';
 import SubmitFiles from './components/SubmitFiles';
 import EditCompany from './components/EditCompany';
+import FounderSubmission from './components/FounderSubmission';
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
   isDark: boolean;
@@ -202,6 +203,20 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
               <Link to="/login" className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all duration-300 inline-flex items-center">
                 Login / Sign Up <ChevronRight className="inline w-5 h-5 ml-2" />
               </Link>
+              
+              {/* Founders Section */}
+              <div className={`mt-8 p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-800' : 'border-orange-200 bg-orange-50'}`}>
+                <h3 className="text-lg font-semibold mb-2 text-orange-600">For Founders</h3>
+                <p className={`text-sm mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  To submit your Pitch Deck to investors, click the button below:
+                </p>
+                <Link 
+                  to="/submit-pitch-deck" 
+                  className="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-700 transition-all duration-300 inline-flex items-center text-sm"
+                >
+                  Submit Pitch Deck <ChevronRight className="inline w-4 h-4 ml-1" />
+                </Link>
+              </div>
               
               {/* Social Proof */}
               <div className="mt-8">
@@ -447,12 +462,8 @@ function App() {
           element={<EditCompany isDark={isDark} toggleTheme={toggleTheme} />} 
         />
         <Route 
-          path="/edit-company" 
-          element={<EditCompany isDark={isDark} toggleTheme={toggleTheme} />} 
-        />
-        <Route 
-          path="/edit-company" 
-          element={<EditCompany isDark={isDark} toggleTheme={toggleTheme} />} 
+          path="/submit-pitch-deck" 
+          element={<FounderSubmission isDark={isDark} toggleTheme={toggleTheme} />} 
         />
       </Routes>
     </Router>
