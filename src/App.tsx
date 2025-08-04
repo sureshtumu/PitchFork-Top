@@ -232,34 +232,34 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
             {/* Right Column - Mock Dashboard Visual */}
             <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
               <h3 className="text-lg font-bold mb-4 text-center">Investor Dashboard</h3>
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 {mockDashboard.map((company, index) => (
-                  <div key={index} className={`p-3 rounded-lg border ${isDark ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-sm">{company.company}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  <div key={index} className={`p-2 rounded-lg border ${isDark ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="mb-2">
+                      <h4 className="font-semibold text-xs truncate mb-1">{company.company}</h4>
+                      <span className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${
                         company.status === 'Analyzing' ? 'bg-yellow-100 text-yellow-800' :
                         company.status === 'Invest' ? 'bg-green-100 text-green-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {company.status === 'Analyzing' ? <Clock className="inline w-3 h-3 mr-1" /> :
-                         company.status === 'Invest' ? <CheckCircle className="inline w-3 h-3 mr-1" /> :
-                         <XCircle className="inline w-3 h-3 mr-1" />}
+                        {company.status === 'Analyzing' ? <Clock className="inline w-2 h-2 mr-1" /> :
+                         company.status === 'Invest' ? <CheckCircle className="inline w-2 h-2 mr-1" /> :
+                         <XCircle className="inline w-2 h-2 mr-1" />}
                         {company.status}
                       </span>
                     </div>
                     {company.score && (
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         <div className="flex justify-between text-xs">
                           <span>Score:</span>
                           <span className="font-bold text-green-600">{company.score}/10</span>
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>Recommendation:</span>
-                          <span className="font-semibold text-green-600">Invest</span>
+                          <span className="font-semibold text-green-600 text-xs">Invest</span>
                         </div>
                         <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                          Valuation: $2.5M | Market: $500M
+                          Val: $2.5M
                         </div>
                       </div>
                     )}
