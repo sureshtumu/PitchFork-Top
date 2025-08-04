@@ -58,7 +58,10 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
         formData.email, 
         formData.password, 
         formData.firstName, 
-        formData.lastName
+        formData.lastName,
+        formData.companyName,
+        formData.phoneNumber,
+        formData.userType
       );
       
       if (error) {
@@ -92,7 +95,10 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
         formData.email, 
         formData.password, 
         formData.firstName, 
-        formData.lastName
+        formData.lastName,
+        formData.companyName,
+        formData.phoneNumber,
+        formData.userType
       );
       
       if (error) {

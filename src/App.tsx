@@ -182,7 +182,6 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
         {isMobileMenuOpen && (
           <div className={`md:hidden ${isDark ? 'bg-gray-800' : 'bg-white'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="px-4 py-4 space-y-4">
-              <a href="#" className={`block ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Home</a>
               <Link 
                 to="/submit-pitch-deck" 
                 className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 block text-center text-sm font-semibold"
