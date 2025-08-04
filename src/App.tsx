@@ -137,7 +137,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img src="/pitch-fork2.jpg" alt="Pitch Fork Logo" className="w-8 h-8 mr-3" />
+              <img src="/pitch-fork3.png" alt="Pitch Fork Logo" className="w-8 h-8 mr-3" />
               <div className="text-2xl font-bold text-blue-600">
                 Pitch Fork
               </div>
