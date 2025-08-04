@@ -14,6 +14,9 @@ export const signUp = async (
   companyName: string = '',
   phoneNumber: string = '',
   userType: string = 'investor'
+  companyName: string = '',
+  phoneNumber: string = '',
+  userType: string = 'investor'
 ) => {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -23,6 +26,9 @@ export const signUp = async (
         first_name: firstName,
         last_name: lastName,
         full_name: `${firstName} ${lastName}`,
+        company_name: companyName,
+        phone_number: phoneNumber,
+        user_type: userType
         company_name: companyName,
         phone_number: phoneNumber,
         user_type: userType
