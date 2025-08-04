@@ -147,6 +147,12 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
               <a href="#" className={`hover:text-blue-600 transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Home
               </a>
+              <Link 
+                to="/submit-pitch-deck" 
+                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 text-sm font-semibold"
+              >
+                Founders: Submit Pitch Deck
+              </Link>
               <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300">
                 Login / Sign Up
               </Link>
@@ -177,6 +183,12 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
           <div className={`md:hidden ${isDark ? 'bg-gray-800' : 'bg-white'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="px-4 py-4 space-y-4">
               <a href="#" className={`block ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Home</a>
+              <Link 
+                to="/submit-pitch-deck" 
+                className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 block text-center text-sm font-semibold"
+              >
+                Founders: Submit Pitch Deck
+              </Link>
               <Link to="/login" className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 block text-center">
                 Login / Sign Up
               </Link>
@@ -187,19 +199,6 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
 
       {/* Hero Section */}
       <section className={`relative py-12 ${isDark ? 'bg-gray-900' : 'bg-blue-50'}`}>
-        {/* Founders Section - Fixed Top Right */}
-        <div className={`absolute top-4 right-4 z-10 p-3 rounded-lg border text-center w-64 ${isDark ? 'border-gray-600 bg-gray-800' : 'border-orange-200 bg-orange-50'}`}>
-          <p className={`text-xs mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-            <span className="font-semibold text-orange-600">Founders:</span> Submit your Pitch Deck
-          </p>
-          <Link 
-            to="/submit-pitch-deck" 
-            className="bg-orange-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-orange-700 transition-all duration-300 inline-flex items-center"
-          >
-            Submit Pitch Deck <ChevronRight className="inline w-3 h-3 ml-1" />
-          </Link>
-        </div>
-        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Left Column - Text Content */}
