@@ -26,9 +26,6 @@ export const signUp = async (
         company_name: companyName,
         phone_number: phoneNumber,
         user_type: userType
-        company_name: companyName,
-        phone_number: phoneNumber,
-        user_type: userType
       }
     }
   })
