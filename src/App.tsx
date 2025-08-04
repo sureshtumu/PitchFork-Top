@@ -190,7 +190,20 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Left Column - Text Content */}
-            <div className="text-left">
+            <div className="text-left relative">
+              {/* Founders Section - Top Right */}
+              <div className={`absolute top-0 right-0 p-3 rounded-lg border text-center max-w-xs ${isDark ? 'border-gray-600 bg-gray-800' : 'border-orange-200 bg-orange-50'}`}>
+                <p className={`text-xs mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <span className="font-semibold text-orange-600">Founders:</span> Submit your Pitch Deck
+                </p>
+                <Link 
+                  to="/submit-pitch-deck" 
+                  className="bg-orange-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-orange-700 transition-all duration-300 inline-flex items-center"
+                >
+                  Submit Pitch Deck <ChevronRight className="inline w-3 h-3 ml-1" />
+                </Link>
+              </div>
+
               <h1 className="text-3xl md:text-4xl font-bold mb-4 text-blue-600">
                 Welcome to Pitch Fork
               </h1>
@@ -203,21 +216,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
               <Link to="/login" className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all duration-300 inline-flex items-center">
                 Login / Sign Up <ChevronRight className="inline w-5 h-5 ml-2" />
               </Link>
-              
-              {/* Founders Section */}
-              <div className={`mt-8 p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-800' : 'border-orange-200 bg-orange-50'}`}>
-                <h3 className="text-lg font-semibold mb-2 text-orange-600">For Founders</h3>
-                <p className={`text-sm mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  To submit your Pitch Deck to investors, click the button below:
-                </p>
-                <Link 
-                  to="/submit-pitch-deck" 
-                  className="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-700 transition-all duration-300 inline-flex items-center text-sm"
-                >
-                  Submit Pitch Deck <ChevronRight className="inline w-4 h-4 ml-1" />
-                </Link>
-              </div>
-              
+
               {/* Social Proof */}
               <div className="mt-8">
                 <div className="flex items-center space-x-2 mb-2">
