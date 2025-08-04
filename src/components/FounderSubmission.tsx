@@ -46,6 +46,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
   const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -56,18 +57,55 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFiles(e.target.files);
+    handleFiles(e.target.files);
+  };
+
+  const handleFiles = (fileList: FileList | null) => {
+    setFiles(fileList);
     
     // Initialize metadata for new files
-    if (e.target.files) {
+    if (fileList) {
       const newMetadata: {[key: string]: {name: string, description: string}} = {};
-      Array.from(e.target.files).forEach(file => {
+      Array.from(fileList).forEach(file => {
         newMetadata[file.name] = {
           name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for default name
           description: ''
         };
       });
       setDocumentMetadata(newMetadata);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles.length > 0) {
+      // Filter files by allowed types
+      const allowedExtensions = ['.pdf', '.ppt', '.pptx', '.xls', '.xlsx'];
+      const validFiles = Array.from(droppedFiles).filter(file => {
+        const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+        return allowedExtensions.includes(extension);
+      });
+      
+      if (validFiles.length > 0) {
+        const dt = new DataTransfer();
+        validFiles.forEach(file => dt.items.add(file));
+        handleFiles(dt.files);
+      } else {
+        setMessage({ type: 'error', text: 'Please drop only PDF, PPT, PPTX, XLS, or XLSX files' });
+      }
     }
   };
 
@@ -521,10 +559,27 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
             </div>
             <div className="p-6">
               {/* File Input */}
-              <div className="mb-6">
+              <div 
+                className={`mb-6 p-6 border-2 border-dashed rounded-lg transition-colors ${
+                  isDragOver 
+                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
+                    : isDark 
+                      ? 'border-gray-600 bg-gray-700' 
+                      : 'border-gray-300 bg-gray-50'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <label htmlFor="file-input" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Select Files *
+                  Drag & Drop Files or Click to Select *
                 </label>
+                <div className="text-center mb-4">
+                  <Upload className={`w-12 h-12 mx-auto mb-2 ${isDragOver ? 'text-orange-500' : 'text-gray-400'}`} />
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {isDragOver ? 'Drop your files here' : 'Drag your pitch deck and documents here, or click below to browse'}
+                  </p>
+                </div>
                 <input
                   id="file-input"
                   type="file"
@@ -532,16 +587,16 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   required
                   accept={allowedFileTypes}
                   onChange={handleFileChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer ${
                     isDark 
                       ? 'bg-gray-700 border-gray-600 text-white file:bg-gray-600 file:text-white file:border-0 file:rounded file:px-3 file:py-1 file:mr-3' 
                       : 'bg-white border-gray-300 text-gray-900 file:bg-gray-100 file:text-gray-700 file:border-0 file:rounded file:px-3 file:py-1 file:mr-3'
                   }`}
                 />
-                <p className={`mt-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Accepted formats: PDF, PPT, PPTX, XLS, XLSX. Please include your pitch deck and any supporting documents.
-                </p>
               </div>
+              <p className={`text-xs text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                Accepted formats: PDF, PPT, PPTX, XLS, XLSX
+              </p>
 
               {/* Selected Files Display */}
               {files && files.length > 0 && (
