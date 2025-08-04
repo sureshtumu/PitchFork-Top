@@ -210,7 +210,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                 To Invest or Not to Invest. Decide like a VC
               </h2>
               <p className="text-lg mb-6 text-gray-600 dark:text-gray-300">
-                Deep AI driven personalized scoring of businesses seeking funding
+                Deep AI based scoring of ventures based on your custom criteria, leading to analysis of 10x more deals in 1/10th the time 
               </p>
               <Link to="/login" className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all duration-300 inline-flex items-center">
                 Login / Sign Up <ChevronRight className="inline w-5 h-5 ml-2" />
