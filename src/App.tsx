@@ -154,7 +154,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                 Founders: Submit Pitch Deck
               </Link>
               <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300">
-                Login/Sign-super
+                Login/Sign-Up
               </Link>
               <button
                 onClick={toggleTheme}
