@@ -84,8 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
   const handleCardClick = (ventureId: number) => {
     console.log(`Navigate to venture ${ventureId} detail page`);
-    // Navigate to venture detail page
-    window.location.href = `/venture/${ventureId}`;
+    navigate(`/venture/${ventureId}`);
   };
 
   const handleFilterChange = (filterName: keyof typeof filters) => {
