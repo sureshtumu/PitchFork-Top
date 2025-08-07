@@ -1,21 +1,34 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, Filter, Calendar, Building2, ChevronDown, User, FileText, Settings, HelpCircle, ChevronRight } from 'lucide-react';
-import { signOut, getCurrentUser } from '../lib/supabase';
+import { signOut, getCurrentUser, supabase } from '../lib/supabase';
 
 interface DashboardProps {
   isDark: boolean;
   toggleTheme: () => void;
 }
 
+interface Company {
+  id: string;
+  name: string;
+  industry?: string;
+  status?: string;
+  overall_score?: number;
+  recommendation?: string;
+  date_submitted: string;
+  created_at: string;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = React.useState({
-    submitted: false,
-    analyzed: false,
-    rejected: false,
-    inDiligence: false,
-    invested: false
+    submitted: true,
+    pending: true,
+    analyzed: true,
+    inDiligence: true,
+    rejected: true,
+    ddRejected: true,
+    invested: true
   });
   
   const [itemsToShow, setItemsToShow] = React.useState('10');
@@ -23,6 +36,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const [showUserMenu, setShowUserMenu] = React.useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = React.useState(false);
   const [user, setUser] = React.useState<any>(null);
+  const [companies, setCompanies] = React.useState<Company[]>([]);
+  const [isLoadingCompanies, setIsLoadingCompanies] = React.useState(true);
 
   // Check authentication on component mount
   React.useEffect(() => {
@@ -33,10 +48,32 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         return;
       }
       setUser(currentUser);
+      await loadCompanies();
     };
     
     checkAuth();
   }, [navigate]);
+
+  const loadCompanies = async () => {
+    try {
+      setIsLoadingCompanies(true);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('date_submitted', { ascending: false });
+
+      if (error) {
+        console.error('Error loading companies:', error);
+        return;
+      }
+
+      setCompanies(data || []);
+    } catch (error) {
+      console.error('Error loading companies:', error);
+    } finally {
+      setIsLoadingCompanies(false);
+    }
+  };
 
   const handleAnalyze = (ventureId: number, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -58,6 +95,37 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
     }));
   };
 
+  // Filter companies based on selected filters
+  const filteredCompanies = companies.filter(company => {
+    const status = company.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
+    if (status === 'submitted' && filters.submitted) return true;
+    if (status === 'pending' && filters.pending) return true;
+    if (status === 'analyzed' && filters.analyzed) return true;
+    if (status === 'indiligence' && filters.inDiligence) return true;
+    if (status === 'rejected' && filters.rejected) return true;
+    if (status === 'ddrejected' && filters.ddRejected) return true;
+    if (status === 'invested' && filters.invested) return true;
+    return false;
+  });
+
+  // Apply sorting and limit
+  const sortedAndLimitedCompanies = React.useMemo(() => {
+    let sorted = [...filteredCompanies];
+    
+    // Sort by date
+    sorted.sort((a, b) => {
+      const dateA = new Date(a.date_submitted).getTime();
+      const dateB = new Date(b.date_submitted).getTime();
+      return sortBy === 'Recent' ? dateB - dateA : dateA - dateB;
+    });
+
+    // Apply limit
+    if (itemsToShow !== 'All') {
+      sorted = sorted.slice(0, parseInt(itemsToShow));
+    }
+
+    return sorted;
+  }, [filteredCompanies, sortBy, itemsToShow]);
   const handleLogout = async () => {
     const { error } = await signOut();
     if (!error) {
@@ -73,92 +141,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
     return "Pass";
   };
 
-  const mockDeals = [
-    { 
-      id: 1,
-      company: "TechStart AI",
-      status: "Analyzed",
-      score: 7.8,
-      industry: "AI/ML",
-      valuation: "$8M",
-      dateSubmitted: "2024-01-15"
-    },
-    { 
-      id: 2,
-      company: "GreenEnergy Co", 
-      status: "Invested", 
-      score: 8.7, 
-      industry: "Clean Tech",
-      valuation: "$12M",
-      dateSubmitted: "2024-01-10"
-    },
-    { 
-      id: 3,
-      company: "RetailTech", 
-      status: "Rejected", 
-      score: 4.2, 
-      industry: "E-commerce",
-      valuation: "$3M",
-      dateSubmitted: "2024-01-08"
-    },
-    { 
-      id: 4,
-      company: "HealthApp", 
-      status: "Rejected", 
-      score: 5.1, 
-      industry: "HealthTech",
-      valuation: "$6M",
-      dateSubmitted: "2024-01-05"
-    },
-    { 
-      id: 5,
-      company: "FinanceBot", 
-      status: "In-Diligence", 
-      score: 7.3, 
-      industry: "FinTech",
-      valuation: "$9M",
-      dateSubmitted: "2024-01-12"
-    },
-    {
-      id: 6,
-      company: "EduTech Solutions",
-      status: "Submitted",
-      score: null,
-      industry: "EdTech",
-      valuation: "$4M",
-      dateSubmitted: "2024-01-18"
-    },
-    {
-      id: 7,
-      company: "FoodDelivery Pro",
-      status: "Analyzed",
-      score: 6.5,
-      industry: "Food Tech",
-      valuation: "$7M",
-      dateSubmitted: "2024-01-14"
-    },
-    {
-      id: 8,
-      company: "CyberSecurity Inc",
-      status: "Invested",
-      score: 9.1,
-      industry: "Cybersecurity",
-      valuation: "$15M",
-      dateSubmitted: "2024-01-02"
-    }
-  ];
-
-  // Sort deals by date
-  const sortedDeals = [...mockDeals].sort((a, b) => {
-    const dateA = new Date(a.dateSubmitted).getTime();
-    const dateB = new Date(b.dateSubmitted).getTime();
-    return sortBy === 'Recent' ? dateB - dateA : dateA - dateB;
-  });
-
   const stats = [
-    { label: "Total Deals", value: "24", icon: <BarChart3 className="w-6 h-6" /> },
-    { label: "Investments", value: "3", icon: <TrendingUp className="w-6 h-6" /> },
-    { label: "In Review", value: "8", icon: <Clock className="w-6 h-6" /> }
+    { label: "Total Deals", value: companies.length.toString(), icon: <BarChart3 className="w-6 h-6" /> },
+    { label: "Investments", value: companies.filter(c => c.status === 'Invested').length.toString(), icon: <TrendingUp className="w-6 h-6" /> },
+    { label: "In Review", value: companies.filter(c => c.status === 'Pending' || c.status === 'Analyzed').length.toString(), icon: <Clock className="w-6 h-6" /> }
   ];
 
   return (
@@ -306,9 +292,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                 <div className="flex flex-wrap gap-4">
                   {[
                     { key: 'submitted', label: 'Submitted' },
+                    { key: 'pending', label: 'Pending' },
                     { key: 'analyzed', label: 'Analyzed' },
-                    { key: 'rejected', label: 'Rejected' },
                     { key: 'inDiligence', label: 'In-Diligence' },
+                    { key: 'rejected', label: 'Rejected' },
+                    { key: 'ddRejected', label: 'DD-Rejected' },
                     { key: 'invested', label: 'Invested' }
                   ].map((filter) => (
                     <label key={filter.key} className="flex items-center">
@@ -371,35 +359,47 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             <h2 className="text-xl font-bold text-blue-600">Recent Ventures</h2>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedDeals.map((venture) => {
-                const recommendation = getRecommendation(venture.score);
+            {isLoadingCompanies ? (
+              <div className="text-center py-8">
+                <div className="text-gray-500">Loading companies...</div>
+              </div>
+            ) : sortedAndLimitedCompanies.length === 0 ? (
+              <div className="text-center py-8">
+                <Building2 className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No companies match the selected filters</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sortedAndLimitedCompanies.map((company) => {
+                  const recommendation = getRecommendation(company.overall_score);
                 return (
-                  <div 
-                    key={venture.id} 
+                    <div 
+                      key={company.id} 
                     className={`p-6 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-lg ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 hover:bg-gray-650' 
                         : 'bg-gray-50 border-gray-200 hover:bg-white hover:shadow-md'
                     }`}
-                    onClick={() => handleCardClick(venture.id)}
+                      onClick={() => handleCardClick(parseInt(company.id))}
                   >
                     {/* Venture Name */}
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-blue-600">{venture.company}</h3>
+                        <h3 className="text-lg font-semibold text-blue-600">{company.name}</h3>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        venture.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
-                        venture.status === 'Analyzed' ? 'bg-yellow-100 text-yellow-800' :
-                        venture.status === 'Invested' ? 'bg-green-100 text-green-800' :
-                        venture.status === 'In-Diligence' ? 'bg-blue-100 text-blue-800' :
+                          company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
+                          company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                          company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
+                          company.status === 'Invested' ? 'bg-green-100 text-green-800' :
+                          company.status === 'In-Diligence' ? 'bg-purple-100 text-purple-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {venture.status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
-                         venture.status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
-                         venture.status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :
-                         venture.status === 'In-Diligence' ? <Users className="w-3 h-3 mr-1" /> :
+                          {company.status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
+                           company.status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
+                           company.status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
+                           company.status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :
+                           company.status === 'In-Diligence' ? <Users className="w-3 h-3 mr-1" /> :
                          <XCircle className="w-3 h-3 mr-1" />}
-                        {venture.status}
+                          {company.status || 'Submitted'}
                       </span>
                     </div>
 
@@ -407,7 +407,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     <div className="flex items-center mb-2">
                       <Building2 className="w-4 h-4 mr-2 text-orange-500" />
                       <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {venture.industry}
+                          {company.industry || 'Not specified'}
                       </span>
                     </div>
 
@@ -415,7 +415,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     <div className="flex items-center mb-3">
                       <Calendar className="w-4 h-4 mr-2 text-orange-500" />
                       <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        Submitted: {new Date(venture.dateSubmitted).toLocaleDateString()}
+                          Submitted: {new Date(company.date_submitted).toLocaleDateString()}
                       </span>
                     </div>
 
@@ -423,39 +423,39 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     <div className="grid grid-cols-2 gap-4 mb-3">
                       <div>
                         <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Score</p>
-                        {venture.score ? (
-                          <p className="text-lg font-bold text-blue-600">{venture.score}/10</p>
+                          {company.overall_score ? (
+                            <p className="text-lg font-bold text-blue-600">{company.overall_score}/10</p>
                         ) : (
                           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending</p>
                         )}
                       </div>
                       <div>
                         <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Valuation</p>
-                        <p className="text-lg font-bold text-green-600">{venture.valuation}</p>
+                          <p className="text-lg font-bold text-green-600">TBD</p>
                       </div>
                     </div>
 
                     {/* Recommendation */}
                     <div>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Recommendation</p>
-                      {recommendation ? (
+                        {company.recommendation && company.recommendation !== 'Pending Analysis' ? (
                         <p className={`text-sm font-medium ${
-                          recommendation === 'Invest' ? 'text-green-600' :
-                          recommendation === 'Consider' ? 'text-yellow-600' :
+                            company.recommendation === 'Invest' ? 'text-green-600' :
+                            company.recommendation === 'Consider' ? 'text-yellow-600' :
                           'text-red-600'
                         }`}>
-                          {recommendation}
+                            {company.recommendation}
                         </p>
                       ) : (
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending Analysis</p>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending Analysis</p>
                       )}
                     </div>
 
                     {/* Analyze Button for Submitted Status */}
-                    {venture.status === 'Submitted' && (
+                      {company.status === 'Submitted' && (
                       <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
                         <button
-                          onClick={(e) => handleAnalyze(venture.id, e)}
+                            onClick={(e) => handleAnalyze(parseInt(company.id), e)}
                           className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm"
                         >
                           Analyze
@@ -465,6 +465,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                   </div>
                 );
               })}
+              </div>
+            )}
             </div>
           </div>
         </div>
