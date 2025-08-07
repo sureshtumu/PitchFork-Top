@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import SubmitFiles from './components/SubmitFiles';
 import EditCompany from './components/EditCompany';
 import FounderSubmission from './components/FounderSubmission';
+import VentureDetail from './components/VentureDetail';
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
   isDark: boolean;
@@ -456,6 +457,10 @@ function App() {
         <Route 
           path="/submit-pitch-deck" 
           element={<FounderSubmission isDark={isDark} toggleTheme={toggleTheme} />} 
+        />
+        <Route 
+          path="/venture/:id" 
+          element={<VentureDetail isDark={isDark} toggleTheme={toggleTheme} />} 
         />
       </Routes>
     </Router>

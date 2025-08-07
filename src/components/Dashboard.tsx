@@ -84,7 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
   const handleCardClick = (ventureId: number) => {
     console.log(`Navigate to venture ${ventureId} detail page`);
-    navigate(`/venture/${ventureId}`);
+    // This should use the actual company ID, not a numeric index
   };
 
   const handleFilterChange = (filterName: keyof typeof filters) => {
@@ -381,7 +381,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                         ? 'bg-gray-700 border-gray-600 hover:bg-gray-650' 
                         : 'bg-gray-50 border-gray-200 hover:bg-white hover:shadow-md'
                     }`}
-                      onClick={() => handleCardClick(parseInt(company.id))}
+                      onClick={() => navigate(`/venture/${company.id}`)}
                   >
                     {/* Venture Name */}
                     <div className="flex items-center justify-between mb-3">
