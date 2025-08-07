@@ -148,6 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   ];
 
   return (
+    <>
     <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       {/* Navigation */}
       <nav className={`${isDark ? 'bg-gray-800/95' : 'bg-white/95'} backdrop-blur-sm border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -514,6 +515,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
           </div>
         </div>
     </footer>
+    </>
   </div>
   );
 };
