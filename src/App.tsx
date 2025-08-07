@@ -4,7 +4,6 @@ import { ChevronRight, Star, Users, Zap, Target, TrendingUp, Shield, MessageCirc
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
 import Dashboard from './components/Dashboard';
-import VentureDetail from './components/VentureDetail';
 import SubmitFiles from './components/SubmitFiles';
 import EditCompany from './components/EditCompany';
 import FounderSubmission from './components/FounderSubmission';
@@ -445,10 +444,6 @@ function App() {
         <Route 
           path="/dashboard" 
           element={<Dashboard isDark={isDark} toggleTheme={toggleTheme} />} 
-        />
-        <Route 
-          path="/venture/:id" 
-          element={<VentureDetail isDark={isDark} toggleTheme={toggleTheme} />} 
         />
         <Route 
           path="/submit-files" 
