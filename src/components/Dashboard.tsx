@@ -472,7 +472,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
           </div>
         </div>
       </div>
-    </div>
 
     {/* Footer */}
     <footer className={`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
