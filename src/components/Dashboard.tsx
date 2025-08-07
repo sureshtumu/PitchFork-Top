@@ -472,9 +472,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         </div>
         </div>
       </div>
+    </div>
 
-      {/* Footer */}
-      <footer className={`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
+    {/* Footer */}
+    <footer className={`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div>
@@ -512,8 +513,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             <p>&copy; 2025 Pitch Fork. All rights reserved.</p>
           </div>
         </div>
-      </footer>
-    </div>
+    </footer>
+  </div>
   );
 };
 
