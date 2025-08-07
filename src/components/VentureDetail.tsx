@@ -1,7 +1,30 @@
 import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Calendar, User, Mail, Phone, BarChart3, TrendingUp, Users, Target, Zap, DollarSign, FileText, Download, MessageCircle, ChevronDown } from 'lucide-react';
-import { signOut, getCurrentUser } from '../lib/supabase';
+import { signOut, getCurrentUser, supabase } from '../lib/supabase';
+
+interface Company {
+  id: string;
+  name: string;
+  industry?: string;
+  address?: string;
+  country?: string;
+  contact_name_1?: string;
+  title_1?: string;
+  email_1?: string;
+  phone_1?: string;
+  contact_name_2?: string;
+  title_2?: string;
+  email_2?: string;
+  phone_2?: string;
+  description?: string;
+  funding_sought?: string;
+  status?: string;
+  overall_score?: number;
+  recommendation?: string;
+  date_submitted: string;
+  created_at: string;
+}
 
 interface VentureDetailProps {
   isDark: boolean;
@@ -15,6 +38,9 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Check authentication on component mount
   React.useEffect(() => {
@@ -25,44 +51,45 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         return;
       }
       setUser(currentUser);
+      loadCompanyData();
     };
     
     checkAuth();
   }, [navigate]);
 
-  // Mock venture data - in real app, this would be fetched based on ID
-  const venture = {
-    id: parseInt(id || '1'),
-    name: "TechStart AI",
-    dateSubmitted: "2024-01-15",
-    industry: "AI/ML",
-    submitter: {
-      name: "John Smith",
-      email: "john.smith@techstartai.com",
-      phone: "+1 (555) 123-4567"
-    },
-    status: "Analyzed",
-    overallScore: 7.8,
-    scores: {
-      product: 8.2,
-      market: 7.5,
-      productMarketFit: 7.8,
-      team: 8.5,
-      competition: 6.9,
-      revenueCustomerTraction: 7.2,
-      financials: 7.6,
-      valuation: 7.4,
-      swotAnalysis: 7.7
-    },
-    recommendation: "Consider",
-    rationale: "TechStart AI demonstrates strong technical capabilities with an experienced team and solid product development. The AI/ML market shows significant growth potential, and their product-market fit is promising. However, competition is intense in this space, and revenue traction needs improvement. The valuation appears reasonable given current metrics. Overall, this represents a moderate-risk investment opportunity with good upside potential if execution improves.",
-    followUpQuestions: [
-      "What is your customer acquisition cost and how do you plan to reduce it?",
-      "How do you differentiate from established competitors like OpenAI and Google?",
-      "What are your specific revenue milestones for the next 12 months?",
-      "Can you provide more details on your intellectual property portfolio?",
-      "What is your plan for scaling the technical team?"
-    ]
+  const loadCompanyData = async () => {
+    if (!id) {
+      setError('No company ID provided');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { data, error: fetchError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error loading company:', fetchError);
+        setError('Failed to load company data');
+        return;
+      }
+
+      if (!data) {
+        setError('Company not found');
+        return;
+      }
+
+      setCompany(data);
+    } catch (error) {
+      console.error('Error loading company:', error);
+      setError('Failed to load company data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getRecommendation = (score: number) => {
@@ -78,9 +105,28 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   };
 
   const handleStatusChange = (newStatus: string) => {
-    setCurrentStatus(newStatus);
-    // In real app, this would make an API call to update the status
-    console.log(`Status changed to: ${newStatus}`);
+    if (!company) return;
+    
+    const updateStatus = async () => {
+      try {
+        const { error } = await supabase
+          .from('companies')
+          .update({ status: newStatus })
+          .eq('id', company.id);
+
+        if (error) {
+          console.error('Error updating status:', error);
+          return;
+        }
+
+        setCurrentStatus(newStatus);
+        setCompany(prev => prev ? { ...prev, status: newStatus } : null);
+      } catch (error) {
+        console.error('Error updating status:', error);
+      }
+    };
+
+    updateStatus();
   };
 
   const handleLogout = async () => {
@@ -91,8 +137,8 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   };
 
   const handleDownloadReport = () => {
-    // In real app, this would download the actual PDF report
-    alert('PDF report download would be triggered here');
+    if (!company) return;
+    alert(`PDF report download for ${company.name} would be triggered here`);
   };
 
   const scoreCategories = [
@@ -106,6 +152,54 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     { key: 'valuation', label: 'Valuation', icon: <TrendingUp className="w-5 h-5" /> },
     { key: 'swotAnalysis', label: 'SWOT Analysis', icon: <BarChart3 className="w-5 h-5" /> }
   ];
+
+  // Mock scores for demonstration - in real app, these would come from analysis
+  const mockScores = {
+    product: 8.2,
+    market: 7.5,
+    productMarketFit: 7.8,
+    team: 8.5,
+    competition: 6.9,
+    revenueCustomerTraction: 7.2,
+    financials: 7.6,
+    valuation: 7.4,
+    swotAnalysis: 7.7
+  };
+
+  const mockFollowUpQuestions = [
+    "What is your customer acquisition cost and how do you plan to reduce it?",
+    "How do you differentiate from established competitors in your space?",
+    "What are your specific revenue milestones for the next 12 months?",
+    "Can you provide more details on your intellectual property portfolio?",
+    "What is your plan for scaling the team?"
+  ];
+
+  if (isLoading) {
+    return (
+      <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="text-lg">Loading company data...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !company) {
+    return (
+      <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="text-lg text-red-600 mb-4">{error || 'Company not found'}</div>
+            <Link to="/dashboard" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -211,7 +305,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">{venture.name}</h1>
+          <h1 className="text-3xl font-bold text-blue-600 mb-2">{company.name}</h1>
           <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Venture Detail Analysis
           </p>
@@ -223,7 +317,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
             {/* Company Description */}
             <div className="mb-6">
               <p className={`text-base leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                TechStart AI is a cutting-edge artificial intelligence company focused on developing advanced machine learning solutions for enterprise clients. Founded in 2023, the company has built proprietary algorithms that help businesses automate complex decision-making processes, resulting in significant cost savings and improved efficiency. With a strong technical team and growing customer base, TechStart AI is positioned to capitalize on the rapidly expanding AI market.
+                {company.description || 'No description available for this company.'}
               </p>
             </div>
             
@@ -232,49 +326,49 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 <Calendar className="w-5 h-5 mr-3 text-orange-500" />
                 <div>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date Submitted</p>
-                  <p className="font-semibold">{new Date(venture.dateSubmitted).toLocaleDateString()}</p>
+                  <p className="font-semibold">{new Date(company.date_submitted).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <Building2 className="w-5 h-5 mr-3 text-orange-500" />
                 <div>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Industry</p>
-                  <p className="font-semibold">{venture.industry}</p>
+                  <p className="font-semibold">{company.industry || 'Not specified'}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <User className="w-5 h-5 mr-3 text-orange-500" />
                 <div>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Submitter</p>
-                  <p className="font-semibold">{venture.submitter.name}</p>
+                  <p className="font-semibold">{company.contact_name_1 || 'Not specified'}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <Mail className="w-5 h-5 mr-3 text-orange-500" />
                 <div>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
-                  <p className="font-semibold">{venture.submitter.email}</p>
+                  <p className="font-semibold">{company.email_1 || 'Not specified'}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <Phone className="w-5 h-5 mr-3 text-orange-500" />
                 <div>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
-                  <p className="font-semibold">{venture.submitter.phone}</p>
+                  <p className="font-semibold">{company.phone_1 || 'Not specified'}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <DollarSign className="w-5 h-5 mr-3 text-orange-500" />
                 <div>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Valuation</p>
-                  <p className="font-semibold">$8M</p>
+                  <p className="font-semibold">TBD</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <FileText className="w-5 h-5 mr-3 text-orange-500" />
                 <div>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Funding Terms</p>
-                  <p className="font-semibold">SAFE Note, 10% discount, $15M cap</p>
+                  <p className="font-semibold">{company.funding_sought || 'Not specified'}</p>
                 </div>
               </div>
             </div>
@@ -282,7 +376,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         </div>
 
         {/* Score Card - Only show if analyzed */}
-        {venture.status === 'Analyzed' && (
+        {company.status === 'Analyzed' && company.overall_score && (
           <>
             {/* Overall Score and Recommendation */}
             <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
@@ -293,18 +387,18 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="text-center">
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Overall Score</p>
-                    <p className={`text-4xl font-bold ${getScoreColor(venture.overallScore)}`}>
-                      {venture.overallScore}/10
+                    <p className={`text-4xl font-bold ${getScoreColor(company.overall_score)}`}>
+                      {company.overall_score}/10
                     </p>
                   </div>
                   <div className="text-center">
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Recommendation</p>
                     <p className={`text-2xl font-bold ${
-                      venture.recommendation === 'Invest' ? 'text-green-600' :
-                      venture.recommendation === 'Consider' ? 'text-yellow-600' :
+                      company.recommendation === 'Invest' ? 'text-green-600' :
+                      company.recommendation === 'Consider' ? 'text-yellow-600' :
                       'text-red-600'
                     }`}>
-                      {venture.recommendation}
+                      {company.recommendation || getRecommendation(company.overall_score)}
                     </p>
                   </div>
                 </div>
@@ -319,7 +413,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {scoreCategories.map((category) => {
-                    const score = venture.scores[category.key as keyof typeof venture.scores];
+                    const score = mockScores[category.key as keyof typeof mockScores];
                     const getScoreDescription = (key: string, score: number) => {
                       const descriptions: { [key: string]: string } = {
                         product: "Strong technical foundation with innovative AI algorithms and scalable architecture. Product demonstrates clear value proposition.",
@@ -361,7 +455,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               </div>
               <div className="p-6">
                 <p className={`text-base leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {venture.rationale}
+                  {company.name} demonstrates potential in the {company.industry || 'specified'} industry. Based on the submitted information and documents, this represents an investment opportunity that requires further analysis. The company's funding requirements of {company.funding_sought || 'unspecified amount'} should be evaluated against market conditions and growth potential.
                 </p>
               </div>
             </div>
@@ -392,7 +486,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               </div>
               <div className="p-6">
                 <ul className="space-y-3">
-                  {venture.followUpQuestions.map((question, index) => (
+                  {mockFollowUpQuestions.map((question, index) => (
                     <li key={index} className={`flex items-start ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                       <span className="text-blue-600 font-bold mr-3">{index + 1}.</span>
                       <span>{question}</span>
@@ -416,7 +510,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                   key={status}
                   onClick={() => handleStatusChange(status)}
                   className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    currentStatus === status
+                    (company.status || 'Submitted') === status
                       ? 'bg-orange-600 text-white'
                       : isDark
                       ? 'bg-gray-700 text-gray-300 hover:bg-orange-500 hover:text-white'
@@ -428,7 +522,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               ))}
             </div>
             <p className={`mt-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Current Status: <span className="font-semibold text-orange-600">{currentStatus}</span>
+              Current Status: <span className="font-semibold text-orange-600">{company.status || 'Submitted'}</span>
             </p>
           </div>
         </div>
