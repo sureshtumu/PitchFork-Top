@@ -471,7 +471,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             </div>
           </div>
         </div>
-        </div>
       </div>
     </div>
 
