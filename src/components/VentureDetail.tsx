@@ -40,6 +40,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const [error, setError] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Check authentication and load company data
   useEffect(() => {
@@ -87,6 +88,31 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       setError('Failed to load company data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!company || isUpdating) return;
+
+    try {
+      setIsUpdating(true);
+      
+      const { error } = await supabase
+        .from('companies')
+        .update({ status: newStatus })
+        .eq('id', company.id);
+
+      if (error) {
+        console.error('Error updating status:', error);
+        return;
+      }
+
+      // Update local state
+      setCompany(prev => prev ? { ...prev, status: newStatus } : null);
+    } catch (error) {
+      console.error('Error updating status:', error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -235,6 +261,50 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
           </p>
         </div>
 
+        {/* Company Name and Action Buttons */}
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-blue-600 mb-4">{company.name}</h2>
+            
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              {['Submitted', 'Analyze', 'Reject', 'Diligence', 'Invest'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleStatusChange(status)}
+                  disabled={isUpdating}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    company.status === status
+                      ? 'bg-blue-600 text-white'
+                      : isDark
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {isUpdating ? 'Updating...' : status}
+                </button>
+              ))}
+            </div>
+            
+            {/* Current Status Display */}
+            <div className="flex items-center">
+              <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mr-2`}>
+                Current Status:
+              </span>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
+                company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
+                company.status === 'Invested' ? 'bg-green-100 text-green-800' :
+                company.status === 'Diligence' ? 'bg-purple-100 text-purple-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {company.status || 'Submitted'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Company Information Card */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -245,14 +315,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Company Name */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                  Company Name
-                </label>
-                <p className="text-lg font-semibold text-blue-600">{company.name}</p>
-              </div>
-
               {/* Industry */}
               <div>
                 <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
