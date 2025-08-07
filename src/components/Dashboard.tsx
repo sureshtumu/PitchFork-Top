@@ -125,6 +125,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
     return sorted;
   }, [filteredCompanies, sortBy, itemsToShow]);
+
   const handleLogout = async () => {
     const { error } = await signOut();
     if (!error) {
@@ -205,7 +206,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                       <Link to="/account" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
                         Account
                       </Link>
-                        key={company.id}
+                      <button 
                         onClick={handleLogout}
                         className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
                       >
@@ -470,7 +471,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             </div>
           </div>
         </div>
-      </div>
 
     {/* Footer */}
     <footer className={`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
