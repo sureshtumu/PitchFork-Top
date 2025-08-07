@@ -514,7 +514,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         </div>
     </footer>
     </>
-  </div>
   );
 };
 
