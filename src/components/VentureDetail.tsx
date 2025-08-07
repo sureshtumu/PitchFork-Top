@@ -1,29 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, Calendar, User, Mail, Phone, BarChart3, TrendingUp, Users, Target, Zap, DollarSign, FileText, Download, MessageCircle, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, User, Mail, Phone, DollarSign, BarChart3, ChevronDown } from 'lucide-react';
 import { signOut, getCurrentUser, supabase } from '../lib/supabase';
 
 interface Company {
   id: string;
   name: string;
   industry?: string;
-  address?: string;
-  country?: string;
+  description?: string;
   contact_name_1?: string;
-  title_1?: string;
   email_1?: string;
   phone_1?: string;
-  contact_name_2?: string;
-  title_2?: string;
-  email_2?: string;
-  phone_2?: string;
-  description?: string;
   funding_sought?: string;
   status?: string;
   overall_score?: number;
   recommendation?: string;
   date_submitted: string;
-  created_at: string;
 }
 
 interface VentureDetailProps {
@@ -34,28 +26,28 @@ interface VentureDetailProps {
 const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [currentStatus, setCurrentStatus] = useState('Analyzed');
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  // Check authentication on component mount
-  React.useEffect(() => {
-    const checkAuth = async () => {
+  // Check authentication and load company data
+  useEffect(() => {
+    const checkAuthAndLoadData = async () => {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
         navigate('/login');
         return;
       }
       setUser(currentUser);
-      loadCompanyData();
+      await loadCompanyData();
     };
     
-    checkAuth();
-  }, [navigate]);
+    checkAuthAndLoadData();
+  }, [navigate, id]);
 
   const loadCompanyData = async () => {
     if (!id) {
@@ -92,41 +84,27 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     }
   };
 
-  const getRecommendation = (score: number) => {
-    if (score >= 8) return "Invest";
-    if (score >= 5) return "Consider";
-    return "Pass";
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return "text-green-600";
-    if (score >= 6) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     if (!company) return;
     
-    const updateStatus = async () => {
-      try {
-        const { error } = await supabase
-          .from('companies')
-          .update({ status: newStatus })
-          .eq('id', company.id);
+    try {
+      setIsUpdatingStatus(true);
+      const { error } = await supabase
+        .from('companies')
+        .update({ status: newStatus })
+        .eq('id', company.id);
 
-        if (error) {
-          console.error('Error updating status:', error);
-          return;
-        }
-
-        setCurrentStatus(newStatus);
-        setCompany(prev => prev ? { ...prev, status: newStatus } : null);
-      } catch (error) {
+      if (error) {
         console.error('Error updating status:', error);
+        return;
       }
-    };
 
-    updateStatus();
+      setCompany(prev => prev ? { ...prev, status: newStatus } : null);
+    } catch (error) {
+      console.error('Error updating status:', error);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -135,44 +113,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       navigate('/');
     }
   };
-
-  const handleDownloadReport = () => {
-    if (!company) return;
-    alert(`PDF report download for ${company.name} would be triggered here`);
-  };
-
-  const scoreCategories = [
-    { key: 'product', label: 'Product', icon: <Zap className="w-5 h-5" /> },
-    { key: 'market', label: 'Market', icon: <TrendingUp className="w-5 h-5" /> },
-    { key: 'productMarketFit', label: 'Product-Market-Fit', icon: <Target className="w-5 h-5" /> },
-    { key: 'team', label: 'Team', icon: <Users className="w-5 h-5" /> },
-    { key: 'competition', label: 'Competition', icon: <BarChart3 className="w-5 h-5" /> },
-    { key: 'revenueCustomerTraction', label: 'Revenue & Customer Traction', icon: <DollarSign className="w-5 h-5" /> },
-    { key: 'financials', label: 'Financials', icon: <FileText className="w-5 h-5" /> },
-    { key: 'valuation', label: 'Valuation', icon: <TrendingUp className="w-5 h-5" /> },
-    { key: 'swotAnalysis', label: 'SWOT Analysis', icon: <BarChart3 className="w-5 h-5" /> }
-  ];
-
-  // Mock scores for demonstration - in real app, these would come from analysis
-  const mockScores = {
-    product: 8.2,
-    market: 7.5,
-    productMarketFit: 7.8,
-    team: 8.5,
-    competition: 6.9,
-    revenueCustomerTraction: 7.2,
-    financials: 7.6,
-    valuation: 7.4,
-    swotAnalysis: 7.7
-  };
-
-  const mockFollowUpQuestions = [
-    "What is your customer acquisition cost and how do you plan to reduce it?",
-    "How do you differentiate from established competitors in your space?",
-    "What are your specific revenue milestones for the next 12 months?",
-    "Can you provide more details on your intellectual property portfolio?",
-    "What is your plan for scaling the team?"
-  ];
 
   if (isLoading) {
     return (
@@ -235,9 +175,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                       </Link>
                       <Link to="/edit-company" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
                         Edit Company
-                      </Link>
-                      <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Investor Criteria
                       </Link>
                     </div>
                   )}
@@ -302,227 +239,164 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-blue-600 mb-2">{company.name}</h1>
           <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-            Venture Detail Analysis
+            Venture Details
           </p>
         </div>
 
-        {/* Company Information */}
+        {/* Venture Information */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-blue-600 flex items-center">
+              <Building2 className="w-5 h-5 mr-2" />
+              Venture Information
+            </h2>
+          </div>
           <div className="p-6">
-            {/* Company Description */}
-            <div className="mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Company Name */}
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Company Name</p>
+                <p className="text-lg font-semibold">{company.name}</p>
+              </div>
+
+              {/* Industry */}
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Industry</p>
+                <p className="text-lg">{company.industry || 'Not specified'}</p>
+              </div>
+
+              {/* Date Submitted */}
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Date Submitted</p>
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-2 text-orange-500" />
+                  <p className="text-lg">{new Date(company.date_submitted).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* Contact Name */}
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Contact Name</p>
+                <div className="flex items-center">
+                  <User className="w-4 h-4 mr-2 text-orange-500" />
+                  <p className="text-lg">{company.contact_name_1 || 'Not specified'}</p>
+                </div>
+              </div>
+
+              {/* Contact Email */}
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Contact Email</p>
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 mr-2 text-orange-500" />
+                  <p className="text-lg">{company.email_1 || 'Not specified'}</p>
+                </div>
+              </div>
+
+              {/* Contact Phone */}
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Contact Phone</p>
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-2 text-orange-500" />
+                  <p className="text-lg">{company.phone_1 || 'Not specified'}</p>
+                </div>
+              </div>
+
+              {/* Funding Sought */}
+              <div>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Funding Sought</p>
+                <div className="flex items-center">
+                  <DollarSign className="w-4 h-4 mr-2 text-orange-500" />
+                  <p className="text-lg">{company.funding_sought || 'Not specified'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mt-6">
+              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Description</p>
               <p className={`text-base leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {company.description || 'No description available for this company.'}
               </p>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="flex items-center">
-                <Calendar className="w-5 h-5 mr-3 text-orange-500" />
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date Submitted</p>
-                  <p className="font-semibold">{new Date(company.date_submitted).toLocaleDateString()}</p>
-                </div>
+          </div>
+        </div>
+
+        {/* Analysis Section */}
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-blue-600 flex items-center">
+              <BarChart3 className="w-5 h-5 mr-2" />
+              Analysis
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Overall Score */}
+              <div className="text-center">
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Overall Score</p>
+                {company.status === 'Submitted' || !company.overall_score ? (
+                  <p className={`text-2xl font-bold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending</p>
+                ) : (
+                  <p className={`text-4xl font-bold ${
+                    company.overall_score >= 8 ? 'text-green-600' :
+                    company.overall_score >= 6 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {company.overall_score}/10
+                  </p>
+                )}
               </div>
-              <div className="flex items-center">
-                <Building2 className="w-5 h-5 mr-3 text-orange-500" />
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Industry</p>
-                  <p className="font-semibold">{company.industry || 'Not specified'}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <User className="w-5 h-5 mr-3 text-orange-500" />
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Submitter</p>
-                  <p className="font-semibold">{company.contact_name_1 || 'Not specified'}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Mail className="w-5 h-5 mr-3 text-orange-500" />
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
-                  <p className="font-semibold">{company.email_1 || 'Not specified'}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Phone className="w-5 h-5 mr-3 text-orange-500" />
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
-                  <p className="font-semibold">{company.phone_1 || 'Not specified'}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <DollarSign className="w-5 h-5 mr-3 text-orange-500" />
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Valuation</p>
-                  <p className="font-semibold">TBD</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <FileText className="w-5 h-5 mr-3 text-orange-500" />
-                <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Funding Terms</p>
-                  <p className="font-semibold">{company.funding_sought || 'Not specified'}</p>
-                </div>
+
+              {/* Recommendation */}
+              <div className="text-center">
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Recommendation</p>
+                {company.status === 'Submitted' || !company.recommendation || company.recommendation === 'Pending Analysis' ? (
+                  <p className={`text-2xl font-bold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending</p>
+                ) : (
+                  <p className={`text-2xl font-bold ${
+                    company.recommendation === 'Invest' ? 'text-green-600' :
+                    company.recommendation === 'Consider' ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {company.recommendation}
+                  </p>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Score Card - Only show if analyzed */}
-        {company.status === 'Analyzed' && company.overall_score && (
-          <>
-            {/* Overall Score and Recommendation */}
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-bold text-blue-600">Overall Assessment</h2>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="text-center">
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Overall Score</p>
-                    <p className={`text-4xl font-bold ${getScoreColor(company.overall_score)}`}>
-                      {company.overall_score}/10
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Recommendation</p>
-                    <p className={`text-2xl font-bold ${
-                      company.recommendation === 'Invest' ? 'text-green-600' :
-                      company.recommendation === 'Consider' ? 'text-yellow-600' :
-                      'text-red-600'
-                    }`}>
-                      {company.recommendation || getRecommendation(company.overall_score)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Detailed Scores */}
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-bold text-blue-600">Detailed Score Card</h2>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {scoreCategories.map((category) => {
-                    const score = mockScores[category.key as keyof typeof mockScores];
-                    const getScoreDescription = (key: string, score: number) => {
-                      const descriptions: { [key: string]: string } = {
-                        product: "Strong technical foundation with innovative AI algorithms and scalable architecture. Product demonstrates clear value proposition.",
-                        market: "Large addressable market with growing demand for AI solutions. Market timing appears favorable for expansion.",
-                        productMarketFit: "Good initial traction with enterprise clients. Product addresses real pain points in the market.",
-                        team: "Experienced founding team with strong technical backgrounds and relevant industry experience.",
-                        competition: "Competitive landscape is intense with established players, but company has differentiated approach.",
-                        revenueCustomerTraction: "Early revenue generation with growing customer base. Needs improvement in customer acquisition.",
-                        financials: "Solid financial projections with reasonable assumptions. Revenue model is well-defined.",
-                        valuation: "Valuation appears reasonable given current metrics and market comparables.",
-                        swotAnalysis: "Strong technical capabilities offset by competitive challenges. Good growth potential identified."
-                      };
-                      return descriptions[key] || "Analysis completed for this category.";
-                    };
-                    
-                    return (
-                      <div key={category.key} className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                        <div className="flex items-center mb-2">
-                          <div className="text-orange-500 mr-2">{category.icon}</div>
-                          <h3 className="font-semibold text-sm">{category.label}</h3>
-                        </div>
-                        <p className={`text-2xl font-bold ${getScoreColor(score)}`}>
-                          {score}/10
-                        </p>
-                        <p className={`text-xs leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {getScoreDescription(category.key, score)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Rationale */}
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-bold text-blue-600">Investment Rationale</h2>
-              </div>
-              <div className="p-6">
-                <p className={`text-base leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {company.name} demonstrates potential in the {company.industry || 'specified'} industry. Based on the submitted information and documents, this represents an investment opportunity that requires further analysis. The company's funding requirements of {company.funding_sought || 'unspecified amount'} should be evaluated against market conditions and growth potential.
-                </p>
-              </div>
-            </div>
-
-            {/* Detailed Report Link */}
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-bold text-blue-600">Detailed Report</h2>
-              </div>
-              <div className="p-6">
-                <button
-                  onClick={handleDownloadReport}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors inline-flex items-center"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Download Full Report (PDF)
-                </button>
-              </div>
-            </div>
-
-            {/* Follow-up Questions */}
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-bold text-blue-600 flex items-center">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Follow-up Questions
-                </h2>
-              </div>
-              <div className="p-6">
-                <ul className="space-y-3">
-                  {mockFollowUpQuestions.map((question, index) => (
-                    <li key={index} className={`flex items-start ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                      <span className="text-blue-600 font-bold mr-3">{index + 1}.</span>
-                      <span>{question}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </>
-        )}
-
         {/* Status Management */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold text-blue-600">Status Management</h2>
           </div>
           <div className="p-6">
-            <div className="flex flex-wrap gap-3">
-              {['Analyze', 'Reject', 'Diligence', 'Invest'].map((status) => (
+            <div className="flex flex-wrap gap-3 mb-4">
+              {['Submitted', 'Analyze', 'Rejected', 'Diligence', 'Invest'].map((status) => (
                 <button
                   key={status}
                   onClick={() => handleStatusChange(status)}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  disabled={isUpdatingStatus}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                     (company.status || 'Submitted') === status
-                      ? 'bg-orange-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : isDark
-                      ? 'bg-gray-700 text-gray-300 hover:bg-orange-500 hover:text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-orange-500 hover:text-white'
+                      ? 'bg-gray-700 text-gray-300 hover:bg-blue-500 hover:text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-blue-500 hover:text-white'
                   }`}
                 >
                   {status}
                 </button>
               ))}
             </div>
-            <p className={`mt-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Current Status: <span className="font-semibold text-orange-600">{company.status || 'Submitted'}</span>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Current Status: <span className="font-semibold text-blue-600">{company.status || 'Submitted'}</span>
             </p>
           </div>
         </div>
