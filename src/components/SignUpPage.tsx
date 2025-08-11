@@ -72,7 +72,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
       if (data.user) {
         // Check if email confirmation is required
         if (!data.session) {
-          setSuccess('Please check your email to confirm your account before signing in.');
+          setSuccess('Thank you for registering with Pitch Fork! Please check your email for a confirmation link. Once confirmed, you can sign in and access your dashboard.');
           setIsLoading(false);
         } else {
           // Check user type and redirect accordingly
@@ -83,8 +83,10 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
             .single();
           
           if (profile?.user_type === 'founder') {
+            setSuccess('Welcome to Pitch Fork! You can now login and upload your documents. Check the status of your submission on your Dashboard.');
             navigate('/founder-dashboard');
           } else {
+            setSuccess('Welcome to Pitch Fork! You can now access your investor dashboard.');
             navigate('/dashboard');
           }
         }
