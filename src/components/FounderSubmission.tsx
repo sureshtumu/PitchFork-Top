@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Building2, FileText, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+import { useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../lib/supabase';
+
 interface FounderSubmissionProps {
   isDark: boolean;
   toggleTheme: () => void;
@@ -26,6 +29,7 @@ interface CompanyData {
 }
 
 const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleTheme }) => {
+  const navigate = useNavigate();
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: '',
     industry: '',
@@ -47,6 +51,30 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load user data and prefill form
+  React.useEffect(() => {
+    const loadUserData = async () => {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+
+      // Prefill form with user registration data
+      setCompanyData(prev => ({
+        ...prev,
+        contact_name_1: currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
+        email_1: currentUser.email || '',
+        name: currentUser.user_metadata?.company_name || ''
+      }));
+      
+      setIsInitialized(true);
+    };
+
+    loadUserData();
+  }, [navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -256,6 +284,20 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
   };
 
   const allowedFileTypes = '.pdf,.ppt,.pptx,.xls,.xlsx';
+
+  // Show loading while initializing
+  if (!isInitialized) {
+    return (
+      <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+            <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading form...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>

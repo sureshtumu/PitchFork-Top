@@ -61,25 +61,16 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
     try {
       setIsLoading(true);
       
-      // Get user profile to find their company
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('company_name')
-        .eq('user_id', (await getCurrentUser())?.id)
-        .single();
+      // Get current user
+      const currentUser = await getCurrentUser();
+      if (!currentUser) return;
 
-      if (profileError || !profile?.company_name) {
-        console.error('Error loading user profile:', profileError);
-        setIsLoading(false);
-        return;
-      }
-
-      // Find company by name
+      // Look for companies where the founder is the contact
       const { data: companyData, error: companyError } = await supabase
         .from('companies')
         .select('*')
-        .ilike('name', profile.company_name)
-        .single();
+        .eq('email_1', currentUser.email)
+        .maybeSingle();
 
       if (companyError) {
         console.error('Error loading company:', companyError);
@@ -87,8 +78,10 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         return;
       }
 
-      setCompany(companyData);
-      await loadDocuments(companyData.id);
+      if (companyData) {
+        setCompany(companyData);
+        await loadDocuments(companyData.id);
+      }
     } catch (error) {
       console.error('Error loading founder data:', error);
     } finally {
