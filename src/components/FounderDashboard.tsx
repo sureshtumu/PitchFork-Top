@@ -346,6 +346,29 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
           </p>
         </div>
 
+        {/* No Company Submitted - Show Submit Button */}
+        {!company && !isLoading && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} text-center py-16`}>
+            <div className="max-w-md mx-auto">
+              <Building2 className={`w-16 h-16 mx-auto mb-6 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+              <h2 className="text-2xl font-bold text-blue-600 mb-4">Submit Your Pitch Deck</h2>
+              <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-8`}>
+                Get started by submitting your company information and pitch deck materials.
+              </p>
+              <Link
+                to="/submit-pitch-deck"
+                className="bg-orange-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors inline-flex items-center"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                Founders: Submit Pitch Deck
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Company Information and Actions - Only show if company exists */}
+        {company && (
+          <>
         {/* Message Display */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg border ${
@@ -365,7 +388,6 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         )}
 
         {/* Section 1: Company Information */}
-        {company && (
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-bold text-blue-600 flex items-center">
@@ -432,7 +454,6 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
               </div>
             </div>
           </div>
-        )}
 
         {/* Section 2: Action Buttons */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
@@ -514,6 +535,8 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Upload Modal */}

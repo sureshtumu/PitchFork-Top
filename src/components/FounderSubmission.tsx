@@ -218,6 +218,11 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
       setMessage({ type: 'success', text: 'Pitch deck submitted successfully! Investors will review your submission.' });
       
+      // Navigate back to founder dashboard after successful submission
+      setTimeout(() => {
+        navigate('/founder-dashboard');
+      }, 2000); // Wait 2 seconds to show success message
+      
       // Reset form
       setCompanyData({
         name: '',
