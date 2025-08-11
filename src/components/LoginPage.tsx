@@ -31,8 +31,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
       }
 
       if (data.user) {
-        // Successful login - redirect to dashboard
-        navigate('/dashboard');
+        // Check user type and redirect accordingly
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('user_type')
+          .eq('user_id', data.user.id)
+          .single();
+        
+        if (profile?.user_type === 'founder') {
+          navigate('/founder-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

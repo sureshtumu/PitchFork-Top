@@ -48,6 +48,19 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         return;
       }
       setUser(currentUser);
+      
+      // Check user type and redirect if founder
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('user_type')
+        .eq('user_id', currentUser.id)
+        .single();
+      
+      if (profile?.user_type === 'founder') {
+        navigate('/founder-dashboard');
+        return;
+      }
+      
       await loadCompanies();
     };
     
