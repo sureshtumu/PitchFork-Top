@@ -255,7 +255,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                         </div>
                         <div className="flex justify-between text-xs">
                           <span>Recommendation:</span>
-                          <span className="font-semibold text-green-600 text-xs">Invest</span>
+                          <span className="font-semibold text-green-600 text-xs">Reject</span>
                         </div>
                         <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                           Val: $2.5M
