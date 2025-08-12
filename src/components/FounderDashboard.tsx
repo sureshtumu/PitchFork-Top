@@ -627,12 +627,12 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
 
                 {/* Description */}
                 <div className="md:col-span-2">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  <label className={\`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
                     Description
                   </label>
                   <div className="flex items-start">
                     <FileText className="w-4 h-4 mr-2 text-orange-500 mt-1 flex-shrink-0" />
-                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <p className={\`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
                       {company.description || 'No description provided'}
                     </p>
                   </div>
@@ -642,7 +642,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
           </div>
 
         {/* Section 2: Action Buttons */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+        <div className={\`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold text-blue-600">Actions</h2>
           </div>
@@ -659,7 +659,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
               <button
                 onClick={handleShowAnalysis}
                 disabled={company?.status === 'Pending'}
-                className={`px-6 py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors flex items-center ${
+                className={\`px-6 py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors flex items-center ${
                   company?.status === 'Pending'
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'
@@ -673,7 +673,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         </div>
 
         {/* Documents List */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className={\`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold text-blue-600 flex items-center">
               <FileText className="w-5 h-5 mr-2" />
@@ -687,23 +687,23 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
               </div>
             ) : documents.length === 0 ? (
               <div className="text-center py-8">
-                <FileText className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No documents uploaded yet</div>
+                <FileText className={\`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                <div className={\`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No documents uploaded yet</div>
               </div>
             ) : (
               <div className="space-y-4">
                 {documents.map((document) => (
-                  <div key={document.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                  <div key={document.id} className={\`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center mb-2">
                           <FileText className="w-4 h-4 mr-2 text-blue-500" />
                           <h4 className="font-semibold">{document.document_name}</h4>
                         </div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                        <p className={\`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
                           {document.description || 'No description'}
                         </p>
-                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                        <p className={\`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                           File: {document.filename} • Added: {new Date(document.date_added).toLocaleDateString()}
                         </p>
                       </div>
@@ -728,7 +728,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       {/* Edit Company Modal */}
       {showEditModal && editingCompany && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
+          <div className={\`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold text-blue-600">Edit Company Information</h3>
             </div>
@@ -736,14 +736,14 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Basic Information */}
                 <div>
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  <label className={\`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                     Company Name *
                   </label>
                   <input
                     type="text"
                     value={editingCompany.name}
                     onChange={(e) => setEditingCompany(prev => prev ? { ...prev, name: e.target.value } : null)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={\`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
@@ -752,14 +752,14 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                 </div>
                 
                 <div>
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  <label className={\`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                     Industry
                   </label>
                   <input
                     type="text"
                     value={editingCompany.industry || ''}
                     onChange={(e) => setEditingCompany(prev => prev ? { ...prev, industry: e.target.value } : null)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={\`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
@@ -768,14 +768,14 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                 </div>
                 
                 <div>
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  <label className={\`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                     Address
                   </label>
                   <input
                     type="text"
                     value={editingCompany.address || ''}
                     onChange={(e) => setEditingCompany(prev => prev ? { ...prev, address: e.target.value } : null)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={\`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
@@ -784,14 +784,14 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                 </div>
                 
                 <div>
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  <label className={\`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                     Country
                   </label>
                   <input
                     type="text"
                     value={editingCompany.country || ''}
                     onChange={(e) => setEditingCompany(prev => prev ? { ...prev, country: e.target.value } : null)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={\`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
@@ -808,7 +808,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.contact_name_1 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, contact_name_1: e.target.value } : null)}
                       placeholder="Contact name"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -819,7 +819,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.title_1 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, title_1: e.target.value } : null)}
                       placeholder="Title"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -830,7 +830,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.email_1 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, email_1: e.target.value } : null)}
                       placeholder="Email"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -841,7 +841,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.phone_1 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, phone_1: e.target.value } : null)}
                       placeholder="Phone"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -859,7 +859,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.contact_name_2 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, contact_name_2: e.target.value } : null)}
                       placeholder="Contact name"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -870,7 +870,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.title_2 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, title_2: e.target.value } : null)}
                       placeholder="Title"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -881,7 +881,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.email_2 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, email_2: e.target.value } : null)}
                       placeholder="Email"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -892,7 +892,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                       value={editingCompany.phone_2 || ''}
                       onChange={(e) => setEditingCompany(prev => prev ? { ...prev, phone_2: e.target.value } : null)}
                       placeholder="Phone"
-                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={\`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -903,14 +903,14 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                 
                 {/* Description and Funding */}
                 <div className="md:col-span-2">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  <label className={\`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                     Company Description
                   </label>
                   <textarea
                     value={editingCompany.description || ''}
                     onChange={(e) => setEditingCompany(prev => prev ? { ...prev, description: e.target.value } : null)}
                     rows={3}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={\`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
@@ -919,14 +919,14 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                 </div>
                 
                 <div className="md:col-span-2">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  <label className={\`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                     Funding Sought
                   </label>
                   <input
                     type="text"
                     value={editingCompany.funding_sought || ''}
                     onChange={(e) => setEditingCompany(prev => prev ? { ...prev, funding_sought: e.target.value } : null)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={\`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDark 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
@@ -941,7 +941,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                     setShowEditModal(false);
                     setEditingCompany(null);
                   }}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  className={\`px-4 py-2 rounded-lg font-semibold transition-colors ${
                     isDark 
                       ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -965,7 +965,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
+          <div className={\`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold text-blue-600">Upload Documents</h3>
             </div>
@@ -977,13 +977,13 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                   multiple
                   accept={allowedFileTypes}
                   onChange={handleFileChange}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={\`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     isDark 
                       ? 'bg-gray-700 border-gray-600 text-white file:bg-gray-600 file:text-white file:border-0 file:rounded file:px-3 file:py-1 file:mr-3' 
                       : 'bg-white border-gray-300 text-gray-900 file:bg-gray-100 file:text-gray-700 file:border-0 file:rounded file:px-3 file:py-1 file:mr-3'
                   }`}
                 />
-                <p className={`mt-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className={\`mt-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   Accepted formats: PDF, PPT, PPTX, XLS, XLSX
                 </p>
               </div>
@@ -992,8 +992,8 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
               {newFiles && newFiles.length > 0 && (
                 <div className="space-y-4 mb-4">
                   {Array.from(newFiles).map((file, index) => (
-                    <div key={index} className={`p-3 rounded border ${isDark ? 'border-gray-500 bg-gray-700' : 'border-gray-300 bg-gray-50'}`}>
-                      <div className={`flex items-center text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    <div key={index} className={\`p-3 rounded border ${isDark ? 'border-gray-500 bg-gray-700' : 'border-gray-300 bg-gray-50'}`}>
+                      <div className={\`flex items-center text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                         <FileText className="w-4 h-4 mr-2" />
                         {file.name}
                       </div>
@@ -1003,7 +1003,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                           value={documentMetadata[file.name]?.name || ''}
                           onChange={(e) => handleMetadataChange(file.name, 'name', e.target.value)}
                           placeholder="Document name"
-                          className={`px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                          className={\`px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                             isDark 
                               ? 'bg-gray-600 border-gray-500 text-white' 
                               : 'bg-white border-gray-300 text-gray-900'
@@ -1014,7 +1014,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                           value={documentMetadata[file.name]?.description || ''}
                           onChange={(e) => handleMetadataChange(file.name, 'description', e.target.value)}
                           placeholder="Description"
-                          className={`px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                          className={\`px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                             isDark 
                               ? 'bg-gray-600 border-gray-500 text-white' 
                               : 'bg-white border-gray-300 text-gray-900'
@@ -1033,7 +1033,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                     setNewFiles(null);
                     setDocumentMetadata({});
                   }}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  className={\`px-4 py-2 rounded-lg font-semibold transition-colors ${
                     isDark 
                       ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -1055,7 +1055,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       )}
 
       {/* Footer */}
-      <footer className={`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
+      <footer className={\`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div>
