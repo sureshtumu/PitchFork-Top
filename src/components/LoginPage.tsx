@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { signIn } from '../lib/supabase';
+import { signIn, supabase } from '../lib/supabase';
 
 interface LoginPageProps {
   isDark: boolean;
