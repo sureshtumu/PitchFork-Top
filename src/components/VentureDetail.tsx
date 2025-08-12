@@ -266,6 +266,19 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
           </p>
         </div>
 
+        {/* Message Status */}
+        {messageStatus && (
+          <div className={`mb-6 p-4 rounded-lg border ${
+            messageStatus.type === 'success' 
+              ? 'bg-green-100 border-green-400 text-green-700' 
+              : 'bg-red-100 border-red-400 text-red-700'
+          }`}>
+            <div className="flex items-center">
+              <MessageCircle className="w-5 h-5 mr-2" />
+              {messageStatus.text}
+            </div>
+          </div>
+        )}
         {/* Company Name and Action Buttons */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6">
@@ -289,6 +302,15 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                   {isUpdating ? 'Updating...' : status}
                 </button>
               ))}
+              
+              {/* Send Message Button */}
+              <button
+                onClick={() => setShowMessageForm(!showMessageForm)}
+                className="px-4 py-2 rounded-lg font-semibold transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Send Message
+              </button>
             </div>
             
             {/* Current Status Display */}
@@ -310,6 +332,78 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
           </div>
         </div>
 
+        {/* Message Form */}
+        {showMessageForm && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-green-600 flex items-center">
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Send Message to Founder
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Message Title
+                  </label>
+                  <input
+                    type="text"
+                    value={messageTitle}
+                    onChange={(e) => setMessageTitle(e.target.value)}
+                    placeholder="Enter message title"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Message
+                  </label>
+                  <textarea
+                    value={messageDetail}
+                    onChange={(e) => setMessageDetail(e.target.value)}
+                    placeholder="Enter your message"
+                    rows={4}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={isSendingMessage || !messageTitle.trim() || !messageDetail.trim()}
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {isSendingMessage ? 'Sending...' : 'Send Message'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMessageForm(false);
+                      setMessageTitle('');
+                      setMessageDetail('');
+                      setMessageStatus(null);
+                    }}
+                    className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                      isDark 
+                        ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Company Information Card */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
