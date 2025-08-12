@@ -128,6 +128,64 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!messageTitle.trim() || !messageDetail.trim()) {
+      setMessageStatus({ type: 'error', text: 'Please fill in both title and message' });
+      return;
+    }
+
+    if (!company) {
+      setMessageStatus({ type: 'error', text: 'Company information not available' });
+      return;
+    }
+
+    try {
+      setIsSendingMessage(true);
+      setMessageStatus(null);
+
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        setMessageStatus({ type: 'error', text: 'You must be logged in to send messages' });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('messages')
+        .insert([{
+          company_id: company.id,
+          sender_type: 'investor',
+          sender_id: currentUser.id,
+          recipient_type: 'founder',
+          recipient_id: null, // Will be handled by RLS policies
+          message_title: messageTitle.trim(),
+          message_detail: messageDetail.trim(),
+          message_status: 'unread'
+        }]);
+
+      if (error) {
+        console.error('Error sending message:', error);
+        setMessageStatus({ type: 'error', text: 'Failed to send message. Please try again.' });
+        return;
+      }
+
+      setMessageStatus({ type: 'success', text: 'Message sent successfully!' });
+      setMessageTitle('');
+      setMessageDetail('');
+      
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setMessageStatus(null);
+        setShowMessageForm(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessageStatus({ type: 'error', text: 'An unexpected error occurred' });
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
