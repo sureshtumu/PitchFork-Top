@@ -330,75 +330,51 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         {/* Company Status Card */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-orange-600 mb-2">{company.name}</h2>
-                <div className="flex items-center space-x-4">
-                  <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Status:
-                  </span>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
-                    company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
-                    company.status === 'Invested' ? 'bg-green-100 text-green-800' :
-                    company.status === 'In-Diligence' ? 'bg-purple-100 text-purple-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {company.status || 'Submitted'}
-                  </span>
-                </div>
+            {/* Company Name and Status */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-orange-600 mb-3">{company.name}</h2>
+              <div className="text-2xl font-bold text-orange-500 mb-4">
+                Status: {company.status || 'Submitted'}
               </div>
               
-              {/* Action Buttons */}
-              <div className="flex space-x-3">
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center">
-                  <BarChart3 className="w-4 h-4 mr-2" />
+              {/* Show Analysis Button - only if status is not "Submitted" */}
+              {company.status && company.status !== 'Submitted' && (
+                <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center">
+                  <BarChart3 className="w-5 h-5 mr-2" />
                   Show Analysis
                 </button>
-              </div>
-            </div>
-            
-            {/* Company Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Industry:
-                </span>
-                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                  {company.industry || 'Not specified'}
-                </p>
-              </div>
-              <div>
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Date Submitted:
-                </span>
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-orange-500" />
-                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                    {new Date(company.date_submitted).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Company Information */}
+        {/* Company Information Summary */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h2 className="text-xl font-bold text-orange-600 flex items-center">
               <Building2 className="w-5 h-5 mr-2" />
               Company Information
             </h2>
+            <button 
+              onClick={() => navigate('/edit-company')}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center"
+            >
+              Edit Company
+            </button>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              {/* Company Title */}
+              <div>
+                <h3 className="text-lg font-semibold text-orange-600 mb-1">Company Title</h3>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                  {company.name}
+                </p>
+              </div>
+
               {/* Description */}
-              <div className="md:col-span-2">
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                  Description
-                </label>
+              <div>
+                <h3 className="text-lg font-semibold text-orange-600 mb-1">Description</h3>
                 <div className="flex items-start">
                   <FileText className="w-4 h-4 mr-2 text-orange-500 mt-1 flex-shrink-0" />
                   <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
@@ -407,39 +383,18 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                 </div>
               </div>
 
-              {/* Contact Information */}
-              <div className="md:col-span-2">
-                <h3 className="text-lg font-semibold mb-4 text-orange-600">Contact Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Contact Name
-                    </label>
-                    <div className="flex items-center">
-                      <User className="w-4 h-4 mr-2 text-orange-500" />
-                      <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {company.contact_name_1 || 'Not provided'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Email
-                    </label>
-                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                      {company.email_1 || 'Not provided'}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Phone
-                    </label>
-                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                      {company.phone_1 || 'Not provided'}
-                    </p>
-                  </div>
+              {/* Date Submitted */}
+              <div>
+                <h3 className="text-lg font-semibold text-orange-600 mb-1">Date Submitted</h3>
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-2 text-orange-500" />
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                    {new Date(company.date_submitted).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
                 </div>
               </div>
             </div>
