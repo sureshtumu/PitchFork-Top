@@ -290,7 +290,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
           recipient_type: 'founder',
           recipient_id: currentUser?.id || null,
           message_title: 'Welcome to Pitch Fork!',
-          message_detail: 'Thank you for submitting your company information. We will notify you on the next steps. Please login to see the status and to address any questions that have been asked.',
+          message_detail: 'Thank you for submitting your company information',
           message_status: 'unread'
         }]);
 

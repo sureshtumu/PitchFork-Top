@@ -403,7 +403,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         {/* Messages Section */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-orange-600 flex items-center">
+            <h2 className="text-xl font-bold text-blue-600 flex items-center">
               <MessageCircle className="w-5 h-5 mr-2" />
               Messages
             </h2>
@@ -481,7 +481,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         {/* Company Information Summary */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-orange-600 flex items-center">
+            <h2 className="text-xl font-bold text-blue-600 flex items-center">
               <Building2 className="w-5 h-5 mr-2" />
               Company Information
             </h2>
@@ -497,7 +497,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
             <div className="space-y-4">
               {/* Company Title */}
               <div>
-                <h3 className="text-lg font-semibold text-orange-600 mb-1">Company Title</h3>
+                <h3 className="text-lg font-semibold text-blue-600 mb-1">Company Title</h3>
                 <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
                   {company.name}
                 </p>
@@ -505,7 +505,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
 
               {/* Description */}
               <div>
-                <h3 className="text-lg font-semibold text-orange-600 mb-1">Description</h3>
+                <h3 className="text-lg font-semibold text-blue-600 mb-1">Description</h3>
                 <div className="flex items-start">
                   <FileText className="w-4 h-4 mr-2 text-orange-500 mt-1 flex-shrink-0" />
                   <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
@@ -516,7 +516,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
 
               {/* Date Submitted */}
               <div>
-                <h3 className="text-lg font-semibold text-orange-600 mb-1">Date Submitted</h3>
+                <h3 className="text-lg font-semibold text-blue-600 mb-1">Date Submitted</h3>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-2 text-orange-500" />
                   <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
@@ -535,7 +535,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         {/* Documents Section */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-orange-600 flex items-center">
+            <h2 className="text-xl font-bold text-blue-600 flex items-center">
               <FileText className="w-5 h-5 mr-2" />
               Uploaded Documents
             </h2>
