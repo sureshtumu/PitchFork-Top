@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye } from 'lucide-react';
+import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye, MessageCircle, Edit3 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface FounderDashboardProps {
@@ -29,13 +29,18 @@ interface Company {
   created_at: string;
 }
 
-interface FounderMessage {
+interface Message {
   id: string;
   company_id: string;
-  title: string;
-  message: string;
-  status: string;
+  sender_type: string;
+  sender_id?: string;
+  recipient_type: string;
+  recipient_id?: string;
+  message_title: string;
+  message_detail: string;
+  message_status: string;
   date_sent: string;
+  created_at: string;
 }
 
 interface Document {
@@ -53,8 +58,10 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   // Check authentication and load data
   useEffect(() => {
@@ -95,6 +102,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       if (companyData) {
         setCompany(companyData);
         await loadDocuments(companyData.id);
+        await loadMessages(companyData.id);
       }
     } catch (error) {
       console.error('Error loading founder data:', error);
@@ -119,6 +127,50 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       setDocuments(data || []);
     } catch (error) {
       console.error('Error loading documents:', error);
+    }
+  };
+
+  const loadMessages = async (companyId: string) => {
+    try {
+      setIsLoadingMessages(true);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('recipient_type', 'founder')
+        .order('date_sent', { ascending: false });
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ message_status: 'read' })
+        .eq('id', messageId);
+
+      if (error) {
+        console.error('Error marking message as read:', error);
+        return;
+      }
+
+      // Update local state
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, message_status: 'read' } : msg
+      ));
+    } catch (error) {
+      console.error('Error marking message as read:', error);
     }
   };
 
@@ -348,6 +400,84 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
           </div>
         </div>
 
+        {/* Messages Section */}
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-orange-600 flex items-center">
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Messages
+            </h2>
+          </div>
+          <div className="p-6">
+            {isLoadingMessages ? (
+              <div className="text-center py-4">
+                <div className="text-gray-500">Loading messages...</div>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageCircle className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet</div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div 
+                    key={message.id} 
+                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                      message.message_status === 'unread'
+                        ? isDark 
+                          ? 'border-orange-500 bg-orange-900/20' 
+                          : 'border-orange-300 bg-orange-50'
+                        : isDark 
+                          ? 'border-gray-600 bg-gray-700' 
+                          : 'border-gray-200 bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      if (message.message_status === 'unread') {
+                        markMessageAsRead(message.id);
+                      }
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className={`font-semibold ${
+                        message.message_status === 'unread' ? 'text-orange-600' : ''
+                      }`}>
+                        {message.message_title}
+                      </h4>
+                      <div className="flex items-center space-x-2">
+                        {message.message_status === 'unread' && (
+                          <span className="inline-block w-2 h-2 bg-orange-500 rounded-full"></span>
+                        )}
+                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {new Date(message.date_sent).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {message.message_detail}
+                    </p>
+                    <div className="flex items-center mt-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        message.sender_type === 'system' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        From: {message.sender_type === 'system' ? 'System' : 'Investor'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Company Information Summary */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -356,9 +486,10 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
               Company Information
             </h2>
             <button 
-              onClick={() => navigate('/edit-company')}
+              onClick={() => navigate('/edit-company', { state: { company } })}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center"
             >
+              <Edit3 className="w-4 h-4 mr-2" />
               Edit Company
             </button>
           </div>

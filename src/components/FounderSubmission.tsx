@@ -280,13 +280,18 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       }
 
       // Create welcome message for the founder
+      const currentUser = await getCurrentUser();
       const { error: messageError } = await supabase
-        .from('founder_messages')
+        .from('messages')
         .insert([{
           company_id: company.id,
-          title: 'Welcome to Pitch Fork!',
-          message: 'Thank you for submitting your company information. We will notify you on the next steps. Please login to see the status and to address any questions that have been asked.',
-          status: 'unread'
+          sender_type: 'system',
+          sender_id: null,
+          recipient_type: 'founder',
+          recipient_id: currentUser?.id || null,
+          message_title: 'Welcome to Pitch Fork!',
+          message_detail: 'Thank you for submitting your company information. We will notify you on the next steps. Please login to see the status and to address any questions that have been asked.',
+          message_status: 'unread'
         }]);
 
       if (messageError) {
