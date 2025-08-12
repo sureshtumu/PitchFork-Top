@@ -145,15 +145,9 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#" className={`hover:text-blue-600 transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                Home
-              </a>
-              <Link 
-                to="/submit-pitch-deck" 
-                className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-all duration-300 text-sm font-semibold"
-              >
-                Founders: Submit Pitch Deck
-              </Link>
+              <span className="text-orange-600 font-semibold">
+                Founders: Sign-Up to Submit your pitch deck
+              </span>
               <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300">
                 Login/Sign-Up
               </Link>
@@ -183,12 +177,11 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
         {isMobileMenuOpen && (
           <div className={`md:hidden ${isDark ? 'bg-gray-800' : 'bg-white'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="px-4 py-4 space-y-4">
-              <Link 
-                to="/submit-pitch-deck" 
-                className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 block text-center text-sm font-semibold"
-              >
-                Founders: Submit Pitch Deck
-              </Link>
+              <div className="text-center">
+                <span className="text-orange-600 font-semibold">
+                  Founders: Sign-Up to Submit your pitch deck
+                </span>
+              </div>
               <Link to="/login" className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 block text-center">
                 Login/Sign-Up
               </Link>

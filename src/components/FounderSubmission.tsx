@@ -47,6 +47,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     funding_sought: ''
   });
   const [files, setFiles] = useState<FileList | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -85,23 +86,55 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files);
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
   };
 
-  const handleFiles = (fileList: FileList | null) => {
-    setFiles(fileList);
+  const handleFiles = (fileList: FileList) => {
+    const newFiles = Array.from(fileList);
+    const allowedExtensions = ['.pdf', '.ppt', '.pptx', '.xls', '.xlsx'];
     
-    // Initialize metadata for new files
-    if (fileList) {
-      const newMetadata: {[key: string]: {name: string, description: string}} = {};
-      Array.from(fileList).forEach(file => {
-        newMetadata[file.name] = {
-          name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for default name
-          description: ''
-        };
-      });
-      setDocumentMetadata(newMetadata);
+    // Filter valid files
+    const validFiles = newFiles.filter(file => {
+      const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+      return allowedExtensions.includes(extension);
+    });
+
+    if (validFiles.length === 0) {
+      setMessage({ type: 'error', text: 'Please select only PDF, PPT, PPTX, XLS, or XLSX files' });
+      return;
     }
+
+    // Add new files to existing ones (avoid duplicates)
+    const existingFileNames = selectedFiles.map(f => f.name);
+    const uniqueNewFiles = validFiles.filter(file => !existingFileNames.includes(file.name));
+    
+    if (uniqueNewFiles.length === 0) {
+      setMessage({ type: 'error', text: 'These files are already selected' });
+      return;
+    }
+
+    const updatedFiles = [...selectedFiles, ...uniqueNewFiles];
+    setSelectedFiles(updatedFiles);
+
+    // Create FileList for form compatibility
+    const dt = new DataTransfer();
+    updatedFiles.forEach(file => dt.items.add(file));
+    setFiles(dt.files);
+    
+    // Initialize metadata for new files only
+    const newMetadata = { ...documentMetadata };
+    uniqueNewFiles.forEach(file => {
+      newMetadata[file.name] = {
+        name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for default name
+        description: ''
+      };
+    });
+    setDocumentMetadata(newMetadata);
+    
+    // Clear any error messages
+    setMessage(null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -119,22 +152,24 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     setIsDragOver(false);
     
     const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles.length > 0) {
-      // Filter files by allowed types
-      const allowedExtensions = ['.pdf', '.ppt', '.pptx', '.xls', '.xlsx'];
-      const validFiles = Array.from(droppedFiles).filter(file => {
-        const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-        return allowedExtensions.includes(extension);
-      });
-      
-      if (validFiles.length > 0) {
-        const dt = new DataTransfer();
-        validFiles.forEach(file => dt.items.add(file));
-        handleFiles(dt.files);
-      } else {
-        setMessage({ type: 'error', text: 'Please drop only PDF, PPT, PPTX, XLS, or XLSX files' });
-      }
+    if (droppedFiles && droppedFiles.length > 0) {
+      handleFiles(droppedFiles);
     }
+  };
+
+  const handleRemoveFile = (fileName: string) => {
+    const updatedFiles = selectedFiles.filter(file => file.name !== fileName);
+    setSelectedFiles(updatedFiles);
+
+    // Update FileList
+    const dt = new DataTransfer();
+    updatedFiles.forEach(file => dt.items.add(file));
+    setFiles(dt.files);
+
+    // Remove metadata
+    const newMetadata = { ...documentMetadata };
+    delete newMetadata[fileName];
+    setDocumentMetadata(newMetadata);
   };
 
   const handleMetadataChange = (filename: string, field: 'name' | 'description', value: string) => {
@@ -269,6 +304,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         funding_sought: ''
       });
       setFiles(null);
+      setSelectedFiles([]);
       setDocumentMetadata({});
       
       // Reset file input
@@ -618,20 +654,19 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <label htmlFor="file-input" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Drag & Drop Files or Click to Select *
-                </label>
                 <div className="text-center mb-4">
                   <Upload className={`w-12 h-12 mx-auto mb-2 ${isDragOver ? 'text-orange-500' : 'text-gray-400'}`} />
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {isDragOver ? 'Drop your files here' : 'Drag your pitch deck and documents here, or click below to browse'}
                   </p>
                 </div>
+                <label htmlFor="file-input" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2 text-center`}>
+                  Select Additional Files
+                </label>
                 <input
                   id="file-input"
                   type="file"
                   multiple
-                  required
                   accept={allowedFileTypes}
                   onChange={handleFileChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer ${
@@ -646,17 +681,26 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
               </p>
 
               {/* Selected Files Display */}
-              {files && files.length > 0 && (
+              {selectedFiles.length > 0 && (
                 <div className={`mb-6 p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
                   <h3 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Selected Files ({files.length}):
+                    Selected Files ({selectedFiles.length}):
                   </h3>
                   <div className="space-y-4">
-                    {Array.from(files).map((file, index) => (
+                    {selectedFiles.map((file, index) => (
                       <div key={index} className={`p-3 rounded border ${isDark ? 'border-gray-600 bg-gray-600' : 'border-gray-300 bg-white'}`}>
-                        <div className={`flex items-center text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                        <div className={`flex items-center justify-between text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                          <div className="flex items-center">
                           <FileText className="w-4 h-4 mr-2" />
                           {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(file.name)}
+                            className="text-red-600 hover:text-red-700 text-xs font-medium"
+                          >
+                            Remove
+                          </button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
@@ -704,7 +748,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
           <div className="text-center">
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || selectedFiles.length === 0}
               className="bg-orange-600 text-white py-3 px-8 rounded-lg font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center text-lg"
             >
               <Upload className="w-5 h-5 mr-2" />
