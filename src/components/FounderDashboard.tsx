@@ -315,3 +315,9 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                   multiple
                   {Array.from(newFiles).map((file, index) => (
                         />
+              )
+              )
+              }
+    }
+  }
+}
