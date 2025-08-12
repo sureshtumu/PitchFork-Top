@@ -382,12 +382,17 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         {/* Company Status Card */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6">
-            {/* Company Name and Status */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-orange-600 mb-3">{company.name}</h2>
-              <div className="text-2xl font-bold text-orange-500 mb-4">
-                Status: {company.status || 'Submitted'}
+            {/* Company Name and Status - Side by side */}
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-bold text-orange-600">{company.name}</h2>
+              <div className="text-right">
+                <span className="text-lg font-medium text-blue-600">Status: </span>
+                <span className="text-2xl font-bold text-orange-500">{company.status || 'Submitted'}</span>
               </div>
+            </div>
+            
+            {/* Show Analysis Button */}
+            <div className="mb-4">
               
               {/* Show Analysis Button - only if status is not "Submitted" */}
               {company.status && company.status !== 'Submitted' && (

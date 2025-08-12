@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface VentureDetailProps {
@@ -41,6 +41,11 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showMessageForm, setShowMessageForm] = useState(false);
+  const [messageTitle, setMessageTitle] = useState('');
+  const [messageDetail, setMessageDetail] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [messageStatus, setMessageStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Check authentication and load company data
   useEffect(() => {

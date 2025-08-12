@@ -362,58 +362,6 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Navigation Menu */}
-              <nav className="hidden md:flex items-center space-x-6">
-                <Link to="/dashboard" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Dashboard</Link>
-                <Link to="/reports" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Reports</Link>
-                
-                {/* Utilities Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setShowUtilitiesMenu(!showUtilitiesMenu)}
-                    className={`flex items-center text-blue-600 font-medium transition-colors`}
-                  >
-                    Utilities <ChevronDown className="w-4 h-4 ml-1" />
-                  </button>
-                  {showUtilitiesMenu && (
-                    <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Submit Files
-                      </Link>
-                      <Link to="/edit-company" className={`block px-4 py-2 text-sm text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20`}>
-                        Edit Company
-                      </Link>
-                    </div>
-                  )}
-                </div>
-                
-                <Link to="/help" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Help</Link>
-                
-                {/* User Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className={`flex items-center ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}
-                  >
-                    <User className="w-4 h-4 mr-1" />
-                    User <ChevronDown className="w-4 h-4 ml-1" />
-                  </button>
-                  {showUserMenu && (
-                    <div className={`absolute top-full right-0 mt-2 w-32 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                      <Link to="/account" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Account
-                      </Link>
-                      <button 
-                        onClick={handleLogout}
-                        className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </nav>
-              
               <button
                 onClick={toggleTheme}
                 className={`p-2 rounded-lg ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
@@ -423,26 +371,15 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
               
               {/* Back to Dashboard */}
               <Link 
-                to="/dashboard" 
+                to="/founder-dashboard" 
                 className={`flex items-center px-4 py-2 rounded-lg ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Dashboard
+                Founder Dashboard
               </Link>
             </div>
           </div>
         </div>
-        
-        {/* Click outside handler for dropdowns */}
-        {(showUserMenu || showUtilitiesMenu) && (
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => {
-              setShowUserMenu(false);
-              setShowUtilitiesMenu(false);
-            }}
-          />
-        )}
       </nav>
 
       {/* Main Content */}
