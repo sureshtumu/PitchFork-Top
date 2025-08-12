@@ -279,6 +279,20 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         return;
       }
 
+      // Create welcome message for the founder
+      const { error: messageError } = await supabase
+        .from('founder_messages')
+        .insert([{
+          company_id: company.id,
+          title: 'Welcome to Pitch Fork!',
+          message: 'Thank you for submitting your company information. We will notify you on the next steps. Please login to see the status and to address any questions that have been asked.',
+          status: 'unread'
+        }]);
+
+      if (messageError) {
+        console.error('Error creating welcome message:', messageError);
+      }
+
       setMessage({ type: 'success', text: 'Pitch deck submitted successfully! Investors will review your submission.' });
       
       // Navigate back to founder dashboard after successful submission

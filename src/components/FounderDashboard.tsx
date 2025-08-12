@@ -12,10 +12,30 @@ interface Company {
   id: string;
   name: string;
   industry?: string;
+  address?: string;
+  country?: string;
+  contact_name_1?: string;
+  title_1?: string;
+  email_1?: string;
+  phone_1?: string;
+  contact_name_2?: string;
+  title_2?: string;
+  email_2?: string;
+  phone_2?: string;
   description?: string;
+  funding_sought?: string;
   status?: string;
   date_submitted: string;
   created_at: string;
+}
+
+interface FounderMessage {
+  id: string;
+  company_id: string;
+  title: string;
+  message: string;
+  status: string;
+  date_sent: string;
 }
 
 interface Document {
@@ -32,15 +52,19 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [messages, setMessages] = useState<FounderMessage[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [newFiles, setNewFiles] = useState<FileList | null>(null);
   const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Check authentication and load data
   useEffect(() => {
@@ -81,6 +105,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       if (companyData) {
         setCompany(companyData);
         await loadDocuments(companyData.id);
+        await loadMessages(companyData.id);
       }
     } catch (error) {
       console.error('Error loading founder data:', error);
@@ -108,6 +133,28 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       console.error('Error loading documents:', error);
     } finally {
       setIsLoadingDocuments(false);
+    }
+  };
+
+  const loadMessages = async (companyId: string) => {
+    try {
+      setIsLoadingMessages(true);
+      const { data, error } = await supabase
+        .from('founder_messages')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('date_sent', { ascending: false });
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setIsLoadingMessages(false);
     }
   };
 
@@ -243,8 +290,36 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
     }
   };
 
+  const handleCompanyUpdate = async () => {
+    if (!editingCompany || !company) return;
+
+    try {
+      setIsUploading(true);
+      const { error } = await supabase
+        .from('companies')
+        .update(editingCompany)
+        .eq('id', company.id);
+
+      if (error) {
+        console.error('Error updating company:', error);
+        setMessage({ type: 'error', text: 'Failed to update company information' });
+        return;
+      }
+
+      setCompany(editingCompany);
+      setEditingCompany(null);
+      setShowEditModal(false);
+      setMessage({ type: 'success', text: 'Company information updated successfully' });
+    } catch (error) {
+      console.error('Error updating company:', error);
+      setMessage({ type: 'error', text: 'Failed to update company information' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleShowAnalysis = () => {
-    if (company?.status === 'Pending') return;
+    if (company?.status === 'Pending' || company?.status === 'Submitted') return;
     
     // TODO: Implement PDF analysis display
     alert('Analysis feature will be implemented to show PDF analysis report');
@@ -362,6 +437,42 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         {/* Company Information and Actions - Only show if company exists */}
         {company && (
           <>
+        {/* Messages Section */}
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-blue-600 flex items-center">
+              <Building2 className="w-5 h-5 mr-2" />
+              Messages from Investors
+            </h2>
+          </div>
+          <div className="p-6">
+            {isLoadingMessages ? (
+              <div className="text-center py-4">
+                <div className="text-gray-500">Loading messages...</div>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center py-8">
+                <Building2 className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet</div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-blue-600">{msg.title}</h4>
+                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {new Date(msg.date_sent).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{msg.message}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Message Display */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg border ${
@@ -383,10 +494,22 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         {/* Section 1: Company Information */}
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-blue-600 flex items-center">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-blue-600 flex items-center">
                 <Building2 className="w-5 h-5 mr-2" />
                 Company Information
-              </h2>
+                </h2>
+                <button
+                  onClick={() => {
+                    setEditingCompany({ ...company });
+                    setShowEditModal(true);
+                  }}
+                  className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                  title="Edit company information"
+                >
+                  <FileText className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -420,7 +543,77 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
                     Status
                   </label>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  <div className="text-2xl font-bold text-orange-500">
+                    {company.status || 'Submitted'}
+                  </div>
+                </div>
+
+                {/* Industry */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Industry
+                  </label>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                    {company.industry || 'Not specified'}
+                  </p>
+                </div>
+
+                {/* Funding Sought */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Funding Sought
+                  </label>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                    {company.funding_sought || 'Not specified'}
+                  </p>
+                </div>
+
+                {/* Description */}
+                <div className="md:col-span-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Description
+                  </label>
+                  <div className="flex items-start">
+                    <FileText className="w-4 h-4 mr-2 text-orange-500 mt-1 flex-shrink-0" />
+                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {company.description || 'No description provided'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {/* Section 2: Action Buttons */}
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-blue-600">Actions</h2>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                Upload Documents
+              </button>
+              
+              <button
+                onClick={handleShowAnalysis}
+                disabled={company?.status === 'Pending' || company?.status === 'Submitted'}
+                className={`px-6 py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors flex items-center ${
+                  company?.status === 'Pending' || company?.status === 'Submitted'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'
+                }`}
+              >
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Show Analysis
+              </button>
+            </div>
+          </div>
+        </div>
                     company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
                     company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
                     company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
@@ -531,6 +724,243 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
         </>
         )}
       </div>
+
+      {/* Edit Company Modal */}
+      {showEditModal && editingCompany && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-blue-600">Edit Company Information</h3>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Basic Information */}
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    Company Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCompany.name}
+                    onChange={(e) => setEditingCompany(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    Industry
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCompany.industry || ''}
+                    onChange={(e) => setEditingCompany(prev => prev ? { ...prev, industry: e.target.value } : null)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCompany.address || ''}
+                    onChange={(e) => setEditingCompany(prev => prev ? { ...prev, address: e.target.value } : null)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCompany.country || ''}
+                    onChange={(e) => setEditingCompany(prev => prev ? { ...prev, country: e.target.value } : null)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                {/* Primary Contact */}
+                <div className="md:col-span-2">
+                  <h4 className="font-medium mb-2">Primary Contact</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={editingCompany.contact_name_1 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, contact_name_1: e.target.value } : null)}
+                      placeholder="Contact name"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.title_1 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, title_1: e.target.value } : null)}
+                      placeholder="Title"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="email"
+                      value={editingCompany.email_1 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, email_1: e.target.value } : null)}
+                      placeholder="Email"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="tel"
+                      value={editingCompany.phone_1 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, phone_1: e.target.value } : null)}
+                      placeholder="Phone"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                
+                {/* Secondary Contact */}
+                <div className="md:col-span-2">
+                  <h4 className="font-medium mb-2">Secondary Contact (Optional)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={editingCompany.contact_name_2 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, contact_name_2: e.target.value } : null)}
+                      placeholder="Contact name"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.title_2 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, title_2: e.target.value } : null)}
+                      placeholder="Title"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="email"
+                      value={editingCompany.email_2 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, email_2: e.target.value } : null)}
+                      placeholder="Email"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="tel"
+                      value={editingCompany.phone_2 || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, phone_2: e.target.value } : null)}
+                      placeholder="Phone"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                
+                {/* Description and Funding */}
+                <div className="md:col-span-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    Company Description
+                  </label>
+                  <textarea
+                    value={editingCompany.description || ''}
+                    onChange={(e) => setEditingCompany(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    rows={3}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    Funding Sought
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCompany.funding_sought || ''}
+                    onChange={(e) => setEditingCompany(prev => prev ? { ...prev, funding_sought: e.target.value } : null)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingCompany(null);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                    isDark 
+                      ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCompanyUpdate}
+                  disabled={isUploading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUploading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upload Modal */}
       {showUploadModal && (
