@@ -41,32 +41,32 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
 
   const benefits = [
     {
-      icon: <Target className="w-8 h-8" />,
+      icon: <Target className="w-8 h-8 text-gold-500" />,
       title: "You Set Your Investor Criteria",
       description: "Customize investment parameters to match your investment thesis and risk tolerance"
     },
     {
-      icon: <Zap className="w-8 h-8" />,
+      icon: <Zap className="w-8 h-8 text-gold-500" />,
       title: "Fast Analysis",
       description: "Product, Market, Team, SWOT, Valuation, and financial analysis in minutes, not days"
     },
     {
-      icon: <TrendingUp className="w-8 h-8" />,
+      icon: <TrendingUp className="w-8 h-8 text-gold-500" />,
       title: "Expert-Level Analysis",
       description: "Analyze companies in fields that you are not an expert in with confidence"
     },
     {
-      icon: <CheckCircle className="w-8 h-8" />,
+      icon: <CheckCircle className="w-8 h-8 text-gold-500" />,
       title: "Quick Go/No-Go Recommendation",
       description: "Score card and dashboard to see all your deals with clear recommendations"
     },
     {
-      icon: <BarChart3 className="w-8 h-8" />,
+      icon: <BarChart3 className="w-8 h-8 text-gold-500" />,
       title: "Scale Your Deal Flow",
       description: "Ability to receive and analyze many more projects efficiently"
     },
     {
-      icon: <Shield className="w-8 h-8" />,
+      icon: <Shield className="w-8 h-8 text-gold-500" />,
       title: "Don't Miss Diamonds",
       description: "Reject poor proposals while identifying hidden gems you might have missed"
     }
@@ -132,40 +132,40 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
   ];
 
   return (
-    <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
+    <div className={`min-h-screen font-inter transition-colors duration-300 ${isDark ? 'bg-navy-950 text-silver-100' : 'bg-silver-50 text-navy-900'}`}>
       {/* Navigation */}
-      <nav className={`sticky top-0 z-50 ${isDark ? 'bg-gray-800/95' : 'bg-white/95'} backdrop-blur-sm border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+      <nav className={`sticky top-0 z-50 ${isDark ? 'bg-navy-900/95' : 'bg-white/95'} backdrop-blur-sm border-b ${isDark ? 'border-navy-700' : 'border-silver-200'} shadow-financial`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <img src="/pitch-fork3.png" alt="Pitch Fork Logo" className="w-8 h-8 mr-3" />
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold bg-gold-gradient bg-clip-text text-transparent">
                 Pitch Fork
               </div>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
-              <span className="text-orange-600 font-semibold">
+              <span className="text-gold-600 font-semibold">
                 Founders: Sign-Up to Submit your pitch deck
               </span>
-              <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300">
+              <Link to="/login" className="bg-navy-800 text-white px-6 py-2 rounded-lg hover:bg-navy-700 transition-all duration-300 shadow-financial font-semibold">
                 Login/Sign-Up
               </Link>
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
+                className={`p-2 rounded-lg ${isDark ? 'bg-navy-800 hover:bg-navy-700' : 'bg-silver-100 hover:bg-silver-200'} transition-colors shadow-sm`}
               >
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
             </div>
 
             <div className="md:hidden flex items-center space-x-2">
-              <button onClick={toggleTheme} className={`p-2 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
+              <button onClick={toggleTheme} className={`p-2 rounded-lg ${isDark ? 'bg-navy-800' : 'bg-silver-100'}`}>
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className={`p-2 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}
+                className={`p-2 rounded-lg ${isDark ? 'bg-navy-800' : 'bg-silver-100'}`}
               >
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -175,14 +175,14 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className={`md:hidden ${isDark ? 'bg-gray-800' : 'bg-white'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className={`md:hidden ${isDark ? 'bg-navy-900' : 'bg-white'} border-t ${isDark ? 'border-navy-700' : 'border-silver-200'}`}>
             <div className="px-4 py-4 space-y-4">
               <div className="text-center">
-                <span className="text-orange-600 font-semibold">
+                <span className="text-gold-600 font-semibold">
                   Founders: Sign-Up to Submit your pitch deck
                 </span>
               </div>
-              <Link to="/login" className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 block text-center">
+              <Link to="/login" className="w-full bg-navy-800 text-white px-6 py-2 rounded-lg hover:bg-navy-700 block text-center font-semibold">
                 Login/Sign-Up
               </Link>
             </div>
@@ -191,32 +191,32 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       </nav>
 
       {/* Hero Section */}
-      <section className={`relative py-12 ${isDark ? 'bg-gray-900' : 'bg-blue-50'}`}>
+      <section className={`relative py-16 ${isDark ? 'bg-financial-gradient' : 'bg-gradient-to-br from-silver-50 to-navy-50'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Left Column - Text Content */}
             <div className="text-left relative">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-blue-600">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">
                 Welcome to Pitch Fork
               </h1>
-              <h2 className="text-2xl md:text-3xl font-bold mb-4 text-orange-500">
+              <h2 className="text-2xl md:text-3xl font-bold mb-6 text-navy-800 dark:text-silver-100">
                 To Invest or Not: Decide like a VC
               </h2>
-              <p className="text-lg mb-6 text-gray-600 dark:text-gray-300">
+              <p className="text-lg mb-8 text-navy-600 dark:text-silver-300 leading-relaxed">
                 AI based scoring of ventures based on your custom criteria + industry standards, leading to analysis of 10x more deals in 1/10th the time, so you don't miss a Diamond, and you filter out the duds. 
               </p>
-              <Link to="/login" className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-all duration-300 inline-flex items-center">
+              <Link to="/login" className="bg-gold-gradient text-white px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-gold transition-all duration-300 inline-flex items-center shadow-financial">
                 Login/Sign-Up <ChevronRight className="inline w-5 h-5 ml-2" />
               </Link>
 
               {/* Social Proof */}
-              <div className="mt-8">
+              <div className="mt-10">
                 <div className="flex items-center space-x-2 mb-2">
                   {[1,2,3,4,5].map((star) => (
-                    <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <Star key={star} className="w-5 h-5 fill-gold-400 text-gold-400" />
                   ))}
                 </div>
-                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p className={`text-sm ${isDark ? 'text-silver-300' : 'text-navy-600'} font-medium`}>
                   Rated 4.9/5 by over 500+ registered investors
                 </p>
               </div>
@@ -227,7 +227,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
               <img 
                 src="/landing-main-graphic.png" 
                 alt="Pitch Fork Investment Analysis Platform" 
-                className="w-full max-w-sm rounded-lg shadow-lg"
+                className="w-full max-w-sm rounded-xl shadow-financial"
               />
             </div>
           </div>
@@ -235,20 +235,20 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       </section>
 
       {/* Benefits Section */}
-      <section className={`py-12 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+      <section className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-blue-600">Why Choose Pitch Fork?</h2>
-            <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Why Choose Pitch Fork?</h2>
+            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-navy-600'} max-w-3xl mx-auto`}>
               Streamline your investment process with AI-powered analysis and decision support
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {benefits.map((benefit, index) => (
-              <div key={index} className={`p-5 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'} hover:shadow-lg transition-shadow`}>
-                <div className="text-orange-500 mb-3">{benefit.icon}</div>
-                <h3 className="text-lg font-semibold mb-2">{benefit.title}</h3>
-                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{benefit.description}</p>
+              <div key={index} className={`p-6 rounded-xl ${isDark ? 'bg-navy-800 border border-navy-700' : 'bg-silver-50 border border-silver-200'} hover:shadow-financial transition-all duration-300 hover:scale-105`}>
+                <div className="mb-4">{benefit.icon}</div>
+                <h3 className="text-xl font-bold mb-3 text-navy-800 dark:text-silver-100">{benefit.title}</h3>
+                <p className={`${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>{benefit.description}</p>
               </div>
             ))}
           </div>
@@ -256,22 +256,22 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       </section>
 
       {/* How It Works */}
-      <section className={`py-12 ${isDark ? 'bg-gray-900' : 'bg-orange-50'}`}>
+      <section className={`py-16 ${isDark ? 'bg-navy-950' : 'bg-gradient-to-br from-gold-50 to-silver-100'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-orange-500">How It Works</h2>
-            <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 text-gold-600">How It Works</h2>
+            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-navy-600'} max-w-3xl mx-auto`}>
               From submission to investment decision in 6 simple steps
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {flowSteps.map((step, index) => (
-              <div key={index} className={`relative p-5 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-                <div className="absolute -top-3 -left-3 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+              <div key={index} className={`relative p-6 rounded-xl ${isDark ? 'bg-navy-800 border border-navy-700' : 'bg-white border border-silver-200'} shadow-financial hover:shadow-gold transition-all duration-300`}>
+                <div className="absolute -top-4 -left-4 w-8 h-8 bg-gold-gradient text-white rounded-full flex items-center justify-center font-bold text-sm shadow-gold">
                   {step.step}
                 </div>
-                <h3 className="text-lg font-semibold mb-2 mt-2">{step.title}</h3>
-                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{step.description}</p>
+                <h3 className="text-xl font-bold mb-3 mt-2 text-navy-800 dark:text-silver-100">{step.title}</h3>
+                <p className={`${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>{step.description}</p>
               </div>
             ))}
           </div>
@@ -279,26 +279,26 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       </section>
 
       {/* Testimonials */}
-      <section className={`py-12 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+      <section className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-blue-600">What Our Users Say</h2>
-            <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">What Our Users Say</h2>
+            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-navy-600'}`}>
               Trusted by leading angel investors and investment groups
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className={`p-5 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'} shadow-lg`}>
+              <div key={index} className={`p-6 rounded-xl ${isDark ? 'bg-navy-800 border border-navy-700' : 'bg-silver-50 border border-silver-200'} shadow-financial hover:shadow-gold transition-all duration-300`}>
                 <div className="flex mb-3">
                   {[1,2,3,4,5].map((star) => (
-                    <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <Star key={star} className="w-4 h-4 fill-gold-400 text-gold-400" />
                   ))}
                 </div>
-                <p className={`mb-3 italic text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p className={`mb-4 italic ${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>
                   "{testimonial.quote}"
                 </p>
-                <p className="font-semibold text-orange-500 text-sm">- {testimonial.author}</p>
+                <p className="font-bold text-gold-600">- {testimonial.author}</p>
               </div>
             ))}
           </div>
@@ -306,16 +306,16 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       </section>
 
       {/* FAQs */}
-      <section className={`py-12 ${isDark ? 'bg-gray-900' : 'bg-blue-50'}`}>
+      <section className={`py-16 ${isDark ? 'bg-navy-950' : 'bg-gradient-to-br from-silver-50 to-navy-50'}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-blue-600">Frequently Asked Questions</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Frequently Asked Questions</h2>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-8">
             {faqs.map((faq, index) => (
-              <div key={index} className={`p-5 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-                <h3 className="text-lg font-semibold mb-2">{faq.question}</h3>
-                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{faq.answer}</p>
+              <div key={index} className={`p-6 rounded-xl ${isDark ? 'bg-navy-800 border border-navy-700' : 'bg-white border border-silver-200'} shadow-financial hover:shadow-gold transition-all duration-300`}>
+                <h3 className="text-xl font-bold mb-3 text-navy-800 dark:text-silver-100">{faq.question}</h3>
+                <p className={`${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -323,43 +323,43 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       </section>
 
       {/* Footer */}
-      <footer className={`py-12 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white`}>
+      <footer className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-navy-950'} text-white`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-3">Ready to Transform Your Investment Process?</h2>
-            <p className="text-lg text-gray-300 mb-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Ready to Transform Your Investment Process?</h2>
+            <p className="text-xl text-silver-300 mb-8">
               Join hundreds of investors making smarter decisions with Pitch Fork
             </p>
-            <Link to="/login" className="bg-orange-500 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition-all duration-300 inline-flex items-center">
+            <Link to="/login" className="bg-gold-gradient text-white px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-gold transition-all duration-300 inline-flex items-center shadow-financial">
               Get Started Today <ChevronRight className="inline w-5 h-5 ml-2" />
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="text-xl font-bold text-blue-400 mb-3">
+              <div className="text-2xl font-bold bg-gold-gradient bg-clip-text text-transparent mb-4">
                 Pitch Fork
               </div>
-              <p className="text-gray-300">
+              <p className="text-silver-300 leading-relaxed">
                 Empowering investors with AI-driven analysis for smarter investment decisions.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Contact</h4>
-              <p className="text-gray-300">hello@pitchfork.com</p>
-              <p className="text-gray-300">+1 (555) 123-4567</p>
+              <h4 className="font-bold mb-4 text-gold-400">Contact</h4>
+              <p className="text-silver-300 mb-2">hello@pitchfork.com</p>
+              <p className="text-silver-300">+1 (555) 123-4567</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Product</h4>
-              <ul className="space-y-2 text-gray-300">
+              <h4 className="font-bold mb-4 text-gold-400">Product</h4>
+              <ul className="space-y-2 text-silver-300">
                 <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Demo</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Legal</h4>
-              <ul className="space-y-2 text-gray-300">
+              <h4 className="font-bold mb-4 text-gold-400">Legal</h4>
+              <ul className="space-y-2 text-silver-300">
                 <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Terms & Conditions</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
@@ -367,7 +367,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
             </div>
           </div>
           
-          <div className="border-t border-gray-700 pt-6 text-center text-gray-300">
+          <div className="border-t border-navy-700 pt-8 text-center text-silver-400">
             <p>&copy; 2025 Pitch Fork. All rights reserved.</p>
           </div>
         </div>

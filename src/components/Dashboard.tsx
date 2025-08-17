@@ -237,14 +237,14 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
   return (
     <>
-    <div className={`min-h-screen font-arial transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`min-h-screen font-inter transition-colors duration-300 ${isDark ? 'bg-navy-950 text-silver-100' : 'bg-silver-50 text-navy-900'}`}>
       {/* Navigation */}
-      <nav className={`${isDark ? 'bg-gray-800/95' : 'bg-white/95'} backdrop-blur-sm border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+      <nav className={`${isDark ? 'bg-navy-900/95' : 'bg-white/95'} backdrop-blur-sm border-b ${isDark ? 'border-navy-700' : 'border-silver-200'} shadow-financial`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <img src="/pitch-fork3.png" alt="Pitch Fork Logo" className="w-8 h-8 mr-3" />
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold bg-gold-gradient bg-clip-text text-transparent">
                 Pitch Fork
               </div>
             </div>
@@ -252,51 +252,51 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             <div className="flex items-center space-x-4">
               {/* Navigation Menu */}
               <nav className="hidden md:flex items-center space-x-6">
-                <Link to="/dashboard" className="text-blue-600 font-medium">Dashboard</Link>
-                <Link to="/reports" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Reports</Link>
+                <Link to="/dashboard" className="text-gold-600 font-bold">Dashboard</Link>
+                <Link to="/reports" className={`${isDark ? 'text-silver-300 hover:text-white' : 'text-navy-700 hover:text-navy-900'} transition-colors font-semibold`}>Reports</Link>
                 
                 {/* Utilities Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setShowUtilitiesMenu(!showUtilitiesMenu)}
-                    className={`flex items-center ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}
+                    className={`flex items-center ${isDark ? 'text-silver-300 hover:text-white' : 'text-navy-700 hover:text-navy-900'} transition-colors font-semibold`}
                   >
                     Utilities <ChevronDown className="w-4 h-4 ml-1" />
                   </button>
                   {showUtilitiesMenu && (
-                    <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                    <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} rounded-lg shadow-financial border z-50`}>
+                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Submit Files
                       </Link>
-                      <Link to="/edit-company" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                      <Link to="/edit-company" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Edit Company
                       </Link>
-                      <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                      <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Investor Criteria
                       </Link>
                     </div>
                   )}
                 </div>
                 
-                <Link to="/help" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Help</Link>
+                <Link to="/help" className={`${isDark ? 'text-silver-300 hover:text-white' : 'text-navy-700 hover:text-navy-900'} transition-colors font-semibold`}>Help</Link>
                 
                 {/* User Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className={`flex items-center ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}
+                    className={`flex items-center ${isDark ? 'text-silver-300 hover:text-white' : 'text-navy-700 hover:text-navy-900'} transition-colors font-semibold`}
                   >
                     <User className="w-4 h-4 mr-1" />
                     User <ChevronDown className="w-4 h-4 ml-1" />
                   </button>
                   {showUserMenu && (
-                    <div className={`absolute top-full right-0 mt-2 w-32 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                      <Link to="/account" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                    <div className={`absolute top-full right-0 mt-2 w-32 ${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} rounded-lg shadow-financial border z-50`}>
+                      <Link to="/account" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Account
                       </Link>
                       <button 
                         onClick={handleLogout}
-                        className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
+                        className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}
                       >
                         Logout
                       </button>
@@ -307,7 +307,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
               
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
+                className={`p-2 rounded-lg ${isDark ? 'bg-navy-800 hover:bg-navy-700' : 'bg-silver-100 hover:bg-silver-200'} transition-colors shadow-sm`}
               >
                 {isDark ? '☀️' : '🌙'}
               </button>
@@ -316,7 +316,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
               <div className="md:hidden">
                 <Link 
                   to="/" 
-                  className={`flex items-center px-3 py-2 rounded-lg text-sm ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
+                  className={`flex items-center px-3 py-2 rounded-lg text-sm ${isDark ? 'bg-navy-800 hover:bg-navy-700' : 'bg-silver-100 hover:bg-silver-200'} transition-colors font-semibold`}
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
                   Home
@@ -342,22 +342,22 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">Investment Dashboard</h1>
-          <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+          <h1 className="text-4xl font-bold bg-gold-gradient bg-clip-text text-transparent mb-4">Investment Dashboard</h1>
+          <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-navy-600'}`}>
             Welcome back{user?.user_metadata?.first_name ? `, ${user.user_metadata.first_name}` : ''}! Here's your investment portfolio overview.
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {stats.map((stat, index) => (
-            <div key={index} className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div key={index} className={`${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} p-8 rounded-xl shadow-financial border hover:shadow-gold transition-all duration-300`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{stat.label}</p>
-                  <p className="text-2xl font-bold text-blue-600">{stat.value}</p>
+                  <p className={`text-sm font-semibold ${isDark ? 'text-silver-400' : 'text-navy-600'}`}>{stat.label}</p>
+                  <p className="text-3xl font-bold text-gold-600">{stat.value}</p>
                 </div>
-                <div className="text-orange-500">
+                <div className="text-gold-500">
                   {stat.icon}
                 </div>
               </div>
@@ -366,9 +366,9 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         </div>
 
         {/* Section 1: Filters */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-blue-600 flex items-center">
+        <div className={`${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} rounded-xl shadow-financial border mb-12`}>
+          <div className="p-6 border-b border-silver-200 dark:border-navy-700">
+            <h2 className="text-2xl font-bold text-gold-600 flex items-center">
               <Filter className="w-5 h-5 mr-2" />
               Filters
             </h2>
@@ -377,7 +377,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Status Filters - Compact Layout */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Status</h3>
+                <h3 className="text-sm font-bold mb-3 text-navy-800 dark:text-silver-200">Status</h3>
                 <div className="flex flex-wrap gap-4">
                   {[
                     { key: 'submitted', label: 'Submitted' },
@@ -393,9 +393,9 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                         type="checkbox"
                         checked={filters[filter.key as keyof typeof filters]}
                         onChange={() => handleFilterChange(filter.key as keyof typeof filters)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-silver-300 text-gold-600 focus:ring-gold-500"
                       />
-                      <span className={`ml-2 text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <span className={`ml-2 text-sm font-semibold ${isDark ? 'text-silver-300' : 'text-navy-700'}`}>
                         {filter.label}
                       </span>
                     </label>
@@ -405,14 +405,14 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
               {/* Items to Show */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Items to Show</h3>
+                <h3 className="text-sm font-bold mb-3 text-navy-800 dark:text-silver-200">Items to Show</h3>
                 <select
                   value={itemsToShow}
                   onChange={(e) => setItemsToShow(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 font-semibold ${
                     isDark 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
+                      ? 'bg-navy-700 border-navy-600 text-white' 
+                      : 'bg-white border-silver-300 text-navy-900'
                   }`}
                 >
                   <option value="5">5</option>
@@ -424,14 +424,14 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
               {/* Sort By */}
               <div>
-                <h3 className="text-sm font-medium mb-3">Sort By Date</h3>
+                <h3 className="text-sm font-bold mb-3 text-navy-800 dark:text-silver-200">Sort By Date</h3>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 font-semibold ${
                     isDark 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
+                      ? 'bg-navy-700 border-navy-600 text-white' 
+                      : 'bg-white border-silver-300 text-navy-900'
                   }`}
                 >
                   <option value="Recent">Recent</option>
@@ -443,45 +443,45 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         </div>
 
         {/* Section 2: Venture Cards */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-blue-600">Recent Ventures</h2>
+        <div className={`${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} rounded-xl shadow-financial border`}>
+          <div className="p-6 border-b border-silver-200 dark:border-navy-700">
+            <h2 className="text-2xl font-bold text-gold-600">Recent Ventures</h2>
           </div>
           <div className="p-6">
             {isLoadingCompanies ? (
               <div className="text-center py-8">
-                <div className="text-gray-500">Loading companies...</div>
+                <div className="text-silver-500">Loading companies...</div>
               </div>
             ) : sortedAndLimitedCompanies.length === 0 ? (
               <div className="text-center py-8">
-                <Building2 className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No companies match the selected filters</div>
+                <Building2 className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-navy-600' : 'text-silver-400'}`} />
+                <div className={`${isDark ? 'text-silver-400' : 'text-navy-500'}`}>No companies match the selected filters</div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {sortedAndLimitedCompanies.map((company) => {
                   const recommendation = getRecommendation(company.overall_score);
                   const isAnalyzing = analyzingCompanies.has(company.id);
                 return (
                     <div 
                       key={company.id} 
-                    className={`p-6 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                    className={`p-6 rounded-xl border cursor-pointer transition-all duration-300 hover:shadow-gold hover:scale-105 ${
                       isDark 
-                        ? 'bg-gray-700 border-gray-600 hover:bg-gray-650' 
-                        : 'bg-gray-50 border-gray-200 hover:bg-white hover:shadow-md'
+                        ? 'bg-navy-700 border-navy-600 hover:bg-navy-650' 
+                        : 'bg-silver-50 border-silver-200 hover:bg-white hover:shadow-financial'
                     }`}
                       onClick={() => handleCardClick(company.id)}
                   >
                     {/* Venture Name */}
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-blue-600">{company.name}</h3>
+                        <h3 className="text-lg font-bold text-gold-600">{company.name}</h3>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
-                          company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                          company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
-                          company.status === 'Invested' ? 'bg-green-100 text-green-800' :
-                          company.status === 'In-Diligence' ? 'bg-purple-100 text-purple-800' :
-                        'bg-red-100 text-red-800'
+                          company.status === 'Submitted' ? 'bg-silver-100 text-silver-800' :
+                          company.status === 'Pending' ? 'bg-gold-100 text-gold-800' :
+                          company.status === 'Analyzed' ? 'bg-navy-100 text-navy-800' :
+                          company.status === 'Invested' ? 'bg-success-100 text-success-800' :
+                          company.status === 'In-Diligence' ? 'bg-gold-100 text-gold-800' :
+                        'bg-danger-100 text-danger-800'
                       }`}>
                           {company.status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
                            company.status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
@@ -495,16 +495,16 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
                     {/* Industry */}
                     <div className="flex items-center mb-2">
-                      <Building2 className="w-4 h-4 mr-2 text-orange-500" />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      <Building2 className="w-4 h-4 mr-2 text-gold-500" />
+                      <span className={`text-sm font-semibold ${isDark ? 'text-silver-300' : 'text-navy-600'}`}>
                           {company.industry || 'Not specified'}
                       </span>
                     </div>
 
                     {/* Date Submitted */}
                     <div className="flex items-center mb-3">
-                      <Calendar className="w-4 h-4 mr-2 text-orange-500" />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      <Calendar className="w-4 h-4 mr-2 text-gold-500" />
+                      <span className={`text-sm font-semibold ${isDark ? 'text-silver-300' : 'text-navy-600'}`}>
                           Submitted: {new Date(company.date_submitted).toLocaleDateString()}
                       </span>
                     </div>
@@ -512,42 +512,42 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     {/* Score and Valuation */}
                     <div className="grid grid-cols-2 gap-4 mb-3">
                       <div>
-                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Score</p>
+                        <p className={`text-xs font-semibold ${isDark ? 'text-silver-400' : 'text-navy-500'} mb-1`}>Score</p>
                           {company.overall_score ? (
-                            <p className="text-lg font-bold text-blue-600">{company.overall_score}/10</p>
+                            <p className="text-lg font-bold text-gold-600">{company.overall_score}/10</p>
                         ) : (
-                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending</p>
+                          <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-navy-500'}`}>Pending</p>
                         )}
                       </div>
                       <div>
-                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Valuation</p>
-                          <p className="text-lg font-bold text-green-600">TBD</p>
+                        <p className={`text-xs font-semibold ${isDark ? 'text-silver-400' : 'text-navy-500'} mb-1`}>Valuation</p>
+                          <p className="text-lg font-bold text-success-600">TBD</p>
                       </div>
                     </div>
 
                     {/* Recommendation */}
                     <div>
-                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Recommendation</p>
+                      <p className={`text-xs font-semibold ${isDark ? 'text-silver-400' : 'text-navy-500'} mb-1`}>Recommendation</p>
                         {company.recommendation && company.recommendation !== 'Pending Analysis' ? (
                         <p className={`text-sm font-medium ${
-                            company.recommendation === 'Invest' ? 'text-green-600' :
-                            company.recommendation === 'Consider' ? 'text-yellow-600' :
-                          'text-red-600'
+                            company.recommendation === 'Invest' ? 'text-success-600' :
+                            company.recommendation === 'Consider' ? 'text-gold-600' :
+                          'text-danger-600'
                         }`}>
                             {company.recommendation}
                         </p>
                       ) : (
-                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Pending Analysis</p>
+                          <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-navy-500'}`}>Pending Analysis</p>
                       )}
                     </div>
 
                     {/* Analyze Button for Submitted Status */}
                       {company.status === 'Submitted' && (
-                      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+                      <div className="mt-4 pt-3 border-t border-silver-200 dark:border-navy-600">
                         <button
                             onClick={(e) => handleAnalyze(company.id, company.name, e)}
                             disabled={isAnalyzing}
-                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full bg-gold-gradient text-white py-2 px-4 rounded-lg font-bold hover:shadow-gold focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-financial"
                         >
                           {isAnalyzing ? 'Analyzing...' : 'Analyze'}
                         </button>
@@ -564,33 +564,33 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
       </div>
 
     {/* Footer */}
-    <footer className={`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
+    <footer className={`py-12 ${isDark ? 'bg-navy-900' : 'bg-navy-950'} text-white mt-16`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="text-xl font-bold text-blue-400 mb-3">
+              <div className="text-2xl font-bold bg-gold-gradient bg-clip-text text-transparent mb-4">
                 Pitch Fork
               </div>
-              <p className="text-gray-300">
+              <p className="text-silver-300 leading-relaxed">
                 Empowering investors with AI-driven analysis for smarter investment decisions.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Contact</h4>
-              <p className="text-gray-300">hello@pitchfork.com</p>
-              <p className="text-gray-300">+1 (555) 123-4567</p>
+              <h4 className="font-bold mb-4 text-gold-400">Contact</h4>
+              <p className="text-silver-300 mb-2">hello@pitchfork.com</p>
+              <p className="text-silver-300">+1 (555) 123-4567</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Product</h4>
-              <ul className="space-y-2 text-gray-300">
+              <h4 className="font-bold mb-4 text-gold-400">Product</h4>
+              <ul className="space-y-2 text-silver-300">
                 <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Demo</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-3">Legal</h4>
-              <ul className="space-y-2 text-gray-300">
+              <h4 className="font-bold mb-4 text-gold-400">Legal</h4>
+              <ul className="space-y-2 text-silver-300">
                 <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Terms & Conditions</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
@@ -598,7 +598,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             </div>
           </div>
           
-          <div className="border-t border-gray-700 pt-6 text-center text-gray-300">
+          <div className="border-t border-navy-700 pt-8 text-center text-silver-400">
             <p>&copy; 2025 Pitch Fork. All rights reserved.</p>
           </div>
         </div>
