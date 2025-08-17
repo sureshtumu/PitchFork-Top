@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send, Download, BarChart3 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface VentureDetailProps {
@@ -31,12 +31,22 @@ interface Company {
   created_at: string;
 }
 
+interface AnalysisReport {
+  id: string;
+  report_type: string;
+  file_name: string;
+  file_path: string;
+  generated_at: string;
+}
+
 const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [analysisReports, setAnalysisReports] = useState<AnalysisReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
@@ -59,6 +69,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       
       if (id) {
         await loadCompanyData(id);
+        await loadAnalysisReports(id);
       }
     };
     
@@ -93,6 +104,54 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       setError('Failed to load company data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadAnalysisReports = async (companyId: string) => {
+    try {
+      setIsLoadingReports(true);
+      
+      const { data, error } = await supabase
+        .from('analysis_reports')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('generated_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading analysis reports:', error);
+        return;
+      }
+
+      setAnalysisReports(data || []);
+    } catch (error) {
+      console.error('Error loading analysis reports:', error);
+    } finally {
+      setIsLoadingReports(false);
+    }
+  };
+
+  const handleDownloadReport = async (report: AnalysisReport) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('company-documents')
+        .download(report.file_path);
+
+      if (error) {
+        console.error('Error downloading report:', error);
+        return;
+      }
+
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = report.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading report:', error);
     }
   };
 
@@ -462,6 +521,105 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
             </div>
           </div>
         )}
+
+        {/* Analysis Results Section */}
+        {company.status === 'Analyzed' && company.overall_score && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-blue-600 flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Analysis Results
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                {/* Overall Score */}
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                    {company.overall_score}/10
+                  </div>
+                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Overall Score
+                  </div>
+                </div>
+                
+                {/* Recommendation */}
+                <div className="text-center">
+                  <div className={`text-2xl font-bold mb-2 ${
+                    company.recommendation === 'Invest' ? 'text-green-600' :
+                    company.recommendation === 'Consider' ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {company.recommendation}
+                  </div>
+                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Recommendation
+                  </div>
+                </div>
+                
+                {/* Analysis Date */}
+                <div className="text-center">
+                  <div className={`text-lg font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    {analysisReports.length > 0 
+                      ? new Date(analysisReports[0].generated_at).toLocaleDateString()
+                      : 'N/A'
+                    }
+                  </div>
+                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Analysis Date
+                  </div>
+                </div>
+              </div>
+              
+              {/* Summary Score and Recommendation */}
+              {analysisReports.find(r => r.report_type === 'summary') && (
+                <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-blue-50'} mb-4`}>
+                  <h3 className="text-lg font-semibold text-blue-600 mb-2">Summary Score and Recommendation</h3>
+                  <button
+                    onClick={() => handleDownloadReport(analysisReports.find(r => r.report_type === 'summary')!)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Summary Report
+                  </button>
+                </div>
+              )}
+              
+              {/* Downloadable Reports */}
+              {analysisReports.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Analysis Reports</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {analysisReports.map((report) => (
+                      <div key={report.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-semibold capitalize">
+                              {report.report_type === 'summary' ? 'Summary Report' :
+                               report.report_type === 'detailed' ? 'Detailed Analysis' :
+                               'Company Feedback'}
+                            </h4>
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Generated: {new Date(report.generated_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleDownloadReport(report)}
+                            className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                            title="Download report"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Company Information Card */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
