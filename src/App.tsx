@@ -227,7 +227,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
               <img 
                 src="/landing-main-graphic.png" 
                 alt="Pitch Fork Investment Analysis Platform" 
-                className="w-full max-w-lg rounded-lg shadow-lg"
+                className="w-full max-w-sm rounded-lg shadow-lg"
               />
             </div>
           </div>
