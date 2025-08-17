@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, Filter, Calendar, Building2, ChevronDown, User, FileText, Settings, HelpCircle, ChevronRight } from 'lucide-react';
 import { signOut, getCurrentUser, supabase } from '../lib/supabase';
+import { analyzeCompany, generateReportPDFs, saveAnalysisReports } from '../lib/analysisService';
 
 interface DashboardProps {
   isDark: boolean;
@@ -38,6 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const [user, setUser] = React.useState<any>(null);
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [isLoadingCompanies, setIsLoadingCompanies] = React.useState(true);
+  const [analyzingCompanies, setAnalyzingCompanies] = React.useState<Set<string>>(new Set());
 
   // Check authentication on component mount
   React.useEffect(() => {
@@ -88,16 +90,89 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
     }
   };
 
-  const handleAnalyze = (ventureId: number, e: React.MouseEvent) => {
+  const handleAnalyze = async (companyId: string, companyName: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    console.log(`Analyzing venture ${ventureId}`);
-    // Here you would trigger the analysis process
-    alert(`Starting analysis for venture ${ventureId}`);
+    
+    if (analyzingCompanies.has(companyId)) {
+      return; // Already analyzing
+    }
+
+    try {
+      // Add to analyzing set
+      setAnalyzingCompanies(prev => new Set(prev).add(companyId));
+
+      // Step 1: Analyze the company
+      const analysisResult = await analyzeCompany(companyId);
+
+      // Step 2: Update company with score and recommendation
+      const { error: updateError } = await supabase
+        .from('companies')
+        .update({
+          overall_score: analysisResult.overall_score,
+          recommendation: analysisResult.recommendation,
+          status: 'Analyzed'
+        })
+        .eq('id', companyId);
+
+      if (updateError) {
+        console.error('Error updating company:', updateError);
+        throw new Error('Failed to update company analysis');
+      }
+
+      // Step 3: Generate PDF reports
+      const reports = await generateReportPDFs(companyId, analysisResult, companyName);
+
+      // Step 4: Save reports to storage and database
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        await saveAnalysisReports(companyId, companyName, reports, currentUser.id);
+      }
+
+      // Step 5: Update local state
+      setCompanies(prev => prev.map(company => 
+        company.id === companyId 
+          ? { 
+              ...company, 
+              overall_score: analysisResult.overall_score,
+              recommendation: analysisResult.recommendation,
+              status: 'Analyzed'
+            }
+          : company
+      ));
+
+      // Step 6: Create notification message for founder
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          company_id: companyId,
+          sender_type: 'system',
+          sender_id: null,
+          recipient_type: 'founder',
+          recipient_id: null,
+          message_title: 'Analysis Complete',
+          message_detail: `Your company analysis is complete. Overall score: ${analysisResult.overall_score}/10. Recommendation: ${analysisResult.recommendation}`,
+          message_status: 'unread'
+        });
+
+      if (messageError) {
+        console.error('Error creating analysis notification:', messageError);
+      }
+
+    } catch (error) {
+      console.error('Analysis error:', error);
+      alert('Analysis failed. Please try again.');
+    } finally {
+      // Remove from analyzing set
+      setAnalyzingCompanies(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(companyId);
+        return newSet;
+      });
+    }
   };
 
-  const handleCardClick = (ventureId: number) => {
-    console.log(`Navigate to venture ${ventureId} detail page`);
-    // This should use the actual company ID, not a numeric index
+  const handleCardClick = (companyId: string) => {
+    navigate(`/venture/${companyId}`);
   };
 
   const handleFilterChange = (filterName: keyof typeof filters) => {
@@ -386,6 +461,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sortedAndLimitedCompanies.map((company) => {
                   const recommendation = getRecommendation(company.overall_score);
+                  const isAnalyzing = analyzingCompanies.has(company.id);
                 return (
                     <div 
                       key={company.id} 
@@ -394,7 +470,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                         ? 'bg-gray-700 border-gray-600 hover:bg-gray-650' 
                         : 'bg-gray-50 border-gray-200 hover:bg-white hover:shadow-md'
                     }`}
-                      onClick={() => navigate(`/venture/${company.id}`)}
+                      onClick={() => handleCardClick(company.id)}
                   >
                     {/* Venture Name */}
                     <div className="flex items-center justify-between mb-3">
@@ -469,10 +545,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                       {company.status === 'Submitted' && (
                       <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
                         <button
-                            onClick={(e) => handleAnalyze(parseInt(company.id), e)}
-                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm"
+                            onClick={(e) => handleAnalyze(company.id, company.name, e)}
+                            disabled={isAnalyzing}
+                          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Analyze
+                          {isAnalyzing ? 'Analyzing...' : 'Analyze'}
                         </button>
                       </div>
                     )}
