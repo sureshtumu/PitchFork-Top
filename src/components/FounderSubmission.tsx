@@ -553,7 +553,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                     className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center text-lg"
                   >
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    {isAnalyzing ? 'Analyzing...' : 'Analyze Pitch Deck'}
+                    {isAnalyzing ? 'Analyzing...' : 'Continue'}
                   </button>
                 </div>
               )}
