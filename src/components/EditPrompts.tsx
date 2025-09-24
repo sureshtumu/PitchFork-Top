@@ -12,6 +12,7 @@ interface Prompt {
   id: string;
   prompt_name: string;
   prompt_detail: string;
+  description?: string;
   preferred_llm: string;
   created_at: string;
   updated_at: string;
@@ -26,6 +27,7 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
   const [newPrompt, setNewPrompt] = useState({
     prompt_name: '',
     prompt_detail: '',
+    description: '',
     preferred_llm: 'GPT-4'
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +97,7 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
       }
 
       setPrompts(prev => [data, ...prev]);
-      setNewPrompt({ prompt_name: '', prompt_detail: '', preferred_llm: 'GPT-4' });
+      setNewPrompt({ prompt_name: '', prompt_detail: '', description: '', preferred_llm: 'GPT-4' });
       setShowAddForm(false);
       setMessage({ type: 'success', text: 'Prompt added successfully' });
     } catch (error) {
@@ -116,6 +118,7 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
         .update({
           prompt_name: editingPrompt.prompt_name,
           prompt_detail: editingPrompt.prompt_detail,
+          description: editingPrompt.description,
           preferred_llm: editingPrompt.preferred_llm,
           updated_at: new Date().toISOString()
         })
@@ -340,6 +343,22 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
                 </div>
                 <div>
                   <label className={`block text-sm font-semibold ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={newPrompt.description}
+                    onChange={(e) => setNewPrompt(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Brief description of the prompt's purpose"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent transition-colors ${
+                      isDark 
+                        ? 'bg-navy-700 border-navy-600 text-white placeholder-silver-400' 
+                        : 'bg-white border-silver-300 text-navy-900 placeholder-navy-500'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-semibold ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
                     Prompt Detail *
                   </label>
                   <textarea
@@ -384,7 +403,7 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
                   <button
                     onClick={() => {
                       setShowAddForm(false);
-                      setNewPrompt({ prompt_name: '', prompt_detail: '', preferred_llm: 'GPT-4' });
+                      setNewPrompt({ prompt_name: '', prompt_detail: '', description: '', preferred_llm: 'GPT-4' });
                     }}
                     className={`px-6 py-2 rounded-lg font-bold transition-colors ${
                       isDark 
@@ -433,6 +452,21 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
                             type="text"
                             value={editingPrompt.prompt_name}
                             onChange={(e) => setEditingPrompt(prev => prev ? { ...prev, prompt_name: e.target.value } : null)}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 ${
+                              isDark 
+                                ? 'bg-navy-600 border-navy-500 text-white' 
+                                : 'bg-white border-silver-300 text-navy-900'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className={`block text-sm font-semibold ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
+                            Description
+                          </label>
+                          <input
+                            type="text"
+                            value={editingPrompt.description || ''}
+                            onChange={(e) => setEditingPrompt(prev => prev ? { ...prev, description: e.target.value } : null)}
                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 ${
                               isDark 
                                 ? 'bg-navy-600 border-navy-500 text-white' 
@@ -511,6 +545,11 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
                           <p className={`text-sm ${isDark ? 'text-silver-300' : 'text-slate-600'} mb-3 leading-relaxed`}>
                             {prompt.prompt_detail}
                           </p>
+                          {prompt.description && (
+                            <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-500'} mb-3 italic`}>
+                              {prompt.description}
+                            </p>
+                          )}
                           <p className={`text-xs ${isDark ? 'text-silver-400' : 'text-slate-500'}`}>
                             Created: {new Date(prompt.created_at).toLocaleDateString()} • 
                             Updated: {new Date(prompt.updated_at).toLocaleDateString()}
