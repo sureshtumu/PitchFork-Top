@@ -5,11 +5,15 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'arial': ['Arial', 'sans-serif'],
-        'inter': ['Inter', 'system-ui', 'sans-serif'],
-        'roboto': ['Roboto', 'system-ui', 'sans-serif'],
+        'inter': ['Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        'body': ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
+        // Professional text colors
+        slate: {
+          900: '#0F172A', // Dark slate text
+          600: '#64748B', // Light gray subtext
+        },
         // Professional Navy Blue Palette
         navy: {
           50: '#f0f4f8',

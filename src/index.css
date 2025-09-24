@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* Import Inter font */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  
+  /* Base typography styles */
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+  }
+  
+  /* Heading styles */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 600;
+  }
+  
+  /* Strong headings */
+  .font-bold {
+    font-weight: 700;
+  }
+  
+  /* Body text variations */
+  .font-medium {
+    font-weight: 500;
+  }
+}

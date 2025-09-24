@@ -132,7 +132,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
   ];
 
   return (
-    <div className={`min-h-screen font-inter transition-colors duration-300 ${isDark ? 'bg-navy-950 text-silver-100' : 'bg-silver-50 text-navy-900'}`}>
+    <div className={`min-h-screen font-body transition-colors duration-300 ${isDark ? 'bg-navy-950 text-silver-100' : 'bg-silver-50 text-slate-900'}`}>
       {/* Navigation */}
       <nav className={`sticky top-0 z-50 ${isDark ? 'bg-navy-900/95' : 'bg-white/95'} backdrop-blur-sm border-b ${isDark ? 'border-navy-700' : 'border-silver-200'} shadow-financial`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -196,13 +196,13 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Left Column - Text Content */}
             <div className="text-left relative">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">
                 Welcome to Pitch Fork
               </h1>
-              <h2 className="text-2xl md:text-3xl font-bold mb-6 text-navy-800 dark:text-silver-100">
+              <h2 className="text-2xl md:text-3xl font-inter font-bold mb-6 text-slate-900 dark:text-silver-100">
                 To Invest or Not: Decide like a VC
               </h2>
-              <p className="text-lg mb-8 text-navy-600 dark:text-silver-300 leading-relaxed">
+              <p className="text-lg mb-8 text-slate-600 dark:text-silver-300 leading-relaxed font-body">
                 AI based scoring of ventures based on your custom criteria + industry standards, leading to analysis of 10x more deals in 1/10th the time, so you don't miss a Diamond, and you filter out the duds. 
               </p>
               <Link to="/login" className="bg-gold-gradient text-white px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-gold transition-all duration-300 inline-flex items-center shadow-financial">
@@ -217,6 +217,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                   ))}
                 </div>
                 <p className={`text-sm ${isDark ? 'text-silver-300' : 'text-navy-600'} font-medium`}>
+                <p className={`text-sm ${isDark ? 'text-silver-300' : 'text-slate-600'} font-medium`}>
                   Rated 4.9/5 by over 500+ registered investors
                 </p>
               </div>
@@ -238,8 +239,8 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       <section className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Why Choose Pitch Fork?</h2>
-            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-navy-600'} max-w-3xl mx-auto`}>
+            <h2 className="text-4xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Why Choose Pitch Fork?</h2>
+            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-slate-600'} max-w-3xl mx-auto font-body`}>
               Streamline your investment process with AI-powered analysis and decision support
             </p>
           </div>
@@ -247,8 +248,8 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
             {benefits.map((benefit, index) => (
               <div key={index} className={`p-6 rounded-xl ${isDark ? 'bg-navy-800 border border-navy-700' : 'bg-silver-50 border border-silver-200'} hover:shadow-financial transition-all duration-300 hover:scale-105`}>
                 <div className="mb-4">{benefit.icon}</div>
-                <h3 className="text-xl font-bold mb-3 text-navy-800 dark:text-silver-100">{benefit.title}</h3>
-                <p className={`${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>{benefit.description}</p>
+                <h3 className="text-xl font-inter font-bold mb-3 text-slate-900 dark:text-silver-100">{benefit.title}</h3>
+                <p className={`${isDark ? 'text-silver-300' : 'text-slate-600'} leading-relaxed font-body`}>{benefit.description}</p>
               </div>
             ))}
           </div>
@@ -259,8 +260,8 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       <section className={`py-16 ${isDark ? 'bg-navy-950' : 'bg-gradient-to-br from-gold-50 to-silver-100'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-gold-600">How It Works</h2>
-            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-navy-600'} max-w-3xl mx-auto`}>
+            <h2 className="text-4xl font-inter font-bold mb-4 text-gold-600">How It Works</h2>
+            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-slate-600'} max-w-3xl mx-auto font-body`}>
               From submission to investment decision in 6 simple steps
             </p>
           </div>
@@ -270,8 +271,8 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                 <div className="absolute -top-4 -left-4 w-8 h-8 bg-gold-gradient text-white rounded-full flex items-center justify-center font-bold text-sm shadow-gold">
                   {step.step}
                 </div>
-                <h3 className="text-xl font-bold mb-3 mt-2 text-navy-800 dark:text-silver-100">{step.title}</h3>
-                <p className={`${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>{step.description}</p>
+                <h3 className="text-xl font-inter font-bold mb-3 mt-2 text-slate-900 dark:text-silver-100">{step.title}</h3>
+                <p className={`${isDark ? 'text-silver-300' : 'text-slate-600'} leading-relaxed font-body`}>{step.description}</p>
               </div>
             ))}
           </div>
@@ -282,8 +283,8 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       <section className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">What Our Users Say</h2>
-            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-navy-600'}`}>
+            <h2 className="text-4xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">What Our Users Say</h2>
+            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-slate-600'} font-body`}>
               Trusted by leading angel investors and investment groups
             </p>
           </div>
@@ -296,9 +297,10 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                   ))}
                 </div>
                 <p className={`mb-4 italic ${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>
+                <p className={`mb-4 italic ${isDark ? 'text-silver-300' : 'text-slate-600'} leading-relaxed font-body`}>
                   "{testimonial.quote}"
                 </p>
-                <p className="font-bold text-gold-600">- {testimonial.author}</p>
+                <p className="font-inter font-bold text-gold-600">- {testimonial.author}</p>
               </div>
             ))}
           </div>
@@ -309,13 +311,13 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       <section className={`py-16 ${isDark ? 'bg-navy-950' : 'bg-gradient-to-br from-silver-50 to-navy-50'}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Frequently Asked Questions</h2>
+           <h2 className="text-4xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Frequently Asked Questions</h2>
           </div>
           <div className="space-y-8">
             {faqs.map((faq, index) => (
               <div key={index} className={`p-6 rounded-xl ${isDark ? 'bg-navy-800 border border-navy-700' : 'bg-white border border-silver-200'} shadow-financial hover:shadow-gold transition-all duration-300`}>
-                <h3 className="text-xl font-bold mb-3 text-navy-800 dark:text-silver-100">{faq.question}</h3>
-                <p className={`${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>{faq.answer}</p>
+               <h3 className="text-xl font-inter font-bold mb-3 text-slate-900 dark:text-silver-100">{faq.question}</h3>
+               <p className={`${isDark ? 'text-silver-300' : 'text-slate-600'} leading-relaxed font-body`}>{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -326,8 +328,8 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       <footer className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-navy-950'} text-white`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Ready to Transform Your Investment Process?</h2>
-            <p className="text-xl text-silver-300 mb-8">
+            <h2 className="text-3xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Ready to Transform Your Investment Process?</h2>
+            <p className="text-xl text-silver-300 mb-8 font-body">
               Join hundreds of investors making smarter decisions with Pitch Fork
             </p>
             <Link to="/login" className="bg-gold-gradient text-white px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-gold transition-all duration-300 inline-flex items-center shadow-financial">
