@@ -29,6 +29,28 @@ interface Company {
   recommendation?: string;
   date_submitted: string;
   created_at: string;
+  // New analysis fields
+  serviceable_market_size_value?: number;
+  serviceable_market_size_units?: string;
+  serviceable_market_size_raw?: string;
+  serviceable_market_size_basis?: string;
+  annual_revenue_value?: number;
+  annual_revenue_units?: string;
+  annual_revenue_raw?: string;
+  annual_revenue_period?: string;
+  investment_amount_value?: number;
+  investment_amount_units?: string;
+  investment_amount_raw?: string;
+  investment_instrument?: string;
+  investment_other_terms?: string;
+  valuation_value?: number;
+  valuation_units?: string;
+  valuation_raw?: string;
+  valuation_type?: string;
+  key_team_members?: any[];
+  extraction_confidence?: any;
+  extraction_sources?: any;
+  extraction_notes?: any;
 }
 
 interface AnalysisReport {
