@@ -776,6 +776,111 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               </div>
             </div>
           </div>
+
+          {/* Enhanced Company Analysis Section */}
+          {(company.serviceable_market_size_value || company.annual_revenue_value || company.investment_amount_value || company.key_team_members?.length) && (
+            <div className="mt-8">
+              <h3 className="text-xl font-bold text-gold-600 mb-6">Detailed Analysis</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Market Size */}
+                {company.serviceable_market_size_value && (
+                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
+                    <h4 className="font-semibold text-gold-600 mb-2">Serviceable Market Size</h4>
+                    <p className="text-2xl font-bold mb-1">
+                      {company.serviceable_market_size_value}{company.serviceable_market_size_units}
+                    </p>
+                    {company.serviceable_market_size_basis && (
+                      <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-600'}`}>
+                        Basis: {company.serviceable_market_size_basis}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Annual Revenue */}
+                {company.annual_revenue_value && (
+                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
+                    <h4 className="font-semibold text-gold-600 mb-2">Annual Revenue</h4>
+                    <p className="text-2xl font-bold mb-1">
+                      {company.annual_revenue_value}{company.annual_revenue_units}
+                    </p>
+                    {company.annual_revenue_period && (
+                      <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-600'}`}>
+                        Period: {company.annual_revenue_period}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Investment Amount */}
+                {company.investment_amount_value && (
+                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
+                    <h4 className="font-semibold text-gold-600 mb-2">Investment Sought</h4>
+                    <p className="text-2xl font-bold mb-1">
+                      {company.investment_amount_value}{company.investment_amount_units}
+                    </p>
+                    {company.investment_instrument && (
+                      <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-600'}`}>
+                        Instrument: {company.investment_instrument}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Valuation Details */}
+                {company.valuation_value && (
+                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
+                    <h4 className="font-semibold text-gold-600 mb-2">Company Valuation</h4>
+                    <p className="text-2xl font-bold mb-1">
+                      {company.valuation_value}{company.valuation_units}
+                    </p>
+                    {company.valuation_type && (
+                      <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-600'}`}>
+                        Type: {company.valuation_type}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Key Team Members */}
+              {company.key_team_members && company.key_team_members.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-semibold text-gold-600 mb-3">Key Team Members</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {company.key_team_members.map((member: any, index: number) => (
+                      <div key={index} className={`p-3 rounded-lg border ${isDark ? 'border-navy-600 bg-navy-700' : 'border-silver-200 bg-white'}`}>
+                        <p className="font-semibold">{member.name || `Team Member ${index + 1}`}</p>
+                        {member.title && (
+                          <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-600'}`}>
+                            {member.title}
+                          </p>
+                        )}
+                        {member.experience && (
+                          <p className={`text-xs ${isDark ? 'text-silver-500' : 'text-slate-500'} mt-1`}>
+                            {member.experience}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Investment Terms */}
+              {company.investment_other_terms && (
+                <div className="mt-6">
+                  <h4 className="font-semibold text-gold-600 mb-2">Additional Investment Terms</h4>
+                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
+                    <p className={`${isDark ? 'text-silver-300' : 'text-slate-700'}`}>
+                      {company.investment_other_terms}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

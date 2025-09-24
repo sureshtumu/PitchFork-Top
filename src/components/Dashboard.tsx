@@ -524,7 +524,13 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                       </div>
                       <div>
                         <p className={`text-xs font-semibold ${isDark ? 'text-silver-400' : 'text-navy-500'} mb-1`}>Valuation</p>
-                          <p className="text-lg font-bold text-success-600">TBD</p>
+                          {company.valuation_value && company.valuation_units ? (
+                            <p className="text-lg font-bold text-success-600">
+                              {company.valuation_value}{company.valuation_units}
+                            </p>
+                          ) : (
+                            <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-navy-500'}`}>TBD</p>
+                          )}
                       </div>
                     </div>
 
