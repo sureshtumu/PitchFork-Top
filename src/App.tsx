@@ -216,7 +216,6 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                     <Star key={star} className="w-5 h-5 fill-gold-400 text-gold-400" />
                   ))}
                 </div>
-                <p className={`text-sm ${isDark ? 'text-silver-300' : 'text-navy-600'} font-medium`}>
                 <p className={`text-sm ${isDark ? 'text-silver-300' : 'text-slate-600'} font-medium`}>
                   Rated 4.9/5 by over 500+ registered investors
                 </p>
@@ -296,7 +295,6 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                     <Star key={star} className="w-4 h-4 fill-gold-400 text-gold-400" />
                   ))}
                 </div>
-                <p className={`mb-4 italic ${isDark ? 'text-silver-300' : 'text-navy-600'} leading-relaxed`}>
                 <p className={`mb-4 italic ${isDark ? 'text-silver-300' : 'text-slate-600'} leading-relaxed font-body`}>
                   "{testimonial.quote}"
                 </p>
