@@ -25,6 +25,28 @@ interface Company {
   description?: string;
   funding_sought?: string;
   created_at: string;
+  // New analysis fields
+  serviceable_market_size_value?: number;
+  serviceable_market_size_units?: string;
+  serviceable_market_size_raw?: string;
+  serviceable_market_size_basis?: string;
+  annual_revenue_value?: number;
+  annual_revenue_units?: string;
+  annual_revenue_raw?: string;
+  annual_revenue_period?: string;
+  investment_amount_value?: number;
+  investment_amount_units?: string;
+  investment_amount_raw?: string;
+  investment_instrument?: string;
+  investment_other_terms?: string;
+  valuation_value?: number;
+  valuation_units?: string;
+  valuation_raw?: string;
+  valuation_type?: string;
+  key_team_members?: any[];
+  extraction_confidence?: any;
+  extraction_sources?: any;
+  extraction_notes?: any;
 }
 
 interface Document {
@@ -660,6 +682,228 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
                   />
+                </div>
+              </div>
+              
+              {/* Financial Analysis Section */}
+              <div className="md:col-span-2 mt-8">
+                <h4 className="text-lg font-semibold text-blue-600 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Financial Analysis</h4>
+                
+                {/* Serviceable Market Size */}
+                <div className="mb-6">
+                  <h5 className="font-medium mb-3">Serviceable Market Size</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="number"
+                      value={editingCompany.serviceable_market_size_value || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, serviceable_market_size_value: e.target.value ? Number(e.target.value) : undefined } : null)}
+                      placeholder="Market size value"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.serviceable_market_size_units || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, serviceable_market_size_units: e.target.value } : null)}
+                      placeholder="Units (e.g., M, B, K)"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.serviceable_market_size_raw || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, serviceable_market_size_raw: e.target.value } : null)}
+                      placeholder="Raw text from document"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.serviceable_market_size_basis || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, serviceable_market_size_basis: e.target.value } : null)}
+                      placeholder="Calculation basis"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                
+                {/* Annual Revenue */}
+                <div className="mb-6">
+                  <h5 className="font-medium mb-3">Annual Revenue</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="number"
+                      value={editingCompany.annual_revenue_value || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, annual_revenue_value: e.target.value ? Number(e.target.value) : undefined } : null)}
+                      placeholder="Revenue value"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.annual_revenue_units || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, annual_revenue_units: e.target.value } : null)}
+                      placeholder="Units (e.g., M, K)"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.annual_revenue_raw || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, annual_revenue_raw: e.target.value } : null)}
+                      placeholder="Raw text from document"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.annual_revenue_period || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, annual_revenue_period: e.target.value } : null)}
+                      placeholder="Period (e.g., 2023, FY2024)"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                
+                {/* Investment Terms */}
+                <div className="mb-6">
+                  <h5 className="font-medium mb-3">Investment Terms</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="number"
+                      value={editingCompany.investment_amount_value || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, investment_amount_value: e.target.value ? Number(e.target.value) : undefined } : null)}
+                      placeholder="Investment amount"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.investment_amount_units || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, investment_amount_units: e.target.value } : null)}
+                      placeholder="Units (e.g., M, K)"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.investment_amount_raw || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, investment_amount_raw: e.target.value } : null)}
+                      placeholder="Raw text from document"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.investment_instrument || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, investment_instrument: e.target.value } : null)}
+                      placeholder="Instrument (e.g., Equity, Convertible)"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                  <div className="mt-3">
+                    <textarea
+                      value={editingCompany.investment_other_terms || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, investment_other_terms: e.target.value } : null)}
+                      placeholder="Other investment terms and conditions"
+                      rows={2}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                
+                {/* Valuation */}
+                <div className="mb-6">
+                  <h5 className="font-medium mb-3">Valuation</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="number"
+                      value={editingCompany.valuation_value || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, valuation_value: e.target.value ? Number(e.target.value) : undefined } : null)}
+                      placeholder="Valuation amount"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.valuation_units || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, valuation_units: e.target.value } : null)}
+                      placeholder="Units (e.g., M, B)"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.valuation_raw || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, valuation_raw: e.target.value } : null)}
+                      placeholder="Raw text from document"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={editingCompany.valuation_type || ''}
+                      onChange={(e) => setEditingCompany(prev => prev ? { ...prev, valuation_type: e.target.value } : null)}
+                      placeholder="Type (e.g., Pre-money, Post-money)"
+                      className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
               
