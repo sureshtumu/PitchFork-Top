@@ -274,6 +274,9 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                       <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Investor Criteria
                       </Link>
+                      <Link to="/edit-prompts" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
+                        Edit Prompts
+                      </Link>
                     </div>
                   )}
                 </div>
