@@ -729,59 +729,6 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   </div>
                   
                   {/* Secondary Contact */}
-                  <div className="md:col-span-2">
-                    <h4 className="font-medium mb-2">Secondary Contact (Optional)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        name="contact_name_2"
-                        value={companyData.contact_name_2}
-                        onChange={handleInputChange}
-                        placeholder="Contact name"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="text"
-                        name="title_2"
-                        value={companyData.title_2}
-                        onChange={handleInputChange}
-                        placeholder="Title"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="email"
-                        name="email_2"
-                        value={companyData.email_2}
-                        onChange={handleInputChange}
-                        placeholder="Email"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="tel"
-                        name="phone_2"
-                        value={companyData.phone_2}
-                        onChange={handleInputChange}
-                        placeholder="Phone"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                    </div>
-                  </div>
                   
                   {/* Description and Funding */}
                   <div className="md:col-span-2">
