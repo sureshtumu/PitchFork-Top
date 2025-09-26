@@ -18,10 +18,6 @@ interface Company {
   title_1?: string;
   email_1?: string;
   phone_1?: string;
-  contact_name_2?: string;
-  title_2?: string;
-  email_2?: string;
-  phone_2?: string;
   description?: string;
   funding_sought?: string;
   status?: string;
@@ -29,28 +25,6 @@ interface Company {
   recommendation?: string;
   date_submitted: string;
   created_at: string;
-  // New analysis fields
-  serviceable_market_size_value?: number;
-  serviceable_market_size_units?: string;
-  serviceable_market_size_raw?: string;
-  serviceable_market_size_basis?: string;
-  annual_revenue_value?: number;
-  annual_revenue_units?: string;
-  annual_revenue_raw?: string;
-  annual_revenue_period?: string;
-  investment_amount_value?: number;
-  investment_amount_units?: string;
-  investment_amount_raw?: string;
-  investment_instrument?: string;
-  investment_other_terms?: string;
-  valuation_value?: number;
-  valuation_units?: string;
-  valuation_raw?: string;
-  valuation_type?: string;
-  key_team_members?: any[];
-  extraction_confidence?: any;
-  extraction_sources?: any;
-  extraction_notes?: any;
 }
 
 interface AnalysisReport {
@@ -421,6 +395,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
             </div>
           </div>
         )}
+
         {/* Company Name and Action Buttons */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6">
@@ -699,6 +674,16 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 </span>
               </div>
 
+              {/* Funding Sought */}
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  Funding Sought
+                </label>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                  {company.funding_sought || 'Not specified'}
+                </p>
+              </div>
+
               {/* Description */}
               <div className="md:col-span-2">
                 <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
@@ -777,8 +762,47 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
             </div>
           </div>
         </div>
+      </div>
 
       {/* Footer */}
+      <footer className={`py-8 ${isDark ? 'bg-gray-800' : 'bg-gray-900'} text-white mt-12`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div>
+              <div className="text-xl font-bold text-blue-400 mb-3">
+                Pitch Fork
+              </div>
+              <p className="text-gray-300">
+                Empowering investors with AI-driven analysis for smarter investment decisions.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Contact</h4>
+              <p className="text-gray-300">hello@pitchfork.com</p>
+              <p className="text-gray-300">+1 (555) 123-4567</p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Product</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Demo</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Legal</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Terms & Conditions</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-700 pt-6 text-center text-gray-300">
+            <p>&copy; 2025 Pitch Fork. All rights reserved.</p>
+          </div>
+        </div>
       </footer>
     </div>
   );
