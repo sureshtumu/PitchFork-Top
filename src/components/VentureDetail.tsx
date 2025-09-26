@@ -776,49 +776,9 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Enhanced Company Analysis Section */}
-          {(company.serviceable_market_size_value || company.annual_revenue_value || company.investment_amount_value || company.key_team_members?.length) && (
-            <div className="mt-8">
-              <h3 className="text-xl font-bold text-gold-600 mb-6">Detailed Analysis</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Market Size */}
-                {company.serviceable_market_size_value && (
-                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
-                    <h4 className="font-semibold text-gold-600 mb-2">Serviceable Market Size</h4>
-                    <p className="text-2xl font-bold mb-1">
-                      {company.serviceable_market_size_value}{company.serviceable_market_size_units}
-                    </p>
-                    {company.serviceable_market_size_basis && (
-                      <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-600'}`}>
-                        Basis: {company.serviceable_market_size_basis}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Annual Revenue */}
-                {company.annual_revenue_value && (
-                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
-                    <h4 className="font-semibold text-gold-600 mb-2">Annual Revenue</h4>
-                    <p className="text-2xl font-bold mb-1">
-                      {company.annual_revenue_value}{company.annual_revenue_units}
-                    </p>
-                    {company.annual_revenue_period && (
-                      <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-slate-600'}`}>
-                        Period: {company.annual_revenue_period}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Investment Amount */}
-                {company.investment_amount_value && (
-                  <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-700' : 'bg-silver-50'}`}>
-                    <h4 className="font-semibold text-gold-600 mb-2">Investment Sought</h4>
-                    <p className="text-2xl font-bold mb-1">
-                      {company.investment_amount_value}{company.investment_amount_units}
+      {/* Footer */}
       </footer>
     </div>
   );
