@@ -772,7 +772,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                     ))}
                   </div>
                 </div>
-              )}
             </div>
           </div>
         )}
