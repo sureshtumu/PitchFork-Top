@@ -579,7 +579,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         )}
 
         {/* Analysis Results Section */}
-        {(company.status === 'Analysis Complete' && company.overall_score) && (
+        {company.status === 'Analysis Complete' && company.overall_score && (
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-bold text-blue-600 flex items-center">
