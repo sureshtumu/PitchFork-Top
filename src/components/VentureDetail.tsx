@@ -743,7 +743,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               </div>
               
               {/* Downloadable Reports */}
-              {analysisReports.length > 0 && (
+              {analysisReports.length > 0 ? (
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Analysis Reports</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -771,16 +771,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                       </div>
                     ))}
                   </div>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
-                    Detailed reports will be available once generated.
-                  </p>
-                  <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center mx-auto">
-                    <Download className="w-4 h-4 mr-2" />
-                    Generate Detailed Report
-                  </button>
                 </div>
               )}
             </div>
