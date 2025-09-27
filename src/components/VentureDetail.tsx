@@ -494,7 +494,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                 company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
                 company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
+                company.status === 'Analysis Complete' ? 'bg-blue-100 text-blue-800' :
                 company.status === 'Invested' ? 'bg-green-100 text-green-800' :
                 company.status === 'Diligence' ? 'bg-purple-100 text-purple-800' :
                 'bg-red-100 text-red-800'
@@ -772,6 +772,13 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                     ))}
                   </div>
                 </div>
+              ) : (
+                <div className="text-center">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                    Detailed reports will be available once generated.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
