@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send, Download, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send, Download, BarChart3, TrendingUp, Users, DollarSign, Target, Star } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface VentureDetailProps {
@@ -35,6 +35,21 @@ interface AnalysisReport {
   generated_at: string;
 }
 
+interface MockAnalysisData {
+  scorecard: {
+    product: number;
+    market: number;
+    team: number;
+    financials: number;
+    valuation: number;
+  };
+  detailed_questions: string[];
+  strengths: string[];
+  weaknesses: string[];
+  investment_highlights: string[];
+  risk_factors: string[];
+}
+
 const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -52,6 +67,47 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const [messageDetail, setMessageDetail] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [messageStatus, setMessageStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  // Mock analysis data - in real app, this would come from the database
+  const [mockAnalysisData] = useState<MockAnalysisData>({
+    scorecard: {
+      product: 8.5,
+      market: 7.8,
+      team: 9.2,
+      financials: 7.1,
+      valuation: 6.9
+    },
+    detailed_questions: [
+      'What is your customer acquisition cost and lifetime value?',
+      'How do you plan to scale your technology infrastructure?',
+      'What are your key competitive advantages and moats?',
+      'What is your go-to-market strategy for the next 18 months?',
+      'How will you use the funding to achieve your milestones?',
+      'What are the key risks to your business model?'
+    ],
+    strengths: [
+      'Strong technical team with relevant experience',
+      'Clear market opportunity and addressable market',
+      'Innovative product with competitive advantages',
+      'Strong early traction and customer validation'
+    ],
+    weaknesses: [
+      'Limited financial runway',
+      'Competitive market landscape',
+      'Scaling challenges ahead'
+    ],
+    investment_highlights: [
+      'Experienced team with track record',
+      'Large addressable market',
+      'Strong product-market fit indicators',
+      'Clear monetization strategy'
+    ],
+    risk_factors: [
+      'Market competition from established players',
+      'Technology adoption risks',
+      'Regulatory compliance requirements'
+    ]
+  });
 
   // Check authentication and load company data
   useEffect(() => {
@@ -523,7 +579,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         )}
 
         {/* Analysis Results Section */}
-        {company.status === 'Analyzed' && company.overall_score && (
+        {company.status === 'Analysis Complete' && company.overall_score && (
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-bold text-blue-600 flex items-center">
@@ -571,19 +627,120 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 </div>
               </div>
               
-              {/* Summary Score and Recommendation */}
-              {analysisReports.find(r => r.report_type === 'summary') && (
-                <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-blue-50'} mb-4`}>
-                  <h3 className="text-lg font-semibold text-blue-600 mb-2">Summary Score and Recommendation</h3>
-                  <button
-                    onClick={() => handleDownloadReport(analysisReports.find(r => r.report_type === 'summary')!)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Summary Report
-                  </button>
+              {/* Investment Scorecard */}
+              <div className={`p-6 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-blue-50'} mb-6`}>
+                <h3 className="text-xl font-bold text-blue-600 mb-4 flex items-center">
+                  <Star className="w-5 h-5 mr-2" />
+                  Investment Scorecard
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Target className="w-5 h-5 text-blue-600 mr-1" />
+                      <span className="font-semibold">Product</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">{mockAnalysisData.scorecard.product}</div>
+                    <div className={`w-full bg-gray-200 rounded-full h-2 mt-2`}>
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${(mockAnalysisData.scorecard.product / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <TrendingUp className="w-5 h-5 text-green-600 mr-1" />
+                      <span className="font-semibold">Market</span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">{mockAnalysisData.scorecard.market}</div>
+                    <div className={`w-full bg-gray-200 rounded-full h-2 mt-2`}>
+                      <div 
+                        className="bg-green-600 h-2 rounded-full" 
+                        style={{ width: `${(mockAnalysisData.scorecard.market / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Users className="w-5 h-5 text-purple-600 mr-1" />
+                      <span className="font-semibold">Team</span>
+                    </div>
+                    <div className="text-2xl font-bold text-purple-600">{mockAnalysisData.scorecard.team}</div>
+                    <div className={`w-full bg-gray-200 rounded-full h-2 mt-2`}>
+                      <div 
+                        className="bg-purple-600 h-2 rounded-full" 
+                        style={{ width: `${(mockAnalysisData.scorecard.team / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <BarChart3 className="w-5 h-5 text-orange-600 mr-1" />
+                      <span className="font-semibold">Financials</span>
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600">{mockAnalysisData.scorecard.financials}</div>
+                    <div className={`w-full bg-gray-200 rounded-full h-2 mt-2`}>
+                      <div 
+                        className="bg-orange-600 h-2 rounded-full" 
+                        style={{ width: `${(mockAnalysisData.scorecard.financials / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <DollarSign className="w-5 h-5 text-red-600 mr-1" />
+                      <span className="font-semibold">Valuation</span>
+                    </div>
+                    <div className="text-2xl font-bold text-red-600">{mockAnalysisData.scorecard.valuation}</div>
+                    <div className={`w-full bg-gray-200 rounded-full h-2 mt-2`}>
+                      <div 
+                        className="bg-red-600 h-2 rounded-full" 
+                        style={{ width: `${(mockAnalysisData.scorecard.valuation / 10) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
+
+              {/* Investment Highlights and Risk Factors */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className={`p-4 rounded-lg ${isDark ? 'bg-green-900/20 border border-green-700' : 'bg-green-50 border border-green-200'}`}>
+                  <h4 className="text-lg font-bold text-green-600 mb-3">Investment Highlights</h4>
+                  <ul className="space-y-2">
+                    {mockAnalysisData.investment_highlights.map((highlight, index) => (
+                      <li key={index} className={`flex items-start text-sm ${isDark ? 'text-green-300' : 'text-green-700'}`}>
+                        <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        {highlight}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={`p-4 rounded-lg ${isDark ? 'bg-red-900/20 border border-red-700' : 'bg-red-50 border border-red-200'}`}>
+                  <h4 className="text-lg font-bold text-red-600 mb-3">Risk Factors</h4>
+                  <ul className="space-y-2">
+                    {mockAnalysisData.risk_factors.map((risk, index) => (
+                      <li key={index} className={`flex items-start text-sm ${isDark ? 'text-red-300' : 'text-red-700'}`}>
+                        <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        {risk}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Due Diligence Questions */}
+              <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-50'} mb-6`}>
+                <h4 className="text-lg font-bold text-blue-600 mb-3">Due Diligence Questions</h4>
+                <div className="space-y-2">
+                  {mockAnalysisData.detailed_questions.map((question, index) => (
+                    <div key={index} className={`p-3 rounded border ${isDark ? 'border-gray-600 bg-gray-600' : 'border-gray-200 bg-white'}`}>
+                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <span className="font-semibold text-blue-600">Q{index + 1}:</span> {question}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
               
               {/* Downloadable Reports */}
               {analysisReports.length > 0 && (
@@ -614,6 +771,16 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                    Detailed reports will be available once generated.
+                  </p>
+                  <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center mx-auto">
+                    <Download className="w-4 h-4 mr-2" />
+                    Generate Detailed Report
+                  </button>
                 </div>
               )}
             </div>
@@ -665,7 +832,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                   company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
                   company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                  company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
+                  company.status === 'Analysis Complete' ? 'bg-green-100 text-green-800' :
                   company.status === 'Invested' ? 'bg-green-100 text-green-800' :
                   company.status === 'In-Diligence' ? 'bg-purple-100 text-purple-800' :
                   'bg-red-100 text-red-800'

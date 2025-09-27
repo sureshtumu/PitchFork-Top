@@ -110,7 +110,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         .update({
           overall_score: analysisResult.overall_score,
           recommendation: analysisResult.recommendation,
-          status: 'Analyzed'
+          status: 'Analysis Complete'
         })
         .eq('id', companyId);
 
@@ -135,7 +135,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
               ...company, 
               overall_score: analysisResult.overall_score,
               recommendation: analysisResult.recommendation,
-              status: 'Analyzed'
+              status: 'Analysis Complete'
             }
           : company
       ));
@@ -187,7 +187,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
     const status = company.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
     if (status === 'submitted' && filters.submitted) return true;
     if (status === 'pending' && filters.pending) return true;
-    if (status === 'analyzed' && filters.analyzed) return true;
+    if ((status === 'analyzed' || status === 'analysiscomplete') && filters.analyzed) return true;
     if (status === 'indiligence' && filters.inDiligence) return true;
     if (status === 'rejected' && filters.rejected) return true;
     if (status === 'ddrejected' && filters.ddRejected) return true;
@@ -232,7 +232,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const stats = [
     { label: "Total Deals", value: companies.length.toString(), icon: <BarChart3 className="w-6 h-6" /> },
     { label: "Investments", value: companies.filter(c => c.status === 'Invested').length.toString(), icon: <TrendingUp className="w-6 h-6" /> },
-    { label: "In Review", value: companies.filter(c => c.status === 'Pending' || c.status === 'Analyzed').length.toString(), icon: <Clock className="w-6 h-6" /> }
+    { label: "In Review", value: companies.filter(c => c.status === 'Pending' || c.status === 'Analysis Complete').length.toString(), icon: <Clock className="w-6 h-6" /> }
   ];
 
   return (
@@ -385,7 +385,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                   {[
                     { key: 'submitted', label: 'Submitted' },
                     { key: 'pending', label: 'Pending' },
-                    { key: 'analyzed', label: 'Analyzed' },
+                    { key: 'analyzed', label: 'Analysis Complete' },
                     { key: 'inDiligence', label: 'In-Diligence' },
                     { key: 'rejected', label: 'Rejected' },
                     { key: 'ddRejected', label: 'DD-Rejected' },
@@ -481,14 +481,14 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           company.status === 'Submitted' ? 'bg-silver-100 text-silver-800' :
                           company.status === 'Pending' ? 'bg-gold-100 text-gold-800' :
-                          company.status === 'Analyzed' ? 'bg-navy-100 text-navy-800' :
+                          company.status === 'Analysis Complete' ? 'bg-success-100 text-success-800' :
                           company.status === 'Invested' ? 'bg-success-100 text-success-800' :
                           company.status === 'In-Diligence' ? 'bg-gold-100 text-gold-800' :
                         'bg-danger-100 text-danger-800'
                       }`}>
                           {company.status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
                            company.status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
-                           company.status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
+                           company.status === 'Analysis Complete' ? <BarChart3 className="w-3 h-3 mr-1" /> :
                            company.status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :
                            company.status === 'In-Diligence' ? <Users className="w-3 h-3 mr-1" /> :
                          <XCircle className="w-3 h-3 mr-1" />}

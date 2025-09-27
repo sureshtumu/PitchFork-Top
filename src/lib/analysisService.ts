@@ -11,6 +11,14 @@ export interface AnalysisResult {
   financial_analysis: string;
   risk_factors: string[];
   investment_highlights: string[];
+  scorecard: {
+    product: number;
+    market: number;
+    team: number;
+    financials: number;
+    valuation: number;
+  };
+  detailed_questions: string[];
 }
 
 export interface AnalysisReports {
@@ -53,6 +61,21 @@ export const analyzeCompany = async (companyId: string): Promise<AnalysisResult>
       'Large addressable market',
       'Strong product-market fit indicators',
       'Clear monetization strategy'
+    ],
+    scorecard: {
+      product: Math.round((Math.random() * 3 + 7) * 10) / 10, // 7.0-10.0
+      market: Math.round((Math.random() * 3 + 7) * 10) / 10,
+      team: Math.round((Math.random() * 3 + 7) * 10) / 10,
+      financials: Math.round((Math.random() * 3 + 6) * 10) / 10, // 6.0-9.0
+      valuation: Math.round((Math.random() * 3 + 6) * 10) / 10
+    },
+    detailed_questions: [
+      'What is your customer acquisition cost and lifetime value?',
+      'How do you plan to scale your technology infrastructure?',
+      'What are your key competitive advantages and moats?',
+      'What is your go-to-market strategy for the next 18 months?',
+      'How will you use the funding to achieve your milestones?',
+      'What are the key risks to your business model?'
     ]
   };
 
