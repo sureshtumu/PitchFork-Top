@@ -23,6 +23,7 @@ interface Company {
 const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = React.useState({
+    all: false,
     submitted: true,
     pending: true,
     analyzed: true,
@@ -184,6 +185,9 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
   // Filter companies based on selected filters
   const filteredCompanies = companies.filter(company => {
+    // If "All" is selected, show all companies
+    if (filters.all) return true;
+    
     const status = company.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
     if (status === 'submitted' && filters.submitted) return true;
     if (status === 'pending' && filters.pending) return true;
@@ -383,6 +387,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                 <h3 className="text-sm font-bold mb-3 text-navy-800 dark:text-silver-200">Status</h3>
                 <div className="flex flex-wrap gap-4">
                   {[
+                    { key: 'all', label: 'All' },
                     { key: 'submitted', label: 'Submitted' },
                     { key: 'pending', label: 'Pending' },
                     { key: 'analyzed', label: 'Analysis Complete' },
