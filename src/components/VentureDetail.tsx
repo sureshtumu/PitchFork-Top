@@ -18,6 +18,10 @@ interface Company {
   title_1?: string;
   email_1?: string;
   phone_1?: string;
+  contact_name_2?: string;
+  title_2?: string;
+  email_2?: string;
+  phone_2?: string;
   description?: string;
   funding_sought?: string;
   status?: string;
@@ -25,6 +29,27 @@ interface Company {
   recommendation?: string;
   date_submitted: string;
   created_at: string;
+  serviceable_market_size_value?: number;
+  serviceable_market_size_units?: string;
+  serviceable_market_size_raw?: string;
+  serviceable_market_size_basis?: string;
+  annual_revenue_value?: number;
+  annual_revenue_units?: string;
+  annual_revenue_raw?: string;
+  annual_revenue_period?: string;
+  investment_amount_value?: number;
+  investment_amount_units?: string;
+  investment_amount_raw?: string;
+  investment_instrument?: string;
+  investment_other_terms?: string;
+  valuation_value?: number;
+  valuation_units?: string;
+  valuation_raw?: string;
+  valuation_type?: string;
+  key_team_members?: any;
+  extraction_confidence?: any;
+  extraction_sources?: any;
+  extraction_notes?: any;
 }
 
 interface AnalysisReport {
@@ -841,6 +866,64 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 </p>
               </div>
 
+              {/* Annual Revenue */}
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  Annual Revenue
+                </label>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                  {company.annual_revenue_value && company.annual_revenue_units 
+                    ? `${company.annual_revenue_value}${company.annual_revenue_units}` 
+                    : company.annual_revenue_raw || 'Not specified'}
+                </p>
+              </div>
+
+              {/* Investment Amount */}
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  Investment Amount
+                </label>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                  {company.investment_amount_value && company.investment_amount_units 
+                    ? `${company.investment_amount_value}${company.investment_amount_units}` 
+                    : company.investment_amount_raw || 'Not specified'}
+                </p>
+              </div>
+
+              {/* Valuation */}
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  Valuation
+                </label>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                  {company.valuation_value && company.valuation_units 
+                    ? `${company.valuation_value}${company.valuation_units} (${company.valuation_type || 'N/A'})` 
+                    : company.valuation_raw || 'Not specified'}
+                </p>
+              </div>
+
+              {/* Market Size */}
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  Serviceable Market Size
+                </label>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                  {company.serviceable_market_size_value && company.serviceable_market_size_units 
+                    ? `${company.serviceable_market_size_value}${company.serviceable_market_size_units}` 
+                    : company.serviceable_market_size_raw || 'Not specified'}
+                </p>
+              </div>
+
+              {/* Investment Instrument */}
+              <div>
+                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                  Investment Instrument
+                </label>
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                  {company.investment_instrument || 'Not specified'}
+                </p>
+              </div>
+
               {/* Description */}
               <div className="md:col-span-2">
                 <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
@@ -854,64 +937,120 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 </div>
               </div>
 
+              {/* Key Team Members */}
+              {company.key_team_members && (
+                <div className="md:col-span-2">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Key Team Members
+                  </label>
+                  <div className="flex items-start">
+                    <Users className="w-4 h-4 mr-2 text-orange-500 mt-1 flex-shrink-0" />
+                    <div className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {Array.isArray(company.key_team_members) ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {company.key_team_members.map((member: any, index: number) => (
+                            <li key={index}>
+                              {typeof member === 'string' ? member : `${member.name || 'Unknown'} - ${member.role || 'N/A'}`}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>{JSON.stringify(company.key_team_members)}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Contact Information */}
               <div className="md:col-span-2">
                 <h3 className="text-lg font-semibold mb-4 text-blue-600">Contact Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Contact Name */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Primary Contact */}
                   <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Contact Name
-                    </label>
-                    <div className="flex items-center">
-                      <User className="w-4 h-4 mr-2 text-orange-500" />
-                      <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {company.contact_name_1 || 'Not provided'}
-                      </p>
+                    <h4 className="font-medium mb-2">Primary Contact</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-2 text-orange-500" />
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {company.contact_name_1 || 'Not provided'}
+                          {company.title_1 && ` - ${company.title_1}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Mail className="w-4 h-4 mr-2 text-orange-500" />
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {company.email_1 ? (
+                            <a 
+                              href={`mailto:${company.email_1}`} 
+                              className="text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                              {company.email_1}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Phone className="w-4 h-4 mr-2 text-orange-500" />
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {company.phone_1 ? (
+                            <a 
+                              href={`tel:${company.phone_1}`} 
+                              className="text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                              {company.phone_1}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Email */}
+                  {/* Secondary Contact */}
                   <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Email
-                    </label>
-                    <div className="flex items-center">
-                      <Mail className="w-4 h-4 mr-2 text-orange-500" />
-                      <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {company.email_1 ? (
-                          <a 
-                            href={`mailto:${company.email_1}`} 
-                            className="text-blue-600 hover:text-blue-700 transition-colors"
-                          >
-                            {company.email_1}
-                          </a>
-                        ) : (
-                          'Not provided'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Phone
-                    </label>
-                    <div className="flex items-center">
-                      <Phone className="w-4 h-4 mr-2 text-orange-500" />
-                      <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {company.phone_1 ? (
-                          <a 
-                            href={`tel:${company.phone_1}`} 
-                            className="text-blue-600 hover:text-blue-700 transition-colors"
-                          >
-                            {company.phone_1}
-                          </a>
-                        ) : (
-                          'Not provided'
-                        )}
-                      </p>
+                    <h4 className="font-medium mb-2">Secondary Contact</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-2 text-orange-500" />
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {company.contact_name_2 || 'Not provided'}
+                          {company.title_2 && ` - ${company.title_2}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Mail className="w-4 h-4 mr-2 text-orange-500" />
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {company.email_2 ? (
+                            <a 
+                              href={`mailto:${company.email_2}`} 
+                              className="text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                              {company.email_2}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Phone className="w-4 h-4 mr-2 text-orange-500" />
+                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {company.phone_2 ? (
+                            <a 
+                              href={`tel:${company.phone_2}`} 
+                              className="text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                              {company.phone_2}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

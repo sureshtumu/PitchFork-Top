@@ -18,9 +18,31 @@ interface Company {
   title_1?: string;
   email_1?: string;
   phone_1?: string;
+  contact_name_2?: string;
+  title_2?: string;
+  email_2?: string;
+  phone_2?: string;
   description?: string;
   funding_sought?: string;
   created_at: string;
+  serviceable_market_size_value?: number;
+  serviceable_market_size_units?: string;
+  serviceable_market_size_raw?: string;
+  serviceable_market_size_basis?: string;
+  annual_revenue_value?: number;
+  annual_revenue_units?: string;
+  annual_revenue_raw?: string;
+  annual_revenue_period?: string;
+  investment_amount_value?: number;
+  investment_amount_units?: string;
+  investment_amount_raw?: string;
+  investment_instrument?: string;
+  investment_other_terms?: string;
+  valuation_value?: number;
+  valuation_units?: string;
+  valuation_raw?: string;
+  valuation_type?: string;
+  key_team_members?: any;
 }
 
 const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
@@ -409,6 +431,262 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     </div>
                   </div>
                   
+                  {/* Secondary Contact */}
+                  <div className="md:col-span-2">
+                    <h4 className="font-medium mb-2">Secondary Contact (Optional)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        name="contact_name_2"
+                        value={formData.contact_name_2 || ''}
+                        onChange={handleInputChange}
+                        placeholder="Contact name"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="text"
+                        name="title_2"
+                        value={formData.title_2 || ''}
+                        onChange={handleInputChange}
+                        placeholder="Title"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="email"
+                        name="email_2"
+                        value={formData.email_2 || ''}
+                        onChange={handleInputChange}
+                        placeholder="Email"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                      <input
+                        type="tel"
+                        name="phone_2"
+                        value={formData.phone_2 || ''}
+                        onChange={handleInputChange}
+                        placeholder="Phone"
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDark 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Financial Information */}
+                  <div className="md:col-span-2">
+                    <h4 className="font-medium mb-4 text-blue-600">Financial Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Annual Revenue (Value)
+                        </label>
+                        <input
+                          type="number"
+                          name="annual_revenue_value"
+                          value={formData.annual_revenue_value || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 500000"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Annual Revenue (Units)
+                        </label>
+                        <input
+                          type="text"
+                          name="annual_revenue_units"
+                          value={formData.annual_revenue_units || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., K, M, B"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Investment Amount (Value)
+                        </label>
+                        <input
+                          type="number"
+                          name="investment_amount_value"
+                          value={formData.investment_amount_value || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 2000000"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Investment Amount (Units)
+                        </label>
+                        <input
+                          type="text"
+                          name="investment_amount_units"
+                          value={formData.investment_amount_units || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., K, M, B"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Valuation (Value)
+                        </label>
+                        <input
+                          type="number"
+                          name="valuation_value"
+                          value={formData.valuation_value || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 10000000"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Valuation (Units)
+                        </label>
+                        <input
+                          type="text"
+                          name="valuation_units"
+                          value={formData.valuation_units || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., K, M, B"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Valuation Type
+                        </label>
+                        <input
+                          type="text"
+                          name="valuation_type"
+                          value={formData.valuation_type || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., Pre-money, Post-money"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Investment Instrument
+                        </label>
+                        <input
+                          type="text"
+                          name="investment_instrument"
+                          value={formData.investment_instrument || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., Equity, Convertible Note, SAFE"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Market Information */}
+                  <div className="md:col-span-2">
+                    <h4 className="font-medium mb-4 text-blue-600">Market Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Market Size (Value)
+                        </label>
+                        <input
+                          type="number"
+                          name="serviceable_market_size_value"
+                          value={formData.serviceable_market_size_value || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., 1000000000"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Market Size (Units)
+                        </label>
+                        <input
+                          type="text"
+                          name="serviceable_market_size_units"
+                          value={formData.serviceable_market_size_units || ''}
+                          onChange={handleInputChange}
+                          placeholder="e.g., K, M, B"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                          Market Size Basis
+                        </label>
+                        <textarea
+                          name="serviceable_market_size_basis"
+                          value={formData.serviceable_market_size_basis || ''}
+                          onChange={handleInputChange}
+                          placeholder="Basis for market size calculation"
+                          rows={2}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
                   {/* Description and Funding */}
                   <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -438,6 +716,25 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                       value={formData.funding_sought || ''}
                       onChange={handleInputChange}
                       placeholder="e.g., $500K Series A"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark 
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+                  
+                  {/* Additional Terms */}
+                  <div className="md:col-span-2">
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Investment Other Terms
+                    </label>
+                    <textarea
+                      name="investment_other_terms"
+                      value={formData.investment_other_terms || ''}
+                      onChange={handleInputChange}
+                      placeholder="Additional investment terms and conditions"
+                      rows={2}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
