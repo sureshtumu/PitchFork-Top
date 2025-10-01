@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, Building2, FileText, CheckCircle, AlertCircle, User, ChevronDown, Save } from 'lucide-react';
+import { ArrowLeft, Upload, Building2, FileText, CheckCircle, AlertCircle, User, ChevronDown, Save, Play } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface FounderSubmissionProps {
@@ -28,7 +28,7 @@ interface CompanyData {
 const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(1); // 1: Upload Pitch Deck, 2: Company Info, 3: Additional Documents
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: '',
     industry: '',
@@ -45,6 +45,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     valuation: '',
     url: ''
   });
+  const [pitchDeckFile, setPitchDeckFile] = useState<File | null>(null);
   const [files, setFiles] = useState<FileList | null>(null);
   const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -62,9 +63,22 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       setUser(currentUser);
       
       // Pre-fill email from user data
+      const userData = currentUser.user_metadata || {};
       setCompanyData(prev => ({
         ...prev,
-        email: currentUser.email || ''
+        name: userData.company_name || 'TechStart Innovations',
+        contact_name_1: userData.full_name || `${userData.first_name || 'John'} ${userData.last_name || 'Doe'}`,
+        email: currentUser.email || 'john.doe@techstart.com',
+        phone: userData.phone_number || '+1 (555) 123-4567',
+        industry: 'Technology',
+        address: '123 Innovation Drive, Suite 100',
+        country: 'United States',
+        description: 'A cutting-edge technology company focused on AI-driven solutions for modern businesses. We specialize in developing innovative software products that help companies streamline their operations and improve efficiency.',
+        funding_terms: 'Seeking $2M Series A funding for product development, market expansion, and team growth. Offering 15% equity with board seat.',
+        key_team_members: 'John Doe (CEO) - 10+ years in tech leadership, former VP at Google. Jane Smith (CTO) - PhD in Computer Science, AI expert. Mike Johnson (VP Sales) - 8 years enterprise sales experience.',
+        revenue: '$500K ARR with 40% month-over-month growth',
+        valuation: '$10M pre-money valuation based on comparable companies and revenue multiples',
+        url: 'https://www.techstart-innovations.com'
       }));
     };
     
@@ -77,6 +91,21 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       ...prev,
       [name]: value
     }));
+  };
+
+  const handlePitchDeckUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPitchDeckFile(e.target.files[0]);
+    }
+  };
+
+  const handleContinueFromPitchDeck = () => {
+    if (!pitchDeckFile) {
+      setMessage({ type: 'error', text: 'Please select a pitch deck file to continue' });
+      return;
+    }
+    setCurrentStep(2);
+    setMessage(null);
   };
 
   const handleSubmitCompanyInfo = async (e: React.FormEvent) => {
@@ -124,8 +153,8 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
       setMessage({ type: 'success', text: 'Company information submitted successfully!' });
       
-      // Move to step 2 for document upload
-      setCurrentStep(2);
+      // Move to step 3 for additional document upload
+      setCurrentStep(3);
       
       // Store company ID for document upload
       sessionStorage.setItem('companyId', data.id);
@@ -171,7 +200,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       return;
     }
 
-    if (!files || files.length === 0) {
+    if (!pitchDeckFile && (!files || files.length === 0)) {
       // Allow skipping file upload
       setMessage({ type: 'success', text: 'Company submission completed successfully!' });
       setTimeout(() => {
@@ -185,49 +214,75 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       const uploadPromises = [];
       const documentRecords = [];
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const filePath = `${companyId}/${file.name}`;
-        const metadata = documentMetadata[file.name] || { name: file.name, description: '' };
-
-        // Upload file to Supabase Storage
-        const uploadPromise = supabase.storage
+      // First upload the pitch deck
+      if (pitchDeckFile) {
+        const pitchDeckPath = `${companyId}/pitch-deck-${pitchDeckFile.name}`;
+        const pitchDeckUpload = supabase.storage
           .from('company-documents')
-          .upload(filePath, file, {
+          .upload(pitchDeckPath, pitchDeckFile, {
             cacheControl: '3600',
             upsert: false
           });
 
-        uploadPromises.push(uploadPromise);
+        uploadPromises.push(pitchDeckUpload);
         documentRecords.push({
           company_id: companyId,
-          filename: file.name,
-          document_name: metadata.name,
-          description: metadata.description,
-          path: filePath
+          filename: pitchDeckFile.name,
+          document_name: 'Pitch Deck',
+          description: 'Company pitch deck presentation',
+          path: pitchDeckPath
         });
       }
 
-      // Wait for all uploads to complete
-      const uploadResults = await Promise.all(uploadPromises);
-      
-      // Check for upload errors
-      const failedUploads = uploadResults.filter(result => result.error);
-      if (failedUploads.length > 0) {
-        console.error('Upload errors:', failedUploads);
-        setMessage({ type: 'error', text: `Failed to upload ${failedUploads.length} file(s)` });
-        return;
+      // Then upload additional files if any
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const filePath = `${companyId}/${file.name}`;
+          const metadata = documentMetadata[file.name] || { name: file.name, description: '' };
+
+          // Upload file to Supabase Storage
+          const uploadPromise = supabase.storage
+            .from('company-documents')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          uploadPromises.push(uploadPromise);
+          documentRecords.push({
+            company_id: companyId,
+            filename: file.name,
+            document_name: metadata.name,
+            description: metadata.description,
+            path: filePath
+          });
+        }
       }
 
-      // Insert document records into database
-      const { error: dbError } = await supabase
-        .from('documents')
-        .insert(documentRecords);
+      if (uploadPromises.length > 0) {
+        const uploadResults = await Promise.all(uploadPromises);
+        
+        // Check for upload errors
+        const failedUploads = uploadResults.filter(result => result.error);
+        if (failedUploads.length > 0) {
+          console.error('Upload errors:', failedUploads);
+          setMessage({ type: 'error', text: `Failed to upload ${failedUploads.length} file(s)` });
+          return;
+        }
 
-      if (dbError) {
-        console.error('Database error:', dbError);
-        setMessage({ type: 'error', text: 'Failed to save document records' });
-        return;
+        if (documentRecords.length > 0) {
+          // Insert document records into database
+          const { error: dbError } = await supabase
+            .from('documents')
+            .insert(documentRecords);
+
+          if (dbError) {
+            console.error('Database error:', dbError);
+            setMessage({ type: 'error', text: 'Failed to save document records' });
+            return;
+          }
+        }
       }
 
       setMessage({ type: 'success', text: 'Company and documents submitted successfully!' });
@@ -344,10 +399,17 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
             }`}>
               2
             </div>
+            <div className={`flex-1 h-1 mx-4 ${currentStep >= 3 ? 'bg-orange-600' : 'bg-gray-300'}`}></div>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+              currentStep >= 3 ? 'bg-orange-600 text-white' : 'bg-gray-300 text-gray-600'
+            }`}>
+              3
+            </div>
           </div>
           <div className="flex justify-between mt-2">
+            <span className="text-sm font-medium">Upload Pitch Deck</span>
             <span className="text-sm font-medium">Company Information</span>
-            <span className="text-sm font-medium">Upload Documents</span>
+            <span className="text-sm font-medium">Additional Documents</span>
           </div>
         </div>
 
@@ -369,8 +431,73 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
           </div>
         )}
 
-        {/* Step 1: Company Information */}
+        {/* Step 1: Upload Pitch Deck */}
         {currentStep === 1 && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-orange-600 flex items-center">
+                <Upload className="w-5 h-5 mr-2" />
+                Upload Your Pitch Deck
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="text-center mb-8">
+                <FileText className="w-16 h-16 mx-auto mb-4 text-orange-500" />
+                <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+                  Please upload your pitch deck to get started with your submission.
+                </p>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Accepted formats: PDF, PPT, PPTX
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <label htmlFor="pitch-deck-input" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                  Select Pitch Deck File *
+                </label>
+                <input
+                  id="pitch-deck-input"
+                  type="file"
+                  accept=".pdf,.ppt,.pptx"
+                  onChange={handlePitchDeckUpload}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 text-white file:bg-gray-600 file:text-white file:border-0 file:rounded file:px-3 file:py-1 file:mr-3' 
+                      : 'bg-white border-gray-300 text-gray-900 file:bg-gray-100 file:text-gray-700 file:border-0 file:rounded file:px-3 file:py-1 file:mr-3'
+                  }`}
+                />
+              </div>
+
+              {pitchDeckFile && (
+                <div className={`mb-6 p-4 rounded-lg border ${isDark ? 'border-green-600 bg-green-900/20' : 'border-green-200 bg-green-50'}`}>
+                  <div className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    <div>
+                      <p className="font-semibold text-green-600">File Selected</p>
+                      <p className={`text-sm ${isDark ? 'text-green-300' : 'text-green-700'}`}>
+                        {pitchDeckFile.name} ({(pitchDeckFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleContinueFromPitchDeck}
+                  disabled={!pitchDeckFile}
+                  className="bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Continue to Company Information
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Company Information */}
+        {currentStep === 2 && (
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-bold text-orange-600 flex items-center">
@@ -666,16 +793,22 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
           </div>
         )}
 
-        {/* Step 2: Document Upload */}
-        {currentStep === 2 && (
+        {/* Step 3: Additional Document Upload */}
+        {currentStep === 3 && (
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-bold text-orange-600 flex items-center">
                 <Upload className="w-5 h-5 mr-2" />
-                Upload Documents
+                Upload Additional Documents
               </h2>
             </div>
             <div className="p-6">
+              <div className="mb-4">
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Your pitch deck has been uploaded. You can optionally upload additional supporting documents.
+                </p>
+              </div>
+
               {/* File Input */}
               <div className="mb-6">
                 <label htmlFor="file-input" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -754,7 +887,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
               {/* Upload/Complete Button */}
               <div className="flex justify-between">
                 <button
-                  onClick={() => setCurrentStep(1)}
+                  onClick={() => setCurrentStep(2)}
                   className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                     isDark 
                       ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
