@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye, MessageCircle, Edit3 } from 'lucide-react';
+import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye, MessageCircle, CreditCard as Edit3 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface FounderDashboardProps {
