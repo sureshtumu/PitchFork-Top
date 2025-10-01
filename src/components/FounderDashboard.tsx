@@ -90,7 +90,7 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       const { data: companyData, error: companyError } = await supabase
         .from('companies')
         .select('*')
-        .eq('email_1', currentUser.email)
+        .eq('email', currentUser.email)
         .maybeSingle();
 
       if (companyError) {
