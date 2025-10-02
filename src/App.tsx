@@ -16,6 +16,7 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
   setIsDark: (value: boolean) => void;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (value: boolean) => void;
+  setShowTestModal: (value: boolean) => void;
 }) {
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -521,6 +522,7 @@ function App() {
               setIsDark={setIsDark} 
               isMobileMenuOpen={isMobileMenuOpen} 
               setIsMobileMenuOpen={setIsMobileMenuOpen} 
+              setShowTestModal={setShowTestModal}
             />
           } 
         />
