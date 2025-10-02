@@ -79,10 +79,17 @@ serve(async (req: Request) => {
     // Download the file from the URL
     const fileResponse = await fetch(fileUrl)
     if (!fileResponse.ok) {
+      console.error("Failed to fetch file:", fileResponse.status, fileResponse.statusText)
+      console.error("File URL:", fileUrl)
       return new Response(
-        JSON.stringify({ error: "Failed to download file from URL" }),
+        JSON.stringify({ 
+          error: "Failed to download file from URL", 
+          status: fileResponse.status,
+          statusText: fileResponse.statusText,
+          url: fileUrl
+        }),
         {
-          status: 400,
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       )

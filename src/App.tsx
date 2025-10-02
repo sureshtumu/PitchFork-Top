@@ -437,6 +437,20 @@ function App() {
         throw new Error('Failed to get file URL');
       }
 
+      console.log('Generated public URL:', urlData.publicUrl);
+
+      // Test if the URL is accessible
+      try {
+        const testResponse = await fetch(urlData.publicUrl, { method: 'HEAD' });
+        console.log('URL accessibility test:', testResponse.status, testResponse.statusText);
+        if (!testResponse.ok) {
+          throw new Error(`File not accessible at URL: ${testResponse.status} ${testResponse.statusText}`);
+        }
+      } catch (urlError) {
+        console.error('URL accessibility error:', urlError);
+        throw new Error(`File URL not accessible: ${urlError.message}`);
+      }
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
