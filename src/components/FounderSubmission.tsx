@@ -510,7 +510,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Company Name */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete ? 'text-orange-600 font-semibold' : ''}`}>
                       Company Name *
                     </label>
                     <input
@@ -520,7 +520,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.name}
                       onChange={handleInputChange}
                       placeholder="Enter your company name"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -530,7 +530,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Industry */}
                   <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.industry ? 'text-orange-600 font-semibold' : ''}`}>
                       Industry
                     </label>
                     <input
@@ -539,7 +539,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.industry}
                       onChange={handleInputChange}
                       placeholder="e.g., Technology, Healthcare"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.industry ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -549,7 +549,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Country */}
                   <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.country ? 'text-orange-600 font-semibold' : ''}`}>
                       Country
                     </label>
                     <input
@@ -558,7 +558,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.country}
                       onChange={handleInputChange}
                       placeholder="Country"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.country ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -662,7 +662,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Company URL */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.url ? 'text-orange-600 font-semibold' : ''}`}>
                       Company Website
                     </label>
                     <input
@@ -671,7 +671,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.url}
                       onChange={handleInputChange}
                       placeholder="https://www.yourcompany.com"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.url ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -681,7 +681,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Description */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.description ? 'text-orange-600 font-semibold' : ''}`}>
                       Company Description
                     </label>
                     <textarea
@@ -690,7 +690,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       onChange={handleInputChange}
                       placeholder="Brief description of your company and what you do"
                       rows={3}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.description ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -703,7 +703,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                     <h3 className="text-lg font-semibold mb-4 text-orange-600">Financial Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.revenue ? 'text-orange-600 font-semibold' : ''}`}>
                           Annual Revenue
                         </label>
                         <input
@@ -712,7 +712,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                           value={companyData.revenue}
                           onChange={handleInputChange}
                           placeholder="e.g., $500K, $2M ARR"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.revenue ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                             isDark 
                               ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -720,7 +720,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                         />
                       </div>
                       <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.valuation ? 'text-orange-600 font-semibold' : ''}`}>
                           Current Valuation
                         </label>
                         <input
@@ -729,7 +729,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                           value={companyData.valuation}
                           onChange={handleInputChange}
                           placeholder="e.g., $10M pre-money"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.valuation ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                             isDark 
                               ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -741,7 +741,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Funding Terms */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.funding_terms ? 'text-orange-600 font-semibold' : ''}`}>
                       Funding Terms
                     </label>
                     <textarea
@@ -750,7 +750,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       onChange={handleInputChange}
                       placeholder="Describe your funding requirements, terms, and how you plan to use the investment"
                       rows={3}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.funding_terms ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -760,7 +760,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Key Team Members */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.key_team_members ? 'text-orange-600 font-semibold' : ''}`}>
                       Key Team Members
                     </label>
                     <textarea
@@ -769,7 +769,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       onChange={handleInputChange}
                       placeholder="List key team members and their roles/backgrounds"
                       rows={3}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.key_team_members ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
