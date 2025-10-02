@@ -233,9 +233,3 @@ Return only the JSON object.`
     )
   }
 })
-        }
-      ]
-    }
-  }
-}
-)
