@@ -81,21 +81,21 @@ serve(async (req: Request) => {
 
     // Prepare the OpenAI API request
     const openaiRequest = {
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `Extract key information from this PDF document and return it as a JSON object.
+          content: `You are an expert at extracting information from business documents. Extract key information from the provided document and return it as a JSON object.
 
 Extract the following information:
 - company_name: The name of the company
-- industry: The industry or sector the company operates in
+- industry: The industry or sector the company operates in  
 - key_team_members: Names and roles of key team members (format as a single string)
 
 Return only valid JSON in this exact format:
 {
   "company_name": "extracted company name or empty string if not found",
-  "industry": "extracted industry or empty string if not found", 
+  "industry": "extracted industry or empty string if not found",
   "key_team_members": "extracted team members or empty string if not found"
 }
 
@@ -103,19 +103,7 @@ If any information is not found, use an empty string for that field.`
         },
         {
           role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Please analyze this PDF document and extract the company name, industry, and key team members."
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${base64File}`,
-                detail: "high"
-              }
-            }
-          ]
+          content: `Please analyze this document and extract the company name, industry, and key team members. Here is the document content as base64: ${base64File.substring(0, 100)}...`
         }
       ],
       response_format: {
@@ -142,8 +130,13 @@ If any information is not found, use an empty string for that field.`
       const errorData = await openaiResponse.text()
       console.error("OpenAI API error:", errorData)
       console.error("OpenAI API status:", openaiResponse.status)
+      console.error("OpenAI API headers:", Object.fromEntries(openaiResponse.headers.entries()))
       return new Response(
-        JSON.stringify({ error: "Failed to analyze PDF document" }),
+        JSON.stringify({ 
+          error: "Failed to analyze PDF document", 
+          details: errorData,
+          status: openaiResponse.status 
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
