@@ -143,6 +143,8 @@ Return only the JSON object.`
         {
           role: "user",
           content: `Please analyze this pitch deck content and extract the company information:
+
+${extractedText}`
         }
       ],
       response_format: {
@@ -160,7 +162,7 @@ Return only the JSON object.`
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": \`Bearer ${openaiApiKey}`
+        "Authorization": `Bearer ${openaiApiKey}`
       },
       body: JSON.stringify(openaiRequest)
     })
