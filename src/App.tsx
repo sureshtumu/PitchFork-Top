@@ -393,10 +393,42 @@ function App() {
   const [testFile, setTestFile] = useState<File | null>(null);
   const [testResults, setTestResults] = useState<any>(null);
   const [isTestLoading, setIsTestLoading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [analyzingFileId, setAnalyzingFileId] = useState<string | null>(null);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
   };
+
+  // Load uploaded files when modal opens
+  const loadUploadedFiles = async () => {
+    try {
+      setIsLoadingFiles(true);
+      const { data, error } = await supabase
+        .from('uploaded-files')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading files:', error);
+        return;
+      }
+
+      setUploadedFiles(data || []);
+    } catch (error) {
+      console.error('Error loading files:', error);
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+
+  // Load files when modal opens
+  React.useEffect(() => {
+    if (showTestModal) {
+      loadUploadedFiles();
+    }
+  }, [showTestModal]);
 
   const handleTestFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -454,14 +486,35 @@ function App() {
 
       console.log('File record saved to database:', dbData);
 
-      // Call the edge function with the file URL
+      // Refresh the file list
+      await loadUploadedFiles();
+      
+      // Clear form
+      setTestFileName('');
+      setTestFile(null);
+      
+      alert('File uploaded successfully!');
+        
+    } catch (error) {
+      console.error('Test error:', error);
+      alert('Test failed: ' + error.message);
+    } finally {
+      setIsTestLoading(false);
+    }
+  };
+
+  const handleAnalyzeFile = async (file: any) => {
+    try {
+      setAnalyzingFileId(file.id);
+      setTestResults(null);
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
-      const functionUrl = `${supabaseUrl}/functions/v1/show-me-details`;
+      const functionUrl = `${supabaseUrl}/functions/v1/get-key-info`;
       
-      console.log('Calling edge function:', functionUrl);
-      console.log('Request payload:', { fileId: dbData.id, filePath: filePath });
+      console.log('Calling get-key-info edge function:', functionUrl);
+      console.log('Request payload:', { fileId: file.id, filePath: file.file_path });
       
       const response = await fetch(functionUrl, {
         method: 'POST',
@@ -470,8 +523,8 @@ function App() {
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({
-          fileId: dbData.id,
-          filePath: filePath
+          fileId: file.id,
+          filePath: file.file_path
         })
       });
 
@@ -487,89 +540,138 @@ function App() {
       console.log('Edge function result:', result);
       setTestResults(result);
 
-      // Note: We're keeping the file in storage since it's now tracked in the database
-        
     } catch (error) {
-      console.error('Test error:', error);
-      alert('Test failed: ' + error.message);
+      console.error('Analysis error:', error);
+      alert('Analysis failed: ' + error.message);
     } finally {
-      setIsTestLoading(false);
+      setAnalyzingFileId(null);
     }
   };
+
   return (
     <Router>
       {/* Test Modal */}
       {showTestModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`${isDark ? 'bg-navy-800' : 'bg-white'} rounded-lg p-6 max-w-md w-full mx-4`}>
+          <div className={`${isDark ? 'bg-navy-800' : 'bg-white'} rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
             <h2 className="text-xl font-bold mb-4 text-gold-600">Test Edge Function</h2>
             
-            <div className="mb-4">
-              <label className={`block text-sm font-medium ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
-                File Name
-              </label>
-              <input
-                type="text"
-                value={testFileName}
-                onChange={(e) => setTestFileName(e.target.value)}
-                placeholder="Enter a name for this file"
-                className={`w-full px-3 py-2 border rounded-lg ${
-                  isDark 
-                    ? 'bg-navy-700 border-navy-600 text-white placeholder-silver-400' 
-                    : 'bg-white border-silver-300 text-navy-900 placeholder-navy-500'
-                }`}
-              />
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Upload New File Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gold-600">Upload New File</h3>
+                
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
+                    File Name
+                  </label>
+                  <input
+                    type="text"
+                    value={testFileName}
+                    onChange={(e) => setTestFileName(e.target.value)}
+                    placeholder="Enter a name for this file"
+                    className={`w-full px-3 py-2 border rounded-lg ${
+                      isDark 
+                        ? 'bg-navy-700 border-navy-600 text-white placeholder-silver-400' 
+                        : 'bg-white border-silver-300 text-navy-900 placeholder-navy-500'
+                    }`}
+                  />
+                </div>
 
-            <div className="mb-4">
-              <label className={`block text-sm font-medium ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
-                Upload PDF File
-              </label>
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={handleTestFileUpload}
-                className={`w-full px-3 py-2 border rounded-lg ${
-                  isDark 
-                    ? 'bg-navy-700 border-navy-600 text-white' 
-                    : 'bg-white border-silver-300 text-navy-900'
-                }`}
-              />
-            </div>
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
+                    Upload PDF File
+                  </label>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleTestFileUpload}
+                    className={`w-full px-3 py-2 border rounded-lg ${
+                      isDark 
+                        ? 'bg-navy-700 border-navy-600 text-white' 
+                        : 'bg-white border-silver-300 text-navy-900'
+                    }`}
+                  />
+                </div>
 
-            {testFile && (
-              <div className="mb-4 p-3 bg-success-100 border border-success-300 rounded">
-                <p className="text-success-700 text-sm">
-                  Selected: {testFile.name} ({(testFile.size / 1024 / 1024).toFixed(2)} MB)
-                </p>
+                {testFile && (
+                  <div className="mb-4 p-3 bg-success-100 border border-success-300 rounded">
+                    <p className="text-success-700 text-sm">
+                      Selected: {testFile.name} ({(testFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleTestContinue}
+                  disabled={!testFile || !testFileName.trim() || isTestLoading}
+                  className="w-full bg-gold-600 text-white px-4 py-2 rounded hover:bg-gold-700 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                >
+                  {isTestLoading ? 'Uploading...' : 'Upload File'}
+                </button>
               </div>
-            )}
+
+              {/* Uploaded Files List Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gold-600">Uploaded Files</h3>
+                
+                {isLoadingFiles ? (
+                  <div className="text-center py-4">
+                    <div className="text-gray-500">Loading files...</div>
+                  </div>
+                ) : uploadedFiles.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className={`${isDark ? 'text-silver-400' : 'text-navy-500'}`}>No files uploaded yet</div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {uploadedFiles.map((file) => (
+                      <div key={file.id} className={`p-3 rounded-lg border ${isDark ? 'border-navy-600 bg-navy-700' : 'border-silver-200 bg-silver-50'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-sm">{file.name}</h4>
+                            <p className={`text-xs ${isDark ? 'text-silver-400' : 'text-navy-600'}`}>
+                              {file.original_filename} • {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                            <p className={`text-xs ${isDark ? 'text-silver-500' : 'text-navy-500'}`}>
+                              {new Date(file.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleAnalyzeFile(file)}
+                            disabled={analyzingFileId === file.id}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {analyzingFileId === file.id ? 'Analyzing...' : 'Analyze'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
             {testResults && (
-              <div className="mb-4 p-3 bg-gold-50 border border-gold-300 rounded">
+              <div className="mt-6 p-4 bg-gold-50 border border-gold-300 rounded">
                 <h3 className="font-semibold text-gold-800 mb-2">Extracted Information:</h3>
                 <div className="text-sm text-gold-700">
-                  <p><strong>Company Name:</strong> {testResults.data?.company_name || 'Not found'}</p>
+                  <p><strong>Company Name:</strong> {testResults.data?.company_name || testResults.data?.name || 'Not found'}</p>
                   <p><strong>Industry:</strong> {testResults.data?.industry || 'Not found'}</p>
-                  <p><strong>Key Team Members:</strong> {testResults.data?.key_team_members || 'Not found'}</p>
+                  <p><strong>Team Members:</strong> {testResults.data?.team_members || testResults.data?.key_team_members || 'Not found'}</p>
                 </div>
               </div>
             )}
 
-            <div className="flex space-x-3">
-              <button
-                onClick={handleTestContinue}
-                disabled={!testFile || !testFileName.trim() || isTestLoading}
-                className="bg-gold-600 text-white px-4 py-2 rounded hover:bg-gold-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isTestLoading ? 'Processing...' : 'Continue'}
-              </button>
+            <div className="flex justify-end mt-6">
               <button
                 onClick={() => {
                   setShowTestModal(false);
                   setTestFileName('');
                   setTestFile(null);
                   setTestResults(null);
+                  setUploadedFiles([]);
+                  setAnalyzingFileId(null);
                 }}
                 className={`px-4 py-2 rounded ${
                   isDark 
@@ -638,4 +740,5 @@ function App() {
   );
 }
 
+React.useEffect = React.useEffect;
 export default App;
