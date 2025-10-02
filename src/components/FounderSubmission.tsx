@@ -51,6 +51,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [extractionComplete, setExtractionComplete] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
