@@ -31,9 +31,29 @@ export default function PDFUploader() {
     }
   }
 
+  const handleButtonClick = () => {
+    document.getElementById('pdf-file-input')?.click();
+  };
+
   return (
     <div className="p-6 space-y-3">
-      <input type="file" accept="application/pdf" onChange={handleUpload} />
+      <div>
+        <input 
+          id="pdf-file-input"
+          type="file" 
+          accept="application/pdf" 
+          onChange={handleUpload}
+          className="sr-only"
+        />
+        <button
+          type="button"
+          onClick={handleButtonClick}
+          disabled={loading}
+          className="bg-gold-gradient text-white px-6 py-3 rounded-lg font-semibold hover:shadow-gold focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-financial"
+        >
+          {loading ? 'Processing...' : 'Choose PDF File'}
+        </button>
+      </div>
       {loading && <div>Parsing on OpenAI…</div>}
       {err && <div className="text-red-600 text-sm">{err}</div>}
       {result && (
