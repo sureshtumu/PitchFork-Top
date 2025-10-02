@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FUNCTION_BASE_URL } from "../lib/config";
+import { supabase } from "../lib/supabase";
 
 export default function PDFUploader() {
   const [result, setResult] = useState<any>(null);
@@ -19,6 +20,9 @@ export default function PDFUploader() {
     try {
       const res = await fetch(`${FUNCTION_BASE_URL}/parse-pdf-openai`, {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
         body: form,
       });
       if (!res.ok) throw new Error(await res.text());
