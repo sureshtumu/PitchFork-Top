@@ -24,7 +24,13 @@ export default function PDFUploader() {
         throw new Error('Supabase configuration missing');
       }
       
+      // Validate that the Supabase URL is properly formatted
+      if (!supabaseUrl.startsWith('https://') && !supabaseUrl.startsWith('http://')) {
+        throw new Error('VITE_SUPABASE_URL must include the protocol (https://)');
+      }
+      
       const functionUrl = `${supabaseUrl}/functions/v1/parse-pdf-openai`;
+      console.log('Attempting to call function at:', functionUrl);
       
       const res = await fetch(functionUrl, {
         method: "POST",
