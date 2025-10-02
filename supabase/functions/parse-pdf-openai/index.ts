@@ -1,185 +1,102 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
+// supabase/functions/parse-pdf/index.ts
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import OpenAI from "https://deno.land/x/openai@v4.52.0/mod.ts";
 
-const corsHeaders = {
+const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
-}
+};
 
-serve(async (req: Request) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    })
-  }
+const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY")! });
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
     if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed" }),
-        {
-          status: 405,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405, headers: { ...cors, "Content-Type": "application/json" }
+      });
     }
 
-    // Get the OpenAI API key from environment variables
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY")
-    if (!openaiApiKey) {
-      return new Response(
-        JSON.stringify({ error: "OpenAI API key not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
+    const { signedUrl } = await req.json();
+    if (!signedUrl) {
+      return new Response(JSON.stringify({ error: "signedUrl required" }), {
+        status: 400, headers: { ...cors, "Content-Type": "application/json" }
+      });
     }
 
-    // Parse the request body to get the file data
-    const formData = await req.formData()
-    const file = formData.get("file") as File
-    
-    if (!file) {
-      return new Response(
-        JSON.stringify({ error: "No file provided" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
-    }
+    // 1) Fetch the PDF bytes from the signed URL
+    const pdfRes = await fetch(signedUrl);
+    if (!pdfRes.ok) throw new Error(`Failed to fetch PDF: ${pdfRes.status}`);
+    const buf = new Uint8Array(await pdfRes.arrayBuffer());
+    const pdfFile = new File([buf], "deck.pdf", { type: "application/pdf" });
 
-    // Log the filename for debugging
-    console.log("Processing PDF file:", file.name)
-    console.log("File size:", file.size, "bytes")
-    console.log("File type:", file.type)
+    // 2) Upload PDF to OpenAI as a file input
+    const uploaded = await openai.files.create({
+      file: pdfFile,
+      // purpose value accepted by OpenAI file inputs for model usage
+      purpose: "assistants",
+    });
 
-    // Check if file is PDF
-    if (file.type !== "application/pdf") {
-      return new Response(
-        JSON.stringify({ error: "Only PDF files are supported" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
-    }
-
-    // Convert file to base64 for OpenAI API
-    const fileBuffer = await file.arrayBuffer()
-    const base64File = encodeBase64(new Uint8Array(fileBuffer))
-
-    // Prepare the OpenAI API request
-    const openaiRequest = {
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert at extracting information from PDF documents. Extract key business information from this document.
-
-Extract the following information:
-- company_name: The name of the company
-- industry: The industry or sector the company operates in  
-- key_team_members: Names and roles of key team members
-
-Return only valid JSON in this exact format:
-{
-  "company_name": "extracted company name or empty string if not found",
-  "industry": "extracted industry or empty string if not found",
-  "key_team_members": "extracted team members or empty string if not found"
-}`
+    // 3) Ask gpt-4.0 to read that file and return strict JSON
+    const schema = {
+      name: "CompanyExtraction",
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          company_name: { type: "string", nullable: true },
+          industry: { type: "string", nullable: true },
+          key_team_members: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                name: { type: "string" },
+                role: { type: "string" }
+              },
+              required: ["name","role"]
+            },
+            nullable: true
+          }
         },
-        {
-          role: "user",
-          content: `Please analyze this PDF document and extract the company information. Here is the base64-encoded PDF content:
-
-data:application/pdf;base64,${base64File}`
-        }
-      ],
-      text: {
-        format: "json_object"
-      },
-      temperature: 0.1,
-      max_tokens: 2048,
-    }
-
-    // Call OpenAI API
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify(openaiRequest)
-    })
-
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.text()
-      console.error("OpenAI API error:", errorData)
-      console.error("OpenAI API status:", openaiResponse.status)
-      return new Response(
-        JSON.stringify({ error: "Failed to analyze PDF document" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
-    }
-
-    const openaiData = await openaiResponse.json()
-    
-    if (!openaiData.choices || !openaiData.choices[0] || !openaiData.choices[0].message) {
-      return new Response(
-        JSON.stringify({ error: "Invalid response from OpenAI" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
-    }
-
-    const aiExtractedContent = openaiData.choices[0].message.content
-    
-    try {
-      // Parse the JSON response from OpenAI
-      const extractedData = JSON.parse(aiExtractedContent)
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: extractedData
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
-    } catch (parseError) {
-      console.error("Failed to parse OpenAI response as JSON:", aiExtractedContent)
-      return new Response(
-        JSON.stringify({ 
-          error: "Failed to parse extracted data",
-          raw_response: aiExtractedContent
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
-    }
-
-  } catch (error) {
-    console.error("Edge function error:", error)
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        required: ["company_name","industry","key_team_members"]
       }
-    )
+    };
+
+    // Use Responses API with file input + structured outputs
+    const resp = await openai.responses.create({
+      model: "gpt-4.0",
+      input: [{
+        role: "user",
+        content: [
+          { type: "input_text",
+            text: "Read the attached PDF pitch deck and extract: company_name, industry, key_team_members (name, role). Return JSON only." },
+          { type: "input_file", file_id: uploaded.id }
+        ]
+      }],
+      response_format: { type: "json_schema", json_schema: schema },
+      temperature: 0
+    });
+
+    // Pull the JSON string out of the response
+    // (shape may evolve; prefer the top-level output text when present)
+    const text =
+      // @ts-ignore (SDK output variants)
+      resp.output?.[0]?.content?.[0]?.text ??
+      // fallback to message content if SDK returns that shape
+      // @ts-ignore
+      resp.output_text ??
+      JSON.stringify(resp);
+
+    return new Response(text, { status: 200, headers: { ...cors, "Content-Type": "application/json" }});
+  } catch (e) {
+    console.error(e);
+    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
+      status: 500, headers: { ...cors, "Content-Type": "application/json" }
+    });
   }
-})
+});
