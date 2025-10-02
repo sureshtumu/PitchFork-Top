@@ -45,6 +45,9 @@ serve(async (req: Request) => {
     const arrayBuffer = await file.arrayBuffer();
     const base64 = encodeBase64(new Uint8Array(arrayBuffer));
 
+    // Truncate base64 string to prevent exceeding OpenAI's input limits
+    const truncatedBase64 = base64.length > 50000 ? base64.substring(0, 50000) : base64;
+
     // Get OpenAI API key
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) {
@@ -74,7 +77,7 @@ serve(async (req: Request) => {
               {
                 type: "image_url",
                 image_url: {
-                  url: `data:application/pdf;base64,${base64}`
+                  url: `data:application/pdf;base64,${truncatedBase64}`
                 }
               }
             ]
