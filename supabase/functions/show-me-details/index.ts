@@ -13,8 +13,8 @@ interface ExtractedDetails {
 }
 
 interface RequestBody {
-  fileUrl: string;
-  fileName: string;
+  fileId: string;
+  filePath: string;
 }
 serve(async (req: Request) => {
   // Handle CORS preflight requests
@@ -48,16 +48,30 @@ serve(async (req: Request) => {
       )
     }
 
-    // Parse the request body to get the file URL
-    const requestBody: RequestBody = await req.json()
-    const { fileUrl, fileName } = requestBody
+    // Get Supabase credentials
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
     
-    console.log('Received request with fileUrl:', fileUrl);
-    console.log('Received request with fileName:', fileName);
-    
-    if (!fileUrl || !fileName) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       return new Response(
-        JSON.stringify({ error: "No file URL or filename provided" }),
+        JSON.stringify({ error: "Supabase credentials not configured" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      )
+    }
+
+    // Parse the request body to get the file reference
+    const requestBody: RequestBody = await req.json()
+    const { fileId, filePath } = requestBody
+    
+    console.log('Received request with fileId:', fileId);
+    console.log('Received request with filePath:', filePath);
+    
+    if (!fileId || !filePath) {
+      return new Response(
+        JSON.stringify({ error: "No file ID or file path provided" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -65,11 +79,42 @@ serve(async (req: Request) => {
       )
     }
 
-    console.log("Processing PDF file:", fileName)
-    console.log("File URL:", fileUrl)
+    // Get file information from database
+    const dbResponse = await fetch(`${supabaseUrl}/rest/v1/uploaded-files?id=eq.${fileId}&select=*`, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!dbResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch file information from database" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      )
+    }
+
+    const dbData = await dbResponse.json();
+    if (!dbData || dbData.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "File not found in database" }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      )
+    }
+
+    const fileRecord = dbData[0];
+    console.log("Processing PDF file:", fileRecord.name)
+    console.log("Original filename:", fileRecord.original_filename)
 
     // Check if file is PDF based on filename
-    if (!fileName.toLowerCase().endsWith('.pdf')) {
+    if (!fileRecord.original_filename.toLowerCase().endsWith('.pdf')) {
       return new Response(
         JSON.stringify({ error: "Only PDF files are supported" }),
         {
@@ -79,15 +124,21 @@ serve(async (req: Request) => {
       )
     }
 
-    // Download the file from the URL
-    console.log('Attempting to download file from URL:', fileUrl);
-    const fileResponse = await fetch(fileUrl)
+    // Download the file from Supabase storage
+    const storageUrl = `${supabaseUrl}/storage/v1/object/company-documents/${filePath}`;
+    console.log('Attempting to download file from storage:', storageUrl);
+    
+    const fileResponse = await fetch(storageUrl, {
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`
+      }
+    });
     
     if (!fileResponse.ok) {
       console.error("Failed to fetch file:", fileResponse.status, fileResponse.statusText)
       return new Response(
         JSON.stringify({ 
-          error: "Failed to download file from URL", 
+          error: "Failed to download file from storage", 
           status: fileResponse.status,
           statusText: fileResponse.statusText
         }),

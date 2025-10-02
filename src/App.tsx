@@ -389,6 +389,7 @@ function App() {
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
+  const [testFileName, setTestFileName] = useState('');
   const [testFile, setTestFile] = useState<File | null>(null);
   const [testResults, setTestResults] = useState<any>(null);
   const [isTestLoading, setIsTestLoading] = useState(false);
@@ -404,8 +405,8 @@ function App() {
   };
 
   const handleTestContinue = async () => {
-    if (!testFile) {
-      alert('Please select a PDF file first');
+    if (!testFile || !testFileName.trim()) {
+      alert('Please provide both a file name and select a PDF file');
       return;
     }
 
@@ -413,8 +414,8 @@ function App() {
       setIsTestLoading(true);
       setTestResults(null);
 
-      // First, upload the file to Supabase storage
-      const fileName = `test-${Date.now()}-${testFile.name}`;
+      // Upload the file to Supabase storage
+      const fileName = `${Date.now()}-${testFile.name}`;
       const filePath = `test-uploads/${fileName}`;
       
       console.log('Uploading file to Supabase storage:', fileName);
@@ -433,16 +434,25 @@ function App() {
 
       console.log('File uploaded successfully:', uploadData);
 
-      // Get the public URL for the uploaded file
-      const { data: urlData } = supabase.storage
-        .from('company-documents')
-        .getPublicUrl(filePath);
+      // Insert entry into uploaded-files table
+      const { data: dbData, error: dbError } = await supabase
+        .from('uploaded-files')
+        .insert([{
+          name: testFileName.trim(),
+          file_path: filePath,
+          original_filename: testFile.name,
+          file_size: testFile.size,
+          content_type: testFile.type
+        }])
+        .select()
+        .single();
 
-      if (!urlData?.publicUrl) {
-        throw new Error('Failed to get file URL');
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error(`Failed to save file record: ${dbError.message}`);
       }
 
-      console.log('Generated public URL:', urlData.publicUrl);
+      console.log('File record saved to database:', dbData);
 
       // Call the edge function with the file URL
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -451,7 +461,7 @@ function App() {
       const functionUrl = `${supabaseUrl}/functions/v1/show-me-details`;
       
       console.log('Calling edge function:', functionUrl);
-      console.log('Request payload:', { fileUrl: urlData.publicUrl, fileName: testFile.name });
+      console.log('Request payload:', { fileId: dbData.id, filePath: filePath });
       
       const response = await fetch(functionUrl, {
         method: 'POST',
@@ -460,8 +470,8 @@ function App() {
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({
-          fileUrl: urlData.publicUrl,
-          fileName: testFile.name
+          fileId: dbData.id,
+          filePath: filePath
         })
       });
 
@@ -477,11 +487,7 @@ function App() {
       console.log('Edge function result:', result);
       setTestResults(result);
 
-      // Clean up the test file from storage
-      console.log('Cleaning up test file from storage');
-      await supabase.storage
-        .from('company-documents')
-        .remove([filePath]);
+      // Note: We're keeping the file in storage since it's now tracked in the database
         
     } catch (error) {
       console.error('Test error:', error);
@@ -498,6 +504,23 @@ function App() {
           <div className={`${isDark ? 'bg-navy-800' : 'bg-white'} rounded-lg p-6 max-w-md w-full mx-4`}>
             <h2 className="text-xl font-bold mb-4 text-gold-600">Test Edge Function</h2>
             
+            <div className="mb-4">
+              <label className={`block text-sm font-medium ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
+                File Name
+              </label>
+              <input
+                type="text"
+                value={testFileName}
+                onChange={(e) => setTestFileName(e.target.value)}
+                placeholder="Enter a name for this file"
+                className={`w-full px-3 py-2 border rounded-lg ${
+                  isDark 
+                    ? 'bg-navy-700 border-navy-600 text-white placeholder-silver-400' 
+                    : 'bg-white border-silver-300 text-navy-900 placeholder-navy-500'
+                }`}
+              />
+            </div>
+
             <div className="mb-4">
               <label className={`block text-sm font-medium ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
                 Upload PDF File
@@ -536,7 +559,7 @@ function App() {
             <div className="flex space-x-3">
               <button
                 onClick={handleTestContinue}
-                disabled={!testFile || isTestLoading}
+                disabled={!testFile || !testFileName.trim() || isTestLoading}
                 className="bg-gold-600 text-white px-4 py-2 rounded hover:bg-gold-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isTestLoading ? 'Processing...' : 'Continue'}
@@ -544,6 +567,7 @@ function App() {
               <button
                 onClick={() => {
                   setShowTestModal(false);
+                  setTestFileName('');
                   setTestFile(null);
                   setTestResults(null);
                 }}
