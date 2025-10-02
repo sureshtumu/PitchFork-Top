@@ -81,7 +81,7 @@ serve(async (req: Request) => {
 
     // Prepare the OpenAI API request
     const openaiRequest = {
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
