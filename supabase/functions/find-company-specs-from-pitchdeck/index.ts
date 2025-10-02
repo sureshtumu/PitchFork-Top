@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { encode } from "https://deno.land/std@0.224.0/encoding/base64.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,7 +84,7 @@ serve(async (req: Request) => {
 
     // Convert file to base64 for OpenAI API
     const fileBuffer = await file.arrayBuffer()
-    const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)))
+    const base64File = encode(new Uint8Array(fileBuffer))
 
     // Prepare the OpenAI API request
     const openaiRequest = {
