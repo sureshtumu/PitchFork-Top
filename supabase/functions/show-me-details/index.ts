@@ -154,9 +154,12 @@ serve(async (req: Request) => {
     const fileBuffer = await fileResponse.arrayBuffer()
     console.log('File buffer size:', fileBuffer.byteLength);
     
-    // Convert to base64 using Deno's built-in encoder
+    // Import base64 encoder from Deno standard library
+    const { encode } = await import("https://deno.land/std@0.224.0/encoding/base64.ts");
+    
+    // Convert to base64 using Deno's standard library
     const uint8Array = new Uint8Array(fileBuffer);
-    const base64File = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+    const base64File = encode(uint8Array);
     
     console.log('File converted to base64, length:', base64File.length);
 
@@ -186,26 +189,12 @@ If any information is not found, use an empty string for that field.`
         },
         {
           role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Please analyze this PDF document and extract the company name, industry, and key team members. The document is provided as a base64-encoded PDF."
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${base64File}`,
-                detail: "high"
-              }
-            }
-          ]
+          content: `Please analyze this PDF document and extract the company name, industry, and key team members. Here is the base64-encoded PDF content: ${base64File.substring(0, 50000)}...`
         }
       ],
+      response_format: { type: "json_object" },
       temperature: 0.1,
       max_tokens: 2048,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0
     }
 
     // Call OpenAI API

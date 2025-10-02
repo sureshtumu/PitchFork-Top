@@ -155,16 +155,12 @@ serve(async (req: Request) => {
     const fileBuffer = await fileResponse.arrayBuffer()
     console.log('File buffer size:', fileBuffer.byteLength);
     
-    // Convert to base64 using btoa with chunking to avoid stack overflow
-    const uint8Array = new Uint8Array(fileBuffer);
+    // Import base64 encoder from Deno standard library
+    const { encode } = await import("https://deno.land/std@0.224.0/encoding/base64.ts");
     
-    // Process in chunks to avoid stack overflow
-    let base64File = '';
-    const chunkSize = 8192; // 8KB chunks
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, i + chunkSize);
-      base64File += btoa(String.fromCharCode(...chunk));
-    }
+    // Convert to base64 using Deno's standard library
+    const uint8Array = new Uint8Array(fileBuffer);
+    const base64File = encode(uint8Array);
     
     console.log('File converted to base64, length:', base64File.length);
 
@@ -194,11 +190,10 @@ If any information is not found, use an empty string for that field.`
         },
         {
           role: "user",
-          content: `Please analyze this PDF document and extract the company name, industry, and key team members. Here is the base64-encoded PDF content:
-
-data:application/pdf;base64,${base64File}`
+          content: `Please analyze this PDF document and extract the company name, industry, and key team members. Here is the base64-encoded PDF content: ${base64File.substring(0, 50000)}...`
         }
       ],
+      response_format: { type: "json_object" },
       temperature: 0.1,
       max_tokens: 1024,
     }
