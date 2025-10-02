@@ -65,6 +65,11 @@ serve(async (req: Request) => {
       )
     }
 
+    // Log the filename for debugging
+    console.log("Processing PDF file:", file.name)
+    console.log("File size:", file.size, "bytes")
+    console.log("File type:", file.type)
+
     // Check if file is PDF
     if (file.type !== "application/pdf") {
       return new Response(
