@@ -194,11 +194,11 @@ ${extractedText}`
       )
     }
 
-    const extractedText = openaiData.choices[0].message.content
+    const aiExtractedContent = openaiData.choices[0].message.content
     
     try {
       // Parse the JSON response from OpenAI
-      const companySpecs: CompanySpecs = JSON.parse(extractedText)
+      const companySpecs: CompanySpecs = JSON.parse(aiExtractedContent)
       
       return new Response(
         JSON.stringify({
@@ -211,11 +211,11 @@ ${extractedText}`
         }
       )
     } catch (parseError) {
-      console.error("Failed to parse OpenAI response as JSON:", extractedText)
+      console.error("Failed to parse OpenAI response as JSON:", aiExtractedContent)
       return new Response(
         JSON.stringify({ 
           error: "Failed to parse extracted data",
-          raw_response: extractedText
+          raw_response: aiExtractedContent
         }),
         {
           status: 500,
