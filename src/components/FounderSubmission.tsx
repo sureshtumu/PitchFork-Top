@@ -105,8 +105,69 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       setMessage({ type: 'error', text: 'Please select a pitch deck file to continue' });
       return;
     }
-    setCurrentStep(2);
-    setMessage(null);
+    
+    // Call the extraction function
+    extractCompanySpecs();
+  };
+
+  const extractCompanySpecs = async () => {
+    if (!pitchDeckFile) return;
+
+    try {
+      setIsLoading(true);
+      setMessage({ type: 'success', text: 'Analyzing your pitch deck with AI...' });
+
+      // Create FormData to send the file
+      const formData = new FormData();
+      formData.append('file', pitchDeckFile);
+
+      // Call the Supabase Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/find-company-specs-from-pitchdeck`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        // Populate the form fields with extracted data
+        const extractedData = result.data;
+        setCompanyData(prev => ({
+          ...prev,
+          name: extractedData.name || prev.name,
+          url: extractedData.url || prev.url,
+          description: extractedData.description || prev.description,
+          industry: extractedData.industry || prev.industry,
+          country: extractedData.country || prev.country,
+          key_team_members: extractedData.key_team_members || prev.key_team_members,
+          revenue: extractedData.revenue || prev.revenue,
+          valuation: extractedData.valuation || prev.valuation,
+          funding_terms: extractedData.funding_sought || prev.funding_terms
+        }));
+
+        setExtractionComplete(true);
+        setMessage({ type: 'success', text: 'AI extraction completed! Review and edit the information below.' });
+      } else {
+        throw new Error(result.error || 'Failed to extract company information');
+      }
+
+    } catch (error) {
+      console.error('Extraction error:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'AI extraction failed. Please fill in the information manually.' 
+      });
+    } finally {
+      setIsLoading(false);
+      setCurrentStep(2);
+    }
   };
 
   const handleSubmitCompanyInfo = async (e: React.FormEvent) => {
