@@ -417,6 +417,8 @@ function App() {
       const fileName = `test-${Date.now()}-${testFile.name}`;
       const filePath = `test-uploads/${fileName}`;
       
+      console.log('Uploading file to Supabase storage:', fileName);
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('company-documents')
         .upload(filePath, testFile, {
@@ -425,8 +427,11 @@ function App() {
         });
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw new Error(`Failed to upload file: ${uploadError.message}`);
       }
+
+      console.log('File uploaded successfully:', uploadData);
 
       // Get the public URL for the uploaded file
       const { data: urlData } = supabase.storage
@@ -439,22 +444,14 @@ function App() {
 
       console.log('Generated public URL:', urlData.publicUrl);
 
-      // Test if the URL is accessible
-      try {
-        const testResponse = await fetch(urlData.publicUrl, { method: 'HEAD' });
-        console.log('URL accessibility test:', testResponse.status, testResponse.statusText);
-        if (!testResponse.ok) {
-          throw new Error(`File not accessible at URL: ${testResponse.status} ${testResponse.statusText}`);
-        }
-      } catch (urlError) {
-        console.error('URL accessibility error:', urlError);
-        throw new Error(`File URL not accessible: ${urlError.message}`);
-      }
-
+      // Call the edge function with the file URL
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
       const functionUrl = `${supabaseUrl}/functions/v1/show-me-details`;
+      
+      console.log('Calling edge function:', functionUrl);
+      console.log('Request payload:', { fileUrl: urlData.publicUrl, fileName: testFile.name });
       
       const response = await fetch(functionUrl, {
         method: 'POST',
@@ -468,18 +465,24 @@ function App() {
         })
       });
 
+      console.log('Edge function response status:', response.status);
+
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('Edge function error response:', errorText);
         throw new Error(`Edge function failed (${response.status}): ${errorText}`);
       }
 
       const result = await response.json();
+      console.log('Edge function result:', result);
       setTestResults(result);
 
       // Clean up the test file from storage
+      console.log('Cleaning up test file from storage');
       await supabase.storage
         .from('company-documents')
         .remove([filePath]);
+        
     } catch (error) {
       console.error('Test error:', error);
       alert('Test failed: ' + error.message);

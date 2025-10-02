@@ -52,6 +52,9 @@ serve(async (req: Request) => {
     const requestBody: RequestBody = await req.json()
     const { fileUrl, fileName } = requestBody
     
+    console.log('Received request with fileUrl:', fileUrl);
+    console.log('Received request with fileName:', fileName);
+    
     if (!fileUrl || !fileName) {
       return new Response(
         JSON.stringify({ error: "No file URL or filename provided" }),
@@ -77,16 +80,16 @@ serve(async (req: Request) => {
     }
 
     // Download the file from the URL
+    console.log('Attempting to download file from URL:', fileUrl);
     const fileResponse = await fetch(fileUrl)
+    
     if (!fileResponse.ok) {
       console.error("Failed to fetch file:", fileResponse.status, fileResponse.statusText)
-      console.error("File URL:", fileUrl)
       return new Response(
         JSON.stringify({ 
           error: "Failed to download file from URL", 
           status: fileResponse.status,
-          statusText: fileResponse.statusText,
-          url: fileUrl
+          statusText: fileResponse.statusText
         }),
         {
           status: 500,
@@ -95,8 +98,16 @@ serve(async (req: Request) => {
       )
     }
 
+    console.log('File downloaded successfully, size:', fileResponse.headers.get('content-length'));
+    
     const fileBuffer = await fileResponse.arrayBuffer()
-    const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)))
+    console.log('File buffer size:', fileBuffer.byteLength);
+    
+    // Convert to base64 using Deno's built-in encoder
+    const uint8Array = new Uint8Array(fileBuffer);
+    const base64File = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+    
+    console.log('File converted to base64, length:', base64File.length);
 
     // Prepare the OpenAI API request
     const openaiRequest = {
