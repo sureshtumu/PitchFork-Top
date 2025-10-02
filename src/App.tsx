@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { ChevronRight, Star, Users, Zap, Target, TrendingUp, Shield, MessageCircle, CheckCircle, XCircle, Clock, BarChart3, Moon, Sun, Menu, X, TrendingDown } from 'lucide-react';
+import { supabase } from './lib/supabase';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
 import Dashboard from './components/Dashboard';
