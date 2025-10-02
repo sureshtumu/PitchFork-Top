@@ -81,16 +81,18 @@ serve(async (req: Request) => {
 
     // Prepare the OpenAI API request
     const openaiRequest = {
-      model: "gpt-4o",
+      model: "gpt-4-vision-preview",
       messages: [
         {
           role: "system",
-          content: `You are an expert at extracting information from business documents. Extract key information from the provided document and return it as a JSON object.
+          content: `You are an expert at extracting information from PDF documents and images. You will be provided with a PDF document converted to base64. Extract key business information from this document.
 
-Extract the following information:
+Look for and extract the following information from the document:
 - company_name: The name of the company
 - industry: The industry or sector the company operates in  
 - key_team_members: Names and roles of key team members (format as a single string)
+
+If the document contains multiple pages or slides, analyze all visible content.
 
 Return only valid JSON in this exact format:
 {
@@ -103,14 +105,23 @@ If any information is not found, use an empty string for that field.`
         },
         {
           role: "user",
-          content: `Please analyze this document and extract the company name, industry, and key team members. Here is the document content as base64: ${base64File.substring(0, 100)}...`
+          content: [
+            {
+              type: "text",
+              text: "Please analyze this PDF document and extract the company name, industry, and key team members. The document is provided as a base64-encoded PDF."
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:application/pdf;base64,${base64File}`,
+                detail: "high"
+              }
+            }
+          ]
         }
       ],
-      response_format: {
-        type: "json_object"
-      },
       temperature: 0.1,
-      max_tokens: 1024,
+      max_tokens: 2048,
       top_p: 1,
       frequency_penalty: 0,
       presence_penalty: 0
@@ -160,7 +171,20 @@ If any information is not found, use an empty string for that field.`
     
     try {
       // Parse the JSON response from OpenAI
-      const extractedDetails: ExtractedDetails = JSON.parse(aiExtractedContent)
+      let extractedDetails: ExtractedDetails;
+      
+      // Try to parse as JSON, if it fails, try to extract JSON from the response
+      try {
+        extractedDetails = JSON.parse(aiExtractedContent);
+      } catch (parseError) {
+        // Try to find JSON in the response text
+        const jsonMatch = aiExtractedContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          extractedDetails = JSON.parse(jsonMatch[0]);
+        } else {
+          throw parseError;
+        }
+      }
       
       return new Response(
         JSON.stringify({
@@ -174,10 +198,12 @@ If any information is not found, use an empty string for that field.`
       )
     } catch (parseError) {
       console.error("Failed to parse OpenAI response as JSON:", aiExtractedContent)
+      console.error("Parse error details:", parseError)
       return new Response(
         JSON.stringify({ 
           error: "Failed to parse extracted data",
-          raw_response: aiExtractedContent
+          raw_response: aiExtractedContent,
+          parse_error: parseError.message
         }),
         {
           status: 500,
