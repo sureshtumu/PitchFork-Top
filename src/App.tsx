@@ -11,12 +11,11 @@ import VentureDetail from './components/VentureDetail';
 import FounderDashboard from './components/FounderDashboard';
 import EditPrompts from './components/EditPrompts';
 
-function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
+function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen, setShowTestModal }: {
   isDark: boolean;
   setIsDark: (value: boolean) => void;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (value: boolean) => void;
-  setShowTestModal: (value: boolean) => void;
   setShowTestModal: (value: boolean) => void;
 }) {
   const toggleTheme = () => {
