@@ -129,8 +129,8 @@ Return only the JSON object.`
 data:application/pdf;base64,${base64File}`
         }
       ],
-      response_format: {
-        type: "json_object"
+      text: {
+        format: "json_object"
       },
       temperature: 0.1,
       max_tokens: 2048,

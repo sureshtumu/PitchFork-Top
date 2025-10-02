@@ -192,7 +192,7 @@ If any information is not found, use an empty string for that field.`
           content: `Please analyze this PDF document and extract the company name, industry, and key team members. Here is the base64-encoded PDF content: ${base64File.substring(0, 50000)}...`
         }
       ],
-      response_format: { type: "json_object" },
+      text: { format: "json_object" },
       temperature: 0.1,
       max_tokens: 2048,
     }
