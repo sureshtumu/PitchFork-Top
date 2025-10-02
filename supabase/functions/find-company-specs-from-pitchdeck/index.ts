@@ -81,37 +81,13 @@ serve(async (req: Request) => {
       )
     }
 
-    // Read file as text (for simple text extraction)
-    // Note: This is a basic approach. For production, you'd want to use a proper PDF parser
+    // Convert file to base64 for OpenAI API
     const fileBuffer = await file.arrayBuffer()
-    const fileText = new TextDecoder().decode(fileBuffer)
-    
-    // Extract readable text from PDF (basic approach)
-    // This will work for text-based PDFs but not image-based ones
-    let extractedText = ""
-    try {
-      // Simple text extraction - look for readable text patterns
-      const textMatches = fileText.match(/[A-Za-z0-9\s\$\%\.\,\!\?\-\(\)]+/g)
-      if (textMatches) {
-        extractedText = textMatches.join(" ").substring(0, 4000) // Limit to 4000 chars
-      }
-    } catch (e) {
-      console.error("Text extraction error:", e)
-    }
-    
-    if (!extractedText || extractedText.length < 100) {
-      return new Response(
-        JSON.stringify({ error: "Could not extract readable text from PDF. Please ensure the PDF contains text (not just images)." }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      )
-    }
+    const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)))
 
     // Prepare the OpenAI API request
     const openaiRequest = {
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -147,13 +123,23 @@ Return only the JSON object.`
         },
         {
           role: "user",
-          content: `Please analyze this pitch deck content and extract the company information:
-
-${extractedText}`
+          content: [
+            {
+              type: "text",
+              text: "Please analyze this pitch deck PDF and extract the company information according to the system instructions."
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:application/pdf;base64,${base64File}`,
+                detail: "high"
+              }
+            }
+          ]
         }
       ],
       response_format: {
-        type: "text"
+        type: "json_object"
       },
       temperature: 0.1,
       max_tokens: 2048,
@@ -202,22 +188,8 @@ ${extractedText}`
     const aiExtractedContent = openaiData.choices[0].message.content
     
     try {
-      // Clean the response by removing markdown code fences if present
-      let cleanedContent = aiExtractedContent.trim()
-      
-      // Remove markdown code block fences (```json and ```)
-      if (cleanedContent.startsWith('```json')) {
-        cleanedContent = cleanedContent.replace(/^```json\s*/, '')
-      }
-      if (cleanedContent.startsWith('```')) {
-        cleanedContent = cleanedContent.replace(/^```\s*/, '')
-      }
-      if (cleanedContent.endsWith('```')) {
-        cleanedContent = cleanedContent.replace(/\s*```$/, '')
-      }
-      
-      // Parse the cleaned JSON response from OpenAI
-      const companySpecs: CompanySpecs = JSON.parse(cleanedContent)
+      // Parse the JSON response from OpenAI (should be valid JSON due to json_object response format)
+      const companySpecs: CompanySpecs = JSON.parse(aiExtractedContent)
       
       return new Response(
         JSON.stringify({
