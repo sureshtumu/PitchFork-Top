@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { encode } from "https://deno.land/std@0.224.0/encoding/base64.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -155,9 +156,9 @@ serve(async (req: Request) => {
     const fileBuffer = await fileResponse.arrayBuffer()
     console.log('File buffer size:', fileBuffer.byteLength);
     
-    // Convert to base64 using Deno's built-in encoder
+    // Convert to base64 using Deno's standard library encoder
     const uint8Array = new Uint8Array(fileBuffer);
-    const base64File = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+    const base64File = encode(uint8Array);
     
     console.log('File converted to base64, length:', base64File.length);
 
