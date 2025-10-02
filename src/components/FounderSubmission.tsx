@@ -121,6 +121,9 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       const formData = new FormData();
       formData.append('file', pitchDeckFile);
 
+      console.log('Calling Supabase Edge Function with file:', pitchDeckFile.name);
+      console.log('File size:', pitchDeckFile.size, 'bytes');
+      console.log('File type:', pitchDeckFile.type);
       // Call the Supabase Edge Function
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/find-company-specs-from-pitchdeck`, {
         method: 'POST',
@@ -130,15 +133,25 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         body: formData
       });
 
+      console.log('Edge function response status:', response.status);
+      console.log('Edge function response headers:', Object.fromEntries(response.headers.entries()));
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Edge function error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('Raw edge function result:', result);
 
       if (result.success && result.data) {
         // Populate the form fields with extracted data
         const extractedData = result.data;
+        console.log('Extracted company data:', extractedData);
+        
+        // Display the JSON data in an alert for debugging
+        alert('Extracted Data:\n' + JSON.stringify(extractedData, null, 2));
+        
         setCompanyData(prev => ({
           ...prev,
           name: extractedData.name || prev.name,
@@ -155,11 +168,17 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         setExtractionComplete(true);
         setMessage({ type: 'success', text: 'AI extraction completed! Review and edit the information below.' });
       } else {
+        console.error('Edge function returned unsuccessful result:', result);
         throw new Error(result.error || 'Failed to extract company information');
       }
 
     } catch (error) {
       console.error('Extraction error:', error);
+      console.error('Full error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       setMessage({ 
         type: 'error', 
         text: 'AI extraction failed. Please fill in the information manually.' 
