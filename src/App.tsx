@@ -11,6 +11,7 @@ import FounderSubmission from './components/FounderSubmission';
 import VentureDetail from './components/VentureDetail';
 import FounderDashboard from './components/FounderDashboard';
 import EditPrompts from './components/EditPrompts';
+import PDFUploadPage from './components/PDFUploadPage';
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen, setShowTestModal }: {
   isDark: boolean;
@@ -734,6 +735,10 @@ function App() {
         <Route 
           path="/edit-prompts" 
           element={<EditPrompts isDark={isDark} toggleTheme={toggleTheme} />} 
+        />
+        <Route 
+          path="/upload" 
+          element={<PDFUploadPage isDark={isDark} toggleTheme={toggleTheme} />} 
         />
       </Routes>
     </Router>
