@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { encode } from "https://deno.land/std@0.168.0/encoding/base64.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +12,10 @@ interface ExtractedDetails {
   key_team_members: string;
 }
 
+interface RequestBody {
+  fileUrl: string;
+  fileName: string;
+}
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -45,13 +48,13 @@ serve(async (req: Request) => {
       )
     }
 
-    // Parse the request body to get the file data
-    const formData = await req.formData()
-    const file = formData.get("file") as File
+    // Parse the request body to get the file URL
+    const requestBody: RequestBody = await req.json()
+    const { fileUrl, fileName } = requestBody
     
-    if (!file) {
+    if (!fileUrl || !fileName) {
       return new Response(
-        JSON.stringify({ error: "No file provided" }),
+        JSON.stringify({ error: "No file URL or filename provided" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -59,13 +62,11 @@ serve(async (req: Request) => {
       )
     }
 
-    // Log the filename for debugging
-    console.log("Processing PDF file:", file.name)
-    console.log("File size:", file.size, "bytes")
-    console.log("File type:", file.type)
+    console.log("Processing PDF file:", fileName)
+    console.log("File URL:", fileUrl)
 
-    // Check if file is PDF
-    if (file.type !== "application/pdf") {
+    // Check if file is PDF based on filename
+    if (!fileName.toLowerCase().endsWith('.pdf')) {
       return new Response(
         JSON.stringify({ error: "Only PDF files are supported" }),
         {
@@ -75,9 +76,20 @@ serve(async (req: Request) => {
       )
     }
 
-    // Convert file to base64 for OpenAI API
-    const fileBuffer = await file.arrayBuffer()
-    const base64File = encode(new Uint8Array(fileBuffer))
+    // Download the file from the URL
+    const fileResponse = await fetch(fileUrl)
+    if (!fileResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "Failed to download file from URL" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      )
+    }
+
+    const fileBuffer = await fileResponse.arrayBuffer()
+    const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)))
 
     // Prepare the OpenAI API request
     const openaiRequest = {

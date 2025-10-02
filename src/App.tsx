@@ -412,8 +412,29 @@ function App() {
       setIsTestLoading(true);
       setTestResults(null);
 
-      const formData = new FormData();
-      formData.append('file', testFile);
+      // First, upload the file to Supabase storage
+      const fileName = `test-${Date.now()}-${testFile.name}`;
+      const filePath = `test-uploads/${fileName}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('company-documents')
+        .upload(filePath, testFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload file: ${uploadError.message}`);
+      }
+
+      // Get the public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from('company-documents')
+        .getPublicUrl(filePath);
+
+      if (!urlData?.publicUrl) {
+        throw new Error('Failed to get file URL');
+      }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -423,9 +444,13 @@ function App() {
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
-        body: formData
+        body: JSON.stringify({
+          fileUrl: urlData.publicUrl,
+          fileName: testFile.name
+        })
       });
 
       if (!response.ok) {
@@ -436,6 +461,10 @@ function App() {
       const result = await response.json();
       setTestResults(result);
 
+      // Clean up the test file from storage
+      await supabase.storage
+        .from('company-documents')
+        .remove([filePath]);
     } catch (error) {
       console.error('Test error:', error);
       alert('Test failed: ' + error.message);
