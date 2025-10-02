@@ -124,19 +124,9 @@ Return only the JSON object.`
         },
         {
           role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Please analyze this pitch deck PDF and extract the company information according to the system instructions."
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${base64File}`,
-                detail: "high"
-              }
-            }
-          ]
+          content: `Please analyze this pitch deck PDF and extract the company information according to the system instructions. Here is the base64-encoded PDF content:
+
+data:application/pdf;base64,${base64File}`
         }
       ],
       response_format: {

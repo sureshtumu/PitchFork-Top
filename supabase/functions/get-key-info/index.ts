@@ -194,19 +194,9 @@ If any information is not found, use an empty string for that field.`
         },
         {
           role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Please analyze this PDF document and extract the company name, industry, and key team members. The document is provided as a base64-encoded PDF."
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:application/pdf;base64,${base64File}`,
-                detail: "high"
-              }
-            }
-          ]
+          content: `Please analyze this PDF document and extract the company name, industry, and key team members. Here is the base64-encoded PDF content:
+
+data:application/pdf;base64,${base64File}`
         }
       ],
       temperature: 0.1,
