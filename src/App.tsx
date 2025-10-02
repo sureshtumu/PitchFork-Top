@@ -143,6 +143,12 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
               <div className="text-2xl font-bold bg-gold-gradient bg-clip-text text-transparent">
                 Pitch Fork
               </div>
+             <button
+               onClick={() => setShowTestModal(true)}
+               className="ml-4 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+             >
+               test-edge
+             </button>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -380,13 +386,132 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
 function App() {
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testFile, setTestFile] = useState<File | null>(null);
+  const [testResults, setTestResults] = useState<any>(null);
+  const [isTestLoading, setIsTestLoading] = useState(false);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
   };
 
+  const handleTestFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setTestFile(e.target.files[0]);
+    }
+  };
+
+  const handleTestContinue = async () => {
+    if (!testFile) {
+      alert('Please select a PDF file first');
+      return;
+    }
+
+    try {
+      setIsTestLoading(true);
+      setTestResults(null);
+
+      const formData = new FormData();
+      formData.append('file', testFile);
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      const functionUrl = `${supabaseUrl}/functions/v1/show-me-details`;
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Edge function failed (${response.status}): ${errorText}`);
+      }
+
+      const result = await response.json();
+      setTestResults(result);
+
+    } catch (error) {
+      console.error('Test error:', error);
+      alert('Test failed: ' + error.message);
+    } finally {
+      setIsTestLoading(false);
+    }
+  };
   return (
     <Router>
+      {/* Test Modal */}
+      {showTestModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${isDark ? 'bg-navy-800' : 'bg-white'} rounded-lg p-6 max-w-md w-full mx-4`}>
+            <h2 className="text-xl font-bold mb-4 text-gold-600">Test Edge Function</h2>
+            
+            <div className="mb-4">
+              <label className={`block text-sm font-medium ${isDark ? 'text-silver-300' : 'text-navy-700'} mb-2`}>
+                Upload PDF File
+              </label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleTestFileUpload}
+                className={`w-full px-3 py-2 border rounded-lg ${
+                  isDark 
+                    ? 'bg-navy-700 border-navy-600 text-white' 
+                    : 'bg-white border-silver-300 text-navy-900'
+                }`}
+              />
+            </div>
+
+            {testFile && (
+              <div className="mb-4 p-3 bg-success-100 border border-success-300 rounded">
+                <p className="text-success-700 text-sm">
+                  Selected: {testFile.name} ({(testFile.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              </div>
+            )}
+
+            {testResults && (
+              <div className="mb-4 p-3 bg-gold-50 border border-gold-300 rounded">
+                <h3 className="font-semibold text-gold-800 mb-2">Extracted Information:</h3>
+                <div className="text-sm text-gold-700">
+                  <p><strong>Company Name:</strong> {testResults.data?.company_name || 'Not found'}</p>
+                  <p><strong>Industry:</strong> {testResults.data?.industry || 'Not found'}</p>
+                  <p><strong>Key Team Members:</strong> {testResults.data?.key_team_members || 'Not found'}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex space-x-3">
+              <button
+                onClick={handleTestContinue}
+                disabled={!testFile || isTestLoading}
+                className="bg-gold-600 text-white px-4 py-2 rounded hover:bg-gold-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isTestLoading ? 'Processing...' : 'Continue'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowTestModal(false);
+                  setTestFile(null);
+                  setTestResults(null);
+                }}
+                className={`px-4 py-2 rounded ${
+                  isDark 
+                    ? 'bg-navy-600 text-silver-300 hover:bg-navy-500' 
+                    : 'bg-silver-200 text-navy-700 hover:bg-silver-300'
+                }`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Routes>
         <Route 
           path="/" 
