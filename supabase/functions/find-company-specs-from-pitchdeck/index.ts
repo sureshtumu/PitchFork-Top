@@ -160,7 +160,7 @@ Return only the JSON object.`
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${openaiApiKey}`
+        "Authorization": \`Bearer ${openaiApiKey}`
       },
       body: JSON.stringify(openaiRequest)
     })
@@ -233,3 +233,9 @@ Return only the JSON object.`
     )
   }
 })
+        }
+      ]
+    }
+  }
+}
+)
