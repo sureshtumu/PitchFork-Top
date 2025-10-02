@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { encode as encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,20 +65,52 @@ serve(async (req: Request) => {
       )
     }
 
-    // Convert file to base64
+    // Check if file is PDF
+    if (file.type !== "application/pdf") {
+      return new Response(
+        JSON.stringify({ error: "Only PDF files are supported" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      )
+    }
+
+    // Read file as text (for simple text extraction)
+    // Note: This is a basic approach. For production, you'd want to use a proper PDF parser
     const fileBuffer = await file.arrayBuffer()
-    const fileBase64 = encodeBase64(new Uint8Array(fileBuffer))
+    const fileText = new TextDecoder().decode(fileBuffer)
+    
+    // Extract readable text from PDF (basic approach)
+    // This will work for text-based PDFs but not image-based ones
+    let extractedText = ""
+    try {
+      // Simple text extraction - look for readable text patterns
+      const textMatches = fileText.match(/[A-Za-z0-9\s\$\%\.\,\!\?\-\(\)]+/g)
+      if (textMatches) {
+        extractedText = textMatches.join(" ").substring(0, 4000) // Limit to 4000 chars
+      }
+    } catch (e) {
+      console.error("Text extraction error:", e)
+    }
+    
+    if (!extractedText || extractedText.length < 100) {
+      return new Response(
+        JSON.stringify({ error: "Could not extract readable text from PDF. Please ensure the PDF contains text (not just images)." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      )
+    }
 
     // Prepare the OpenAI API request
     const openaiRequest = {
-      model: "gpt-4o-mini", // Note: gpt-4.1-mini doesn't exist, using gpt-4o-mini instead
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: [
-            {
-              type: "text",
-              text: `Extract EXACTLY ONE JSON object from the pitch-deck text below.
+          content: `Extract EXACTLY ONE JSON object from the pitch-deck text below.
 
 Rules:
 - Use only deck content (no outside info).
@@ -108,23 +139,10 @@ FIELDS
 
 OUTPUT
 Return only the JSON object.`
-            }
-          ]
         },
         {
           role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Please analyze this pitch deck file: ${file.name}`
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${file.type};base64,${fileBase64}`
-              }
-            }
-          ]
+          content: `Please analyze this pitch deck content and extract the company information:
         }
       ],
       response_format: {
