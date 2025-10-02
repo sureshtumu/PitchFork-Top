@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { encode } from "https://deno.land/std@0.224.0/encoding/base64.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -156,46 +155,49 @@ serve(async (req: Request) => {
     const fileBuffer = await fileResponse.arrayBuffer()
     console.log('File buffer size:', fileBuffer.byteLength);
     
-    // Convert to base64 using Deno's standard library encoder
+    // Convert to base64 using btoa with chunking to avoid stack overflow
     const uint8Array = new Uint8Array(fileBuffer);
-    const base64File = encode(uint8Array);
+    
+    // Process in chunks to avoid stack overflow
+    let base64File = '';
+    const chunkSize = 8192; // 8KB chunks
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      base64File += btoa(String.fromCharCode(...chunk));
+    }
     
     console.log('File converted to base64, length:', base64File.length);
 
     // Prepare the OpenAI API request
     const openaiRequest = {
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an expert at extracting key business information from PDF documents. You will be provided with a PDF document converted to base64. Extract the following key information:
+          content: `You are an expert at extracting key business information from PDF documents and images. You will analyze a PDF document and extract specific information.
 
-1. Company Name - The official name of the company
-2. Industry - The industry or sector the company operates in
-3. Team Members - Names and roles of key team members, founders, executives
+Extract the following information from the document:
+- company_name: The official name of the company
+- industry: The industry or sector the company operates in  
+- team_members: Names and roles of key team members (format as a single string)
 
-Instructions:
-- Analyze all pages/slides in the document
-- Look for pitch decks, business plans, company presentations
-- Extract information accurately from the visible content
-- If information is not clearly stated, use empty string
-- For team members, format as "Name (Role); Name (Role)" etc.
+If the document contains multiple pages or slides, analyze all visible content.
 
-Return ONLY valid JSON in this exact format:
+Return only valid JSON in this exact format:
 {
   "company_name": "extracted company name or empty string",
   "industry": "extracted industry or empty string", 
-  "team_members": "extracted team members with roles or empty string"
+  "team_members": "extracted team members or empty string"
 }
 
-Do not include any other text or explanations.`
+If any information is not found, use an empty string for that field.`
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Please analyze this PDF document and extract the company name, industry, and team members information. Return only the JSON response."
+              text: "Please analyze this PDF document and extract the company name, industry, and key team members. The document is provided as a base64-encoded PDF."
             },
             {
               type: "image_url",
@@ -209,10 +211,9 @@ Do not include any other text or explanations.`
       ],
       temperature: 0.1,
       max_tokens: 1024,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0
     }
+
+    console.log('Calling OpenAI API with request size:', JSON.stringify(openaiRequest).length);
 
     // Call OpenAI API
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -228,6 +229,7 @@ Do not include any other text or explanations.`
       const errorData = await openaiResponse.text()
       console.error("OpenAI API error:", errorData)
       console.error("OpenAI API status:", openaiResponse.status)
+      console.error("OpenAI API headers:", Object.fromEntries(openaiResponse.headers.entries()))
       return new Response(
         JSON.stringify({ 
           error: "Failed to analyze PDF document", 
@@ -254,22 +256,22 @@ Do not include any other text or explanations.`
     }
 
     const aiExtractedContent = openaiData.choices[0].message.content
-    console.log("Raw OpenAI response:", aiExtractedContent);
+    console.log("Raw OpenAI response:", aiExtractedContent)
     
     try {
       // Parse the JSON response from OpenAI
-      let extractedInfo: ExtractedInfo;
+      let extractedInfo: ExtractedInfo
       
       // Try to parse as JSON, if it fails, try to extract JSON from the response
       try {
-        extractedInfo = JSON.parse(aiExtractedContent);
+        extractedInfo = JSON.parse(aiExtractedContent)
       } catch (parseError) {
         // Try to find JSON in the response text
-        const jsonMatch = aiExtractedContent.match(/\{[\s\S]*\}/);
+        const jsonMatch = aiExtractedContent.match(/\{[\s\S]*\}/)
         if (jsonMatch) {
-          extractedInfo = JSON.parse(jsonMatch[0]);
+          extractedInfo = JSON.parse(jsonMatch[0])
         } else {
-          throw parseError;
+          throw parseError
         }
       }
       
@@ -301,8 +303,13 @@ Do not include any other text or explanations.`
 
   } catch (error) {
     console.error("Edge function error:", error)
+    console.error("Error stack:", error.stack)
     return new Response(
-      JSON.stringify({ error: "Internal server error", details: error.message }),
+      JSON.stringify({ 
+        error: "Internal server error", 
+        details: error.message,
+        stack: error.stack 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
