@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { FUNCTION_BASE_URL } from "../lib/config";
 import { supabase } from "../lib/supabase";
 
 export default function PDFUploader() {
@@ -18,10 +17,19 @@ export default function PDFUploader() {
     form.append("file", file);
 
     try {
-      const res = await fetch(`${FUNCTION_BASE_URL}/parse-pdf-openai`, {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase configuration missing');
+      }
+      
+      const functionUrl = `${supabaseUrl}/functions/v1/parse-pdf-openai`;
+      
+      const res = await fetch(functionUrl, {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: form,
       });
