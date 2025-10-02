@@ -149,6 +149,9 @@ Return only the JSON object.`
 
     if (!openaiResponse.ok) {
       const errorData = await openaiResponse.text()
+     console.error("OpenAI API error:", errorData)
+     console.error("OpenAI API status:", openaiResponse.status)
+     console.error("OpenAI API headers:", Object.fromEntries(openaiResponse.headers.entries()))
       console.error("OpenAI API error:", errorData)
       return new Response(
         JSON.stringify({ error: "Failed to analyze pitch deck" }),
