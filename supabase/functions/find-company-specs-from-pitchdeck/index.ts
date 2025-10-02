@@ -197,8 +197,22 @@ ${extractedText}`
     const aiExtractedContent = openaiData.choices[0].message.content
     
     try {
-      // Parse the JSON response from OpenAI
-      const companySpecs: CompanySpecs = JSON.parse(aiExtractedContent)
+      // Clean the response by removing markdown code fences if present
+      let cleanedContent = aiExtractedContent.trim()
+      
+      // Remove markdown code block fences (```json and ```)
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.replace(/^```json\s*/, '')
+      }
+      if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.replace(/^```\s*/, '')
+      }
+      if (cleanedContent.endsWith('```')) {
+        cleanedContent = cleanedContent.replace(/\s*```$/, '')
+      }
+      
+      // Parse the cleaned JSON response from OpenAI
+      const companySpecs: CompanySpecs = JSON.parse(cleanedContent)
       
       return new Response(
         JSON.stringify({
