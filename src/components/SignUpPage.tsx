@@ -18,7 +18,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'investor'
+    userType: 'founder'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -210,23 +210,23 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
                     <input
                       type="radio"
                       name="userType"
-                      value="investor"
-                      checked={formData.userType === 'investor'}
-                      onChange={handleInputChange}
-                      className="mr-2 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Investor</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="userType"
                       value="founder"
                       checked={formData.userType === 'founder'}
                       onChange={handleInputChange}
                       className="mr-2 text-blue-600 focus:ring-blue-500"
                     />
                     <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Founder</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="userType"
+                      value="investor"
+                      checked={formData.userType === 'investor'}
+                      onChange={handleInputChange}
+                      className="mr-2 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Investor</span>
                   </label>
                 </div>
               </div>
