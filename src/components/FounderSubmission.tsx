@@ -167,9 +167,9 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       // Store company ID for later use
       sessionStorage.setItem('companyId', data.id);
 
-      // Navigate to VentureDetail page
+      // Navigate to EditCompany page with company data
       setTimeout(() => {
-        navigate(`/venture-detail/${data.id}`);
+        navigate('/edit-company', { state: { company: data } });
       }, 1000);
 
     } catch (error) {
@@ -191,10 +191,19 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
     // This is now handled during pitch deck upload
     // Company already exists in the database
-    // Just move to the VentureDetail page
+    // Just move to the EditCompany page
     const companyId = sessionStorage.getItem('companyId');
     if (companyId) {
-      navigate(`/venture-detail/${companyId}`);
+      // Fetch the company data to pass to EditCompany
+      const { data: companyRecord } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single();
+
+      if (companyRecord) {
+        navigate('/edit-company', { state: { company: companyRecord } });
+      }
     }
   };
 
