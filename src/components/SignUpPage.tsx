@@ -104,8 +104,8 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
               .from('companies')
               .insert([{
                 name: formData.companyName,
-                contact_name_1: `${formData.firstName} ${formData.lastName}`,
-                email_1: formData.email,
+                contact_name: `${formData.firstName} ${formData.lastName}`,
+                email: formData.email,
                 phone: formData.phoneNumber
               }])
               .select()

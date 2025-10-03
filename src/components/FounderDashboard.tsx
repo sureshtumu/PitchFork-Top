@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye, MessageCircle, Edit3 } from 'lucide-react';
+import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye, MessageCircle, CreditCard as Edit3 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface FounderDashboardProps {
@@ -14,19 +14,19 @@ interface Company {
   industry?: string;
   address?: string;
   country?: string;
-  contact_name_1?: string;
-  title_1?: string;
-  email_1?: string;
-  phone_1?: string;
-  contact_name_2?: string;
-  title_2?: string;
-  email_2?: string;
-  phone_2?: string;
+  contact_name?: string;
+  title?: string;
+  email?: string;
+  phone?: string;
   description?: string;
-  funding_sought?: string;
+  funding_terms?: string;
   status?: string;
   date_submitted: string;
   created_at: string;
+  key_team_members?: string;
+  revenue?: string;
+  valuation?: string;
+  url?: string;
 }
 
 interface Message {

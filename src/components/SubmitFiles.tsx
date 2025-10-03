@@ -14,17 +14,17 @@ interface Company {
   industry?: string;
   address?: string;
   country?: string;
-  contact_name_1?: string;
-  title_1?: string;
-  email_1?: string;
-  phone_1?: string;
-  contact_name_2?: string;
-  title_2?: string;
-  email_2?: string;
-  phone_2?: string;
+  contact_name?: string;
+  title?: string;
+  email?: string;
+  phone?: string;
   description?: string;
-  funding_sought?: string;
+  funding_terms?: string;
   created_at: string;
+  key_team_members?: string;
+  revenue?: string;
+  valuation?: string;
+  url?: string;
 }
 
 const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
@@ -38,16 +38,16 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
     industry: '',
     address: '',
     country: '',
-    contact_name_1: '',
-    title_1: '',
-    email_1: '',
-    phone_1: '',
-    contact_name_2: '',
-    title_2: '',
-    email_2: '',
-    phone_2: '',
+    contact_name: '',
+    title: '',
+    email: '',
+    phone: '',
     description: '',
-    funding_sought: ''
+    funding_terms: '',
+    key_team_members: '',
+    revenue: '',
+    valuation: '',
+    url: ''
   });
   const [files, setFiles] = useState<FileList | null>(null);
   const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
@@ -135,16 +135,16 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
           industry: '',
           address: '',
           country: '',
-          contact_name_1: '',
-          title_1: '',
-          email_1: '',
-          phone_1: '',
-          contact_name_2: '',
-          title_2: '',
-          email_2: '',
-          phone_2: '',
+          contact_name: '',
+          title: '',
+          email: '',
+          phone: '',
           description: '',
-          funding_sought: ''
+          funding_terms: '',
+          key_team_members: '',
+          revenue: '',
+          valuation: '',
+          url: ''
         });
         setMessage({ type: 'success', text: 'Company already exists and has been selected' });
         return;
@@ -171,16 +171,16 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
         industry: '',
         address: '',
         country: '',
-        contact_name_1: '',
-        title_1: '',
-        email_1: '',
-        phone_1: '',
-        contact_name_2: '',
-        title_2: '',
-        email_2: '',
-        phone_2: '',
+        contact_name: '',
+        title: '',
+        email: '',
+        phone: '',
         description: '',
-        funding_sought: ''
+        funding_terms: '',
+        key_team_members: '',
+        revenue: '',
+        valuation: '',
+        url: ''
       });
       setMessage({ type: 'success', text: 'Company added successfully' });
     } catch (error) {
@@ -547,102 +547,51 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <input
                         type="text"
-                        value={newCompanyData.contact_name_1}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_name_1: e.target.value }))}
+                        value={newCompanyData.contact_name}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_name: e.target.value }))}
                         placeholder="Contact name"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="text"
-                        value={newCompanyData.title_1}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, title_1: e.target.value }))}
+                        value={newCompanyData.title}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, title: e.target.value }))}
                         placeholder="Title"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="email"
-                        value={newCompanyData.email_1}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, email_1: e.target.value }))}
+                        value={newCompanyData.email}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, email: e.target.value }))}
                         placeholder="Email"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="tel"
-                        value={newCompanyData.phone_1}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone_1: e.target.value }))}
+                        value={newCompanyData.phone}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone: e.target.value }))}
                         placeholder="Phone"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                     </div>
                   </div>
-                  
-                  {/* Contact 2 */}
-                  <div className="md:col-span-2">
-                    <h4 className="font-medium mb-2">Secondary Contact (Optional)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        value={newCompanyData.contact_name_2}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_name_2: e.target.value }))}
-                        placeholder="Contact name"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="text"
-                        value={newCompanyData.title_2}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, title_2: e.target.value }))}
-                        placeholder="Title"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="email"
-                        value={newCompanyData.email_2}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, email_2: e.target.value }))}
-                        placeholder="Email"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="tel"
-                        value={newCompanyData.phone_2}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, phone_2: e.target.value }))}
-                        placeholder="Phone"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                  
+
                   {/* Description and Funding */}
                   <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -667,8 +616,8 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                     </label>
                     <input
                       type="text"
-                      value={newCompanyData.funding_sought}
-                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, funding_sought: e.target.value }))}
+                      value={newCompanyData.funding_terms}
+                      onChange={(e) => setNewCompanyData(prev => ({ ...prev, funding_terms: e.target.value }))}
                       placeholder="e.g., $500K Series A"
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark 
@@ -696,16 +645,16 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
                         industry: '',
                         address: '',
                         country: '',
-                        contact_name_1: '',
-                        title_1: '',
-                        email_1: '',
-                        phone_1: '',
-                        contact_name_2: '',
-                        title_2: '',
-                        email_2: '',
-                        phone_2: '',
+                        contact_name: '',
+                        title: '',
+                        email: '',
+                        phone: '',
                         description: '',
-                        funding_sought: ''
+                        funding_terms: '',
+                        key_team_members: '',
+                        revenue: '',
+                        valuation: '',
+                        url: ''
                       });
                     }}
                     className={`px-4 py-2 rounded-lg font-semibold transition-colors ${

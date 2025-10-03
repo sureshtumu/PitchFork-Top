@@ -14,17 +14,21 @@ interface Company {
   industry?: string;
   address?: string;
   country?: string;
-  contact_name_1?: string;
-  title_1?: string;
-  email_1?: string;
-  phone_1?: string;
+  contact_name?: string;
+  title?: string;
+  email?: string;
+  phone?: string;
   description?: string;
-  funding_sought?: string;
+  funding_terms?: string;
   status?: string;
   overall_score?: number;
   recommendation?: string;
   date_submitted: string;
   created_at: string;
+  key_team_members?: string;
+  revenue?: string;
+  valuation?: string;
+  url?: string;
 }
 
 interface AnalysisReport {
@@ -709,7 +713,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                     <div className="flex items-center">
                       <User className="w-4 h-4 mr-2 text-orange-500" />
                       <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {company.contact_name_1 || 'Not provided'}
+                        {company.contact_name || 'Not provided'}
                       </p>
                     </div>
                   </div>
