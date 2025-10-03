@@ -127,7 +127,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
 
             // Navigate after a brief delay to show success message
             setTimeout(() => {
-              navigate('/founder-submission');
+              navigate('/submit-pitch-deck');
             }, 1500);
           } else {
             setSuccess('Welcome to Pitch Fork! You can now access your investor dashboard.');
