@@ -223,9 +223,13 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
       // Update local state
       setCompany(prev => prev ? { ...prev, ...formData } : null);
 
-      // Redirect to founder dashboard after successful submission
+      // Redirect based on user type
       setTimeout(() => {
-        navigate('/founder-dashboard');
+        if (isFounder) {
+          navigate('/founder-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }, 1500);
 
     } catch (error) {
