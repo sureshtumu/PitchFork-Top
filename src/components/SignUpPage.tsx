@@ -18,7 +18,7 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'investor'
+    userType: 'founder'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
