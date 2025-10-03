@@ -724,9 +724,13 @@ function App() {
           path="/submit-pitch-deck" 
           element={<FounderSubmission isDark={isDark} toggleTheme={toggleTheme} />} 
         />
-        <Route 
-          path="/venture/:id" 
-          element={<VentureDetail isDark={isDark} toggleTheme={toggleTheme} />} 
+        <Route
+          path="/venture/:id"
+          element={<VentureDetail isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/venture-detail/:id"
+          element={<VentureDetail isDark={isDark} toggleTheme={toggleTheme} />}
         />
         <Route 
           path="/founder-dashboard" 

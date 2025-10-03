@@ -124,6 +124,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       if (error) {
         console.error('Error creating company:', error);
         setMessage({ type: 'error', text: 'Failed to create company profile' });
+        setIsLoading(false);
         return;
       }
 
@@ -139,6 +140,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       if (uploadError) {
         console.error('Upload error:', uploadError);
         setMessage({ type: 'error', text: 'Failed to upload pitch deck' });
+        setIsLoading(false);
         return;
       }
 
@@ -156,6 +158,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       if (docError) {
         console.error('Document error:', docError);
         setMessage({ type: 'error', text: 'Failed to save document record' });
+        setIsLoading(false);
         return;
       }
 
