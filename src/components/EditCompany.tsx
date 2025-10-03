@@ -93,10 +93,10 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
   const loadDocuments = async (companyId: string) => {
     try {
       const { data, error } = await supabase
-        .from('company_documents')
+        .from('documents')
         .select('*')
         .eq('company_id', companyId)
-        .order('created_at', { ascending: false });
+        .order('uploaded_at', { ascending: false });
 
       if (error) {
         console.error('Error loading documents:', error);
@@ -147,7 +147,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
 
         // Save document record
         const { error: docError } = await supabase
-          .from('company_documents')
+          .from('documents')
           .insert([{
             company_id: company.id,
             filename: file.name,

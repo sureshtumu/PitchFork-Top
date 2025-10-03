@@ -246,7 +246,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
       // Save document record
       const { error: docError } = await supabase
-        .from('company_documents')
+        .from('documents')
         .insert([{
           company_id: companyId,
           filename: pitchDeckFile.name,
