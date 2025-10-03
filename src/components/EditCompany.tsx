@@ -35,6 +35,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<any>(null);
+  const [isFounder, setIsFounder] = useState(false);
   const [company, setCompany] = useState<Company | null>(null);
   const [formData, setFormData] = useState<Partial<Company>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +56,16 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
         return;
       }
       setUser(currentUser);
-      
+
+      // Check user type
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('user_type')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      setIsFounder(profile?.user_type === 'founder');
+
       // Check if company data was passed via navigation state
       if (location.state?.company) {
         const companyData = location.state.company;
@@ -260,40 +270,68 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Navigation Menu */}
-              <nav className="hidden md:flex items-center space-x-6">
-                <Link to="/dashboard" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Dashboard</Link>
-                <Link to="/reports" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Reports</Link>
-                
-                {/* Utilities Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setShowUtilitiesMenu(!showUtilitiesMenu)}
-                    className={`flex items-center text-blue-600 font-medium transition-colors`}
-                  >
-                    Utilities <ChevronDown className="w-4 h-4 ml-1" />
-                  </button>
-                  {showUtilitiesMenu && (
-                    <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Submit Files
-                      </Link>
-                      <Link to="/edit-company" className={`block px-4 py-2 text-sm text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20`}>
-                        Edit Company
-                      </Link>
-                      <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Investor Criteria
-                      </Link>
-                      <Link to="/edit-prompts" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Edit Prompts
-                      </Link>
-                    </div>
-                  )}
-                </div>
-                
-                <Link to="/help" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Help</Link>
-                
-                {/* User Dropdown */}
+              {/* Navigation Menu - Only show for investors */}
+              {!isFounder && (
+                <nav className="hidden md:flex items-center space-x-6">
+                  <Link to="/dashboard" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Dashboard</Link>
+                  <Link to="/reports" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Reports</Link>
+
+                  {/* Utilities Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowUtilitiesMenu(!showUtilitiesMenu)}
+                      className={`flex items-center text-blue-600 font-medium transition-colors`}
+                    >
+                      Utilities <ChevronDown className="w-4 h-4 ml-1" />
+                    </button>
+                    {showUtilitiesMenu && (
+                      <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
+                        <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                          Submit Files
+                        </Link>
+                        <Link to="/edit-company" className={`block px-4 py-2 text-sm text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20`}>
+                          Edit Company
+                        </Link>
+                        <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                          Investor Criteria
+                        </Link>
+                        <Link to="/edit-prompts" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                          Edit Prompts
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link to="/help" className={`${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}>Help</Link>
+
+                  {/* User Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      className={`flex items-center ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} transition-colors`}
+                    >
+                      <User className="w-4 h-4 mr-1" />
+                      User <ChevronDown className="w-4 h-4 ml-1" />
+                    </button>
+                    {showUserMenu && (
+                      <div className={`absolute top-full right-0 mt-2 w-32 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
+                        <Link to="/account" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                          Account
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </nav>
+              )}
+
+              {/* Founder Navigation - Simple user menu */}
+              {isFounder && (
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
@@ -304,10 +342,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                   </button>
                   {showUserMenu && (
                     <div className={`absolute top-full right-0 mt-2 w-32 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                      <Link to="/account" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Account
-                      </Link>
-                      <button 
+                      <button
                         onClick={handleLogout}
                         className={`w-full text-left px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}
                       >
@@ -316,7 +351,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     </div>
                   )}
                 </div>
-              </nav>
+              )}
               
               <button
                 onClick={toggleTheme}
@@ -326,8 +361,8 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
               </button>
               
               {/* Back to Dashboard */}
-              <Link 
-                to="/dashboard" 
+              <Link
+                to={isFounder ? "/founder-dashboard" : "/dashboard"}
                 className={`flex items-center px-4 py-2 rounded-lg ${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -738,8 +773,8 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
             <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
               Please select a company from the dashboard to edit its information.
             </p>
-            <Link 
-              to="/dashboard"
+            <Link
+              to={isFounder ? "/founder-dashboard" : "/dashboard"}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
