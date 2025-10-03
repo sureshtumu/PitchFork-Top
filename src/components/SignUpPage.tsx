@@ -39,7 +39,12 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    
+
+    if (formData.userType === 'founder' && !formData.companyName.trim()) {
+      setError('Company name is required for founders');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -70,19 +75,30 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
       }
 
       if (data.user) {
+        console.log('User created:', data.user.id);
+        console.log('Session:', data.session ? 'Yes' : 'No');
+
         // Check if email confirmation is required
         if (!data.session) {
           setSuccess('Thank you for registering with Pitch Fork! Please check your email for a confirmation link. Once confirmed, you can sign in and access your dashboard.');
           setIsLoading(false);
         } else {
+          // Wait a moment for the trigger to create the user profile
+          await new Promise(resolve => setTimeout(resolve, 500));
+
           // Check user type and redirect accordingly
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('user_type')
             .eq('user_id', data.user.id)
             .single();
 
+          console.log('Profile:', profile);
+          console.log('Profile error:', profileError);
+
           if (profile?.user_type === 'founder') {
+            console.log('Creating company for founder:', formData.companyName);
+
             // Create company entry for founder
             const { data: company, error: companyError } = await supabase
               .from('companies')
@@ -97,19 +113,27 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
 
             if (companyError) {
               console.error('Error creating company:', companyError);
-              setError('Account created but failed to create company profile. Please contact support.');
+              setError(`Account created but failed to create company profile: ${companyError.message}`);
               setIsLoading(false);
               return;
             }
+
+            console.log('Company created successfully:', company);
 
             // Store company ID for later use
             sessionStorage.setItem('companyId', company.id);
 
             setSuccess('Welcome to Pitch Fork! Please upload your pitch deck to continue.');
-            navigate('/founder-submission');
+
+            // Navigate after a brief delay to show success message
+            setTimeout(() => {
+              navigate('/founder-submission');
+            }, 1500);
           } else {
             setSuccess('Welcome to Pitch Fork! You can now access your investor dashboard.');
-            navigate('/dashboard');
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 1500);
           }
         }
       }
@@ -257,17 +281,18 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="companyName" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Company Name
+                    Company Name {formData.userType === 'founder' && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     id="companyName"
                     name="companyName"
                     type="text"
+                    required={formData.userType === 'founder'}
                     value={formData.companyName}
                     onChange={handleInputChange}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
                     placeholder="Your company name"
