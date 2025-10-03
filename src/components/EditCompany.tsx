@@ -15,34 +15,21 @@ interface Company {
   address?: string;
   country?: string;
   contact_name_1?: string;
-  title_1?: string;
+  title?: string;
+  email?: string;
   email_1?: string;
-  phone_1?: string;
-  contact_name_2?: string;
-  title_2?: string;
-  email_2?: string;
-  phone_2?: string;
+  phone?: string;
   description?: string;
-  funding_sought?: string;
+  funding_terms?: string;
   created_at: string;
-  serviceable_market_size_value?: number;
-  serviceable_market_size_units?: string;
-  serviceable_market_size_raw?: string;
-  serviceable_market_size_basis?: string;
-  annual_revenue_value?: number;
-  annual_revenue_units?: string;
-  annual_revenue_raw?: string;
-  annual_revenue_period?: string;
-  investment_amount_value?: number;
-  investment_amount_units?: string;
-  investment_amount_raw?: string;
-  investment_instrument?: string;
-  investment_other_terms?: string;
-  valuation_value?: number;
-  valuation_units?: string;
-  valuation_raw?: string;
-  valuation_type?: string;
-  key_team_members?: any;
+  status?: string;
+  date_submitted?: string;
+  overall_score?: number;
+  recommendation?: string;
+  key_team_members?: string;
+  revenue?: string;
+  valuation?: string;
+  url?: string;
 }
 
 const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
@@ -376,252 +363,93 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     />
                   </div>
                   
-                  {/* Primary Contact */}
+                  {/* URL */}
                   <div className="md:col-span-2">
-                    <h4 className="font-medium mb-2">Primary Contact</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        name="contact_name_1"
-                        value={formData.contact_name_1 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Contact name"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="text"
-                        name="title_1"
-                        value={formData.title_1 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Title"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="email"
-                        name="email_1"
-                        value={formData.email_1 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Email"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="tel"
-                        name="phone_1"
-                        value={formData.phone_1 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Phone"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                    </div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Company Website
+                    </label>
+                    <input
+                      type="url"
+                      name="url"
+                      value={formData.url || ''}
+                      onChange={handleInputChange}
+                      placeholder="https://www.company.com"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
                   </div>
-                  
-                  {/* Secondary Contact */}
+
+                  {/* Contact Information */}
                   <div className="md:col-span-2">
-                    <h4 className="font-medium mb-2">Secondary Contact (Optional)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        name="contact_name_2"
-                        value={formData.contact_name_2 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Contact name"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="text"
-                        name="title_2"
-                        value={formData.title_2 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Title"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="email"
-                        name="email_2"
-                        value={formData.email_2 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Email"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                      <input
-                        type="tel"
-                        name="phone_2"
-                        value={formData.phone_2 || ''}
-                        onChange={handleInputChange}
-                        placeholder="Phone"
-                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Financial Information */}
-                  <div className="md:col-span-2">
-                    <h4 className="font-medium mb-4 text-blue-600">Financial Information</h4>
+                    <h3 className="text-lg font-semibold mb-4 text-blue-600">Contact Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Annual Revenue (Value)
-                        </label>
-                        <input
-                          type="number"
-                          name="annual_revenue_value"
-                          value={formData.annual_revenue_value || ''}
-                          onChange={handleInputChange}
-                          placeholder="e.g., 500000"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Annual Revenue (Units)
+                          Contact Name
                         </label>
                         <input
                           type="text"
-                          name="annual_revenue_units"
-                          value={formData.annual_revenue_units || ''}
+                          name="contact_name_1"
+                          value={formData.contact_name_1 || ''}
                           onChange={handleInputChange}
-                          placeholder="e.g., K, M, B"
+                          placeholder="Primary contact name"
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            isDark
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                         />
                       </div>
                       <div>
                         <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Investment Amount (Value)
-                        </label>
-                        <input
-                          type="number"
-                          name="investment_amount_value"
-                          value={formData.investment_amount_value || ''}
-                          onChange={handleInputChange}
-                          placeholder="e.g., 2000000"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Investment Amount (Units)
+                          Title
                         </label>
                         <input
                           type="text"
-                          name="investment_amount_units"
-                          value={formData.investment_amount_units || ''}
+                          name="title"
+                          value={formData.title || ''}
                           onChange={handleInputChange}
-                          placeholder="e.g., K, M, B"
+                          placeholder="Job title"
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            isDark
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                         />
                       </div>
                       <div>
                         <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Valuation (Value)
+                          Email
                         </label>
                         <input
-                          type="number"
-                          name="valuation_value"
-                          value={formData.valuation_value || ''}
+                          type="email"
+                          name="email_1"
+                          value={formData.email_1 || formData.email || ''}
                           onChange={handleInputChange}
-                          placeholder="e.g., 10000000"
+                          placeholder="Contact email"
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            isDark
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                         />
                       </div>
                       <div>
                         <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Valuation (Units)
+                          Phone
                         </label>
                         <input
-                          type="text"
-                          name="valuation_units"
-                          value={formData.valuation_units || ''}
+                          type="tel"
+                          name="phone"
+                          value={formData.phone || ''}
                           onChange={handleInputChange}
-                          placeholder="e.g., K, M, B"
+                          placeholder="Contact phone"
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Valuation Type
-                        </label>
-                        <input
-                          type="text"
-                          name="valuation_type"
-                          value={formData.valuation_type || ''}
-                          onChange={handleInputChange}
-                          placeholder="e.g., Pre-money, Post-money"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Investment Instrument
-                        </label>
-                        <input
-                          type="text"
-                          name="investment_instrument"
-                          value={formData.investment_instrument || ''}
-                          onChange={handleInputChange}
-                          placeholder="e.g., Equity, Convertible Note, SAFE"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            isDark
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                         />
@@ -629,57 +457,40 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     </div>
                   </div>
                   
-                  {/* Market Information */}
+                  {/* Financial Information */}
                   <div className="md:col-span-2">
-                    <h4 className="font-medium mb-4 text-blue-600">Market Information</h4>
+                    <h3 className="text-lg font-semibold mb-4 text-blue-600">Financial Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Market Size (Value)
+                          Annual Revenue
                         </label>
                         <input
-                          type="number"
-                          name="serviceable_market_size_value"
-                          value={formData.serviceable_market_size_value || ''}
+                          type="text"
+                          name="revenue"
+                          value={formData.revenue || ''}
                           onChange={handleInputChange}
-                          placeholder="e.g., 1000000000"
+                          placeholder="e.g., $500K ARR, $2M"
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            isDark
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                         />
                       </div>
                       <div>
                         <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Market Size (Units)
+                          Current Valuation
                         </label>
                         <input
                           type="text"
-                          name="serviceable_market_size_units"
-                          value={formData.serviceable_market_size_units || ''}
+                          name="valuation"
+                          value={formData.valuation || ''}
                           onChange={handleInputChange}
-                          placeholder="e.g., K, M, B"
+                          placeholder="e.g., $10M pre-money"
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                          }`}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                          Market Size Basis
-                        </label>
-                        <textarea
-                          name="serviceable_market_size_basis"
-                          value={formData.serviceable_market_size_basis || ''}
-                          onChange={handleInputChange}
-                          placeholder="Basis for market size calculation"
-                          rows={2}
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            isDark
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                         />
@@ -706,38 +517,39 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     />
                   </div>
                   
+                  {/* Funding Terms */}
                   <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                      Funding Sought
+                      Funding Terms
                     </label>
-                    <input
-                      type="text"
-                      name="funding_sought"
-                      value={formData.funding_sought || ''}
+                    <textarea
+                      name="funding_terms"
+                      value={formData.funding_terms || ''}
                       onChange={handleInputChange}
-                      placeholder="e.g., $500K Series A"
+                      placeholder="Describe your funding requirements, terms, and how you plan to use the investment"
+                      rows={3}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        isDark 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                       }`}
                     />
                   </div>
-                  
-                  {/* Additional Terms */}
+
+                  {/* Key Team Members */}
                   <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                      Investment Other Terms
+                      Key Team Members
                     </label>
                     <textarea
-                      name="investment_other_terms"
-                      value={formData.investment_other_terms || ''}
+                      name="key_team_members"
+                      value={formData.key_team_members || ''}
                       onChange={handleInputChange}
-                      placeholder="Additional investment terms and conditions"
-                      rows={2}
+                      placeholder="List key team members and their roles/backgrounds"
+                      rows={3}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        isDark 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                       }`}
                     />
