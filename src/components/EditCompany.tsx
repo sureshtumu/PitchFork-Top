@@ -111,10 +111,15 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
         return;
       }
 
-      setMessage({ type: 'success', text: 'Company information updated successfully!' });
-      
+      setMessage({ type: 'success', text: 'Company information submitted successfully!' });
+
       // Update local state
       setCompany(prev => prev ? { ...prev, ...formData } : null);
+
+      // Redirect to founder dashboard after successful submission
+      setTimeout(() => {
+        navigate('/founder-dashboard');
+      }, 1500);
 
     } catch (error) {
       console.error('Error updating company:', error);
@@ -251,9 +256,9 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">Edit Company</h1>
+          <h1 className="text-3xl font-bold text-blue-600 mb-2">Complete Your Company Information</h1>
           <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-            {company ? `Update information for ${company.name}` : 'Edit company information'}
+            {company ? `Please review and complete the information for ${company.name}` : 'Complete your company information'}
           </p>
         </div>
 
@@ -454,7 +459,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {isLoading ? 'Saving...' : 'Save Changes'}
+                    {isLoading ? 'Submitting...' : 'Submit Company Information'}
                   </button>
                 </div>
               </form>
