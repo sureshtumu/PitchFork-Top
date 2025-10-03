@@ -14,22 +14,19 @@ interface CompanyData {
   address: string;
   country: string;
   contact_name_1: string;
-  title_1: string;
+  title: string;
+  email: string;
   email_1: string;
-  phone_1: string;
-  contact_name_2: string;
-  title_2: string;
-  email_2: string;
-  phone_2: string;
+  phone: string;
   description: string;
-  funding_sought: string;
+  funding_terms: string;
 }
 
 interface AnalysisResult {
   company_name?: string;
   industry?: string;
   description?: string;
-  funding_sought?: string;
+  funding_terms?: string;
   contact_name?: string;
   title?: string;
   address?: string;
@@ -47,15 +44,12 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     address: '',
     country: '',
     contact_name_1: '',
-    title_1: '',
+    title: '',
+    email: '',
     email_1: '',
-    phone_1: '',
-    contact_name_2: '',
-    title_2: '',
-    email_2: '',
-    phone_2: '',
+    phone: '',
     description: '',
-    funding_sought: ''
+    funding_terms: ''
   });
   const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
   const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
@@ -78,6 +72,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       setCompanyData(prev => ({
         ...prev,
         contact_name_1: currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
+        email: currentUser.email || '',
         email_1: currentUser.email || ''
       }));
       
@@ -302,7 +297,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       return;
     }
 
-    if (!companyData.email_1.trim()) {
+    if (!companyData.email.trim() && !companyData.email_1.trim()) {
       setMessage({ type: 'error', text: 'Please enter a contact email' });
       return;
     }
@@ -726,45 +721,43 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       />
                       <input
                         type="text"
-                        name="title_1"
-                        value={companyData.title_1}
+                        name="title"
+                        value={companyData.title}
                         onChange={handleInputChange}
                         placeholder="Title"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="email"
-                        name="email_1"
+                        name="email"
                         required
-                        value={companyData.email_1}
+                        value={companyData.email}
                         onChange={handleInputChange}
                         placeholder="Email *"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="tel"
-                        name="phone_1"
-                        value={companyData.phone_1}
+                        name="phone"
+                        value={companyData.phone}
                         onChange={handleInputChange}
                         placeholder="Phone"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                     </div>
                   </div>
-                  
-                  {/* Secondary Contact */}
                   
                   {/* Description and Funding */}
                   <div className="md:col-span-2">
@@ -791,13 +784,13 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                     </label>
                     <input
                       type="text"
-                      name="funding_sought"
-                      value={companyData.funding_sought}
+                      name="funding_terms"
+                      value={companyData.funding_terms}
                       onChange={handleInputChange}
                       placeholder="e.g., $500K Series A, $2M Seed Round"
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                        isDark 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                       }`}
                     />
