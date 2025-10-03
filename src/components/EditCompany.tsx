@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Building2, Save, User, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Building2, Save, User, ChevronDown, Upload, FileText, X } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface EditCompanyProps {
@@ -15,12 +15,21 @@ interface Company {
   address?: string;
   country?: string;
   contact_name_1?: string;
-  title_1?: string;
+  title?: string;
+  email?: string;
   email_1?: string;
-  phone_1?: string;
+  phone?: string;
   description?: string;
-  funding_sought?: string;
+  funding_terms?: string;
   created_at: string;
+  status?: string;
+  date_submitted?: string;
+  overall_score?: number;
+  recommendation?: string;
+  key_team_members?: string;
+  revenue?: string;
+  valuation?: string;
+  url?: string;
 }
 
 const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
@@ -34,6 +43,9 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
   // Check authentication and load company data
   useEffect(() => {
@@ -51,19 +63,22 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
         setCompany(companyData);
         setFormData(companyData);
         setIsLoadingCompany(false);
+
+        // Load documents for this company
+        await loadDocuments(companyData.id);
       } else {
         // Load company data from database (for investors)
         await loadCompanyData();
       }
     };
-    
+
     checkAuthAndLoadData();
   }, [navigate, location.state]);
 
   const loadCompanyData = async () => {
     try {
       setIsLoadingCompany(true);
-      
+
       // For now, we'll just show a message that no company was selected
       // In a real app, you might want to show a company selector or redirect
       setMessage({ type: 'error', text: 'No company selected for editing' });
@@ -72,6 +87,89 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
       console.error('Error loading company:', error);
       setMessage({ type: 'error', text: 'Failed to load company data' });
       setIsLoadingCompany(false);
+    }
+  };
+
+  const loadDocuments = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('company_documents')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading documents:', error);
+        return;
+      }
+
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setAdditionalFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setAdditionalFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadFiles = async () => {
+    if (!company || additionalFiles.length === 0) {
+      return;
+    }
+
+    try {
+      setIsUploadingFiles(true);
+
+      for (const file of additionalFiles) {
+        const filePath = `${company.id}/${file.name}`;
+
+        // Upload file to storage
+        const { error: uploadError } = await supabase.storage
+          .from('company-documents')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          setMessage({ type: 'error', text: `Failed to upload ${file.name}` });
+          continue;
+        }
+
+        // Save document record
+        const { error: docError } = await supabase
+          .from('company_documents')
+          .insert([{
+            company_id: company.id,
+            filename: file.name,
+            document_name: file.name.replace(/\.[^/.]+$/, ''),
+            description: '',
+            path: filePath
+          }]);
+
+        if (docError) {
+          console.error('Error saving document record:', docError);
+        }
+      }
+
+      // Reload documents
+      await loadDocuments(company.id);
+      setAdditionalFiles([]);
+      setMessage({ type: 'success', text: 'Files uploaded successfully!' });
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      setMessage({ type: 'error', text: 'Failed to upload files' });
+    } finally {
+      setIsUploadingFiles(false);
     }
   };
 
@@ -450,8 +548,105 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                       }`}
                     />
                   </div>
+
+                  {/* Documents Section */}
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-semibold mb-4 text-blue-600">Documents</h3>
+
+                    {/* Existing Documents */}
+                    {documents.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                          Uploaded Documents
+                        </h4>
+                        <div className="space-y-2">
+                          {documents.map((doc) => (
+                            <div
+                              key={doc.id}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                                isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                              }`}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                <div>
+                                  <p className="font-medium">{doc.document_name}</p>
+                                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {doc.filename}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Add More Files */}
+                    <div>
+                      <h4 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                        Add More Documents
+                      </h4>
+                      <div className="mb-3">
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.ppt,.pptx,.xls,.xlsx,.doc,.docx"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          id="additional-files"
+                        />
+                        <label
+                          htmlFor="additional-files"
+                          className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                            isDark
+                              ? 'border-gray-600 hover:border-blue-500 bg-gray-700'
+                              : 'border-gray-300 hover:border-blue-500 bg-gray-50'
+                          }`}
+                        >
+                          <Upload className="w-5 h-5 mr-2 text-blue-600" />
+                          <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                            Click to select files
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Selected Files for Upload */}
+                      {additionalFiles.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {additionalFiles.map((file, index) => (
+                            <div
+                              key={index}
+                              className={`flex items-center justify-between p-2 rounded border ${
+                                isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+                              }`}
+                            >
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {file.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile(index)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={handleUploadFiles}
+                            disabled={isUploadingFiles}
+                            className="w-full bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                          >
+                            {isUploadingFiles ? 'Uploading...' : 'Upload Files'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                   <button
                     type="submit"

@@ -81,10 +81,32 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
             .select('user_type')
             .eq('user_id', data.user.id)
             .single();
-          
+
           if (profile?.user_type === 'founder') {
-            setSuccess('Welcome to Pitch Fork! You can now login and upload your documents. Check the status of your submission on your Dashboard.');
-            navigate('/founder-dashboard');
+            // Create company entry for founder
+            const { data: company, error: companyError } = await supabase
+              .from('companies')
+              .insert([{
+                name: formData.companyName,
+                contact_name_1: `${formData.firstName} ${formData.lastName}`,
+                email_1: formData.email,
+                phone: formData.phoneNumber
+              }])
+              .select()
+              .single();
+
+            if (companyError) {
+              console.error('Error creating company:', companyError);
+              setError('Account created but failed to create company profile. Please contact support.');
+              setIsLoading(false);
+              return;
+            }
+
+            // Store company ID for later use
+            sessionStorage.setItem('companyId', company.id);
+
+            setSuccess('Welcome to Pitch Fork! Please upload your pitch deck to continue.');
+            navigate('/founder-submission');
           } else {
             setSuccess('Welcome to Pitch Fork! You can now access your investor dashboard.');
             navigate('/dashboard');

@@ -218,40 +218,76 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       setMessage(null);
       setCurrentStep('analyze');
 
-      // Simulate AI analysis (replace with actual AI service call)
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Get company ID from session storage
+      const companyId = sessionStorage.getItem('companyId');
+      if (!companyId) {
+        setMessage({ type: 'error', text: 'Company ID not found. Please sign up again.' });
+        setIsAnalyzing(false);
+        setCurrentStep('upload');
+        return;
+      }
 
-      // Mock analysis result (replace with actual AI analysis)
-      const mockAnalysis: AnalysisResult = {
-        company_name: "TechStart AI",
-        industry: "Artificial Intelligence",
-        description: "AI-powered analytics platform for enterprise customers",
-        funding_sought: "$2M Series A",
-        contact_name: companyData.contact_name_1,
-        title: "CEO & Founder"
-      };
+      // Upload pitch deck to Supabase Storage
+      const filePath = `${companyId}/${pitchDeckFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-documents')
+        .upload(filePath, pitchDeckFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      setAnalysisResult(mockAnalysis);
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        setMessage({ type: 'error', text: 'Failed to upload pitch deck. Please try again.' });
+        setCurrentStep('upload');
+        setIsAnalyzing(false);
+        return;
+      }
 
-      // Pre-fill company data with analysis results
-      setCompanyData(prev => ({
-        ...prev,
-        name: mockAnalysis.company_name || prev.name,
-        industry: mockAnalysis.industry || prev.industry,
-        description: mockAnalysis.description || prev.description,
-        funding_sought: mockAnalysis.funding_sought || prev.funding_sought,
-        contact_name_1: mockAnalysis.contact_name || prev.contact_name_1,
-        title_1: mockAnalysis.title || prev.title_1,
-        address: mockAnalysis.address || prev.address,
-        country: mockAnalysis.country || prev.country
-      }));
+      // Save document record
+      const { error: docError } = await supabase
+        .from('company_documents')
+        .insert([{
+          company_id: companyId,
+          filename: pitchDeckFile.name,
+          document_name: 'Pitch Deck',
+          description: 'Main pitch deck presentation',
+          path: filePath
+        }]);
 
-      setCurrentStep('company');
-      setMessage({ type: 'success', text: 'Pitch deck analyzed successfully! Review and complete the company information below.' });
+      if (docError) {
+        console.error('Error saving document record:', docError);
+        setMessage({ type: 'error', text: 'Failed to save document record' });
+        setIsAnalyzing(false);
+        setCurrentStep('upload');
+        return;
+      }
+
+      // Fetch the company data to pass to EditCompany
+      const { data: companyRecord, error: fetchError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single();
+
+      if (fetchError || !companyRecord) {
+        console.error('Error fetching company:', fetchError);
+        setMessage({ type: 'error', text: 'Failed to fetch company data' });
+        setIsAnalyzing(false);
+        setCurrentStep('upload');
+        return;
+      }
+
+      setMessage({ type: 'success', text: 'Pitch deck uploaded successfully!' });
+
+      // Navigate to EditCompany page with company data
+      setTimeout(() => {
+        navigate('/edit-company', { state: { company: companyRecord } });
+      }, 1000);
 
     } catch (error) {
-      console.error('Analysis error:', error);
-      setMessage({ type: 'error', text: 'Failed to analyze pitch deck. Please try again.' });
+      console.error('Upload error:', error);
+      setMessage({ type: 'error', text: 'Failed to upload pitch deck. Please try again.' });
       setCurrentStep('upload');
     } finally {
       setIsAnalyzing(false);
