@@ -153,7 +153,7 @@ const SubmitFiles: React.FC<SubmitFilesProps> = ({ isDark, toggleTheme }) => {
       // Insert new company
       const { data, error } = await supabase
         .from('companies')
-        .insert([newCompanyData])
+        .insert([{ ...newCompanyData, user_id: user?.id }])
         .select()
         .single();
 

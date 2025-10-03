@@ -88,9 +88,49 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
     try {
       setIsLoadingCompany(true);
 
-      // For now, we'll just show a message that no company was selected
-      // In a real app, you might want to show a company selector or redirect
-      setMessage({ type: 'error', text: 'No company selected for editing' });
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        setMessage({ type: 'error', text: 'User not authenticated' });
+        setIsLoadingCompany(false);
+        return;
+      }
+
+      // Check if user is a founder
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('user_type')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (profile?.user_type === 'founder') {
+        // Load founder's company
+        const { data: companyData, error } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error loading company:', error);
+          setMessage({ type: 'error', text: 'Failed to load company data' });
+          setIsLoadingCompany(false);
+          return;
+        }
+
+        if (!companyData) {
+          setMessage({ type: 'error', text: 'No company found for your account' });
+          setIsLoadingCompany(false);
+          return;
+        }
+
+        setCompany(companyData);
+        setFormData(companyData);
+        await loadDocuments(companyData.id);
+      } else {
+        // For investors, show message that no company was selected
+        setMessage({ type: 'error', text: 'No company selected for editing' });
+      }
+
       setIsLoadingCompany(false);
     } catch (error) {
       console.error('Error loading company:', error);

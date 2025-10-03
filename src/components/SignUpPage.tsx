@@ -106,7 +106,8 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
                 name: formData.companyName,
                 contact_name: `${formData.firstName} ${formData.lastName}`,
                 email: formData.email,
-                phone: formData.phoneNumber
+                phone: formData.phoneNumber,
+                user_id: data.user?.id
               }])
               .select()
               .single();
