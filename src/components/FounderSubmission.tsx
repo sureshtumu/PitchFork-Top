@@ -15,7 +15,7 @@ interface CompanyData {
   country: string;
   contact_name_1: string;
   title: string;
-  email: string;
+  email_1: string;
   phone: string;
   description: string;
   funding_terms: string;
@@ -36,7 +36,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     country: '',
     contact_name_1: '',
     title: '',
-    email: '',
+    email_1: '',
     phone: '',
     description: '',
     funding_terms: '',
@@ -51,7 +51,6 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [extractionComplete, setExtractionComplete] = useState(false);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -69,7 +68,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         ...prev,
         name: userData.company_name || 'TechStart Innovations',
         contact_name_1: userData.full_name || `${userData.first_name || 'John'} ${userData.last_name || 'Doe'}`,
-        email: currentUser.email || 'john.doe@techstart.com',
+        email_1: currentUser.email || 'john.doe@techstart.com',
         phone: userData.phone_number || '+1 (555) 123-4567',
         industry: 'Technology',
         address: '123 Innovation Drive, Suite 100',
@@ -100,136 +99,17 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     }
   };
 
-  const handleContinueFromPitchDeck = () => {
+  const handleContinueFromPitchDeck = async () => {
     if (!pitchDeckFile) {
       setMessage({ type: 'error', text: 'Please select a pitch deck file to continue' });
       return;
     }
-    
-    // Call the extraction function
-    extractCompanySpecs();
-  };
-
-  const extractCompanySpecs = async () => {
-    if (!pitchDeckFile) return;
 
     try {
       setIsLoading(true);
-      setMessage({ type: 'success', text: 'Analyzing your pitch deck with AI...' });
+      setMessage({ type: 'success', text: 'Creating company profile...' });
 
-      // Create FormData to send the file
-      const formData = new FormData();
-      formData.append('file', pitchDeckFile);
-
-      console.log('Calling Supabase Edge Function with file:', pitchDeckFile.name);
-      console.log('File size:', pitchDeckFile.size, 'bytes');
-      console.log('File type:', pitchDeckFile.type);
-      
-      // Validate environment variables
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase environment variables are not configured. Please check your .env file.');
-      }
-      
-      console.log('Supabase URL:', supabaseUrl);
-      
-      // Call the Supabase Edge Function
-      const functionUrl = `${supabaseUrl}/functions/v1/find-company-specs-from-pitchdeck`;
-      console.log('Calling edge function at:', functionUrl);
-      
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: formData
-      });
-
-      console.log('Edge function response status:', response.status);
-      console.log('Edge function response headers:', Object.fromEntries(response.headers.entries()));
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Edge function error response:', errorText);
-        throw new Error(`Edge function failed (${response.status}): ${errorText}`);
-      }
-
-      const result = await response.json();
-      console.log('Raw edge function result:', result);
-
-      if (result.success && result.data) {
-        // Populate the form fields with extracted data
-        const extractedData = result.data;
-        console.log('Extracted company data:', extractedData);
-        
-        // Display the JSON data in an alert for debugging
-        alert('Extracted Data:\n' + JSON.stringify(extractedData, null, 2));
-        
-        setCompanyData(prev => ({
-          ...prev,
-          name: extractedData.name || prev.name,
-          url: extractedData.url || prev.url,
-          description: extractedData.description || prev.description,
-          industry: extractedData.industry || prev.industry,
-          country: extractedData.country || prev.country,
-          key_team_members: extractedData.key_team_members || prev.key_team_members,
-          revenue: extractedData.revenue || prev.revenue,
-          valuation: extractedData.valuation || prev.valuation,
-          funding_terms: extractedData.funding_sought || prev.funding_terms
-        }));
-
-        setExtractionComplete(true);
-        setMessage({ type: 'success', text: 'AI extraction completed! Review and edit the information below.' });
-      } else {
-        console.error('Edge function returned unsuccessful result:', result);
-        throw new Error(result.error || 'Failed to extract company information');
-      }
-
-    } catch (error) {
-      console.error('Extraction error:', error);
-      console.error('Full error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      setMessage({ 
-        type: 'error', 
-        text: 'AI extraction failed. Please fill in the information manually.' 
-      });
-    } finally {
-      setIsLoading(false);
-      setCurrentStep(2);
-    }
-  };
-
-  const handleSubmitCompanyInfo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!companyData.name.trim()) {
-      setMessage({ type: 'error', text: 'Company name is required' });
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setMessage(null);
-
-      // Check if company already exists
-      const { data: existingCompany } = await supabase
-        .from('companies')
-        .select('*')
-        .ilike('name', companyData.name.trim())
-        .maybeSingle();
-
-      if (existingCompany) {
-        setMessage({ type: 'error', text: 'A company with this name already exists' });
-        setIsLoading(false);
-        return;
-      }
-
-      // Insert new company
+      // Create company with basic info
       const { data, error } = await supabase
         .from('companies')
         .insert([{
@@ -243,23 +123,75 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
       if (error) {
         console.error('Error creating company:', error);
-        setMessage({ type: 'error', text: 'Failed to submit company information' });
+        setMessage({ type: 'error', text: 'Failed to create company profile' });
         return;
       }
 
-      setMessage({ type: 'success', text: 'Company information submitted successfully!' });
-      
-      // Move to step 3 for additional document upload
-      setCurrentStep(3);
-      
-      // Store company ID for document upload
+      // Upload pitch deck file
+      const pitchDeckPath = `${data.id}/pitch-deck-${pitchDeckFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-documents')
+        .upload(pitchDeckPath, pitchDeckFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        setMessage({ type: 'error', text: 'Failed to upload pitch deck' });
+        return;
+      }
+
+      // Create document record
+      const { error: docError } = await supabase
+        .from('documents')
+        .insert([{
+          company_id: data.id,
+          filename: pitchDeckFile.name,
+          document_name: 'Pitch Deck',
+          description: 'Company pitch deck presentation',
+          path: pitchDeckPath
+        }]);
+
+      if (docError) {
+        console.error('Document error:', docError);
+        setMessage({ type: 'error', text: 'Failed to save document record' });
+        return;
+      }
+
+      setMessage({ type: 'success', text: 'Company created successfully!' });
+
+      // Store company ID for later use
       sessionStorage.setItem('companyId', data.id);
 
+      // Navigate to VentureDetail page
+      setTimeout(() => {
+        navigate(`/venture-detail/${data.id}`);
+      }, 1000);
+
     } catch (error) {
-      console.error('Error submitting company:', error);
-      setMessage({ type: 'error', text: 'Failed to submit company information' });
+      console.error('Error:', error);
+      setMessage({ type: 'error', text: 'Failed to create company profile' });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+
+  const handleSubmitCompanyInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!companyData.name.trim()) {
+      setMessage({ type: 'error', text: 'Company name is required' });
+      return;
+    }
+
+    // This is now handled during pitch deck upload
+    // Company already exists in the database
+    // Just move to the VentureDetail page
+    const companyId = sessionStorage.getItem('companyId');
+    if (companyId) {
+      navigate(`/venture-detail/${companyId}`);
     }
   };
 
@@ -585,7 +517,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   className="bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
                   <Play className="w-5 h-5 mr-2" />
-                  Continue to Company Information
+                  Upload and Continue
                 </button>
               </div>
             </div>
@@ -606,7 +538,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Company Name */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete ? 'text-orange-600 font-semibold' : ''}`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Company Name *
                     </label>
                     <input
@@ -616,7 +548,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.name}
                       onChange={handleInputChange}
                       placeholder="Enter your company name"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -626,7 +558,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Industry */}
                   <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.industry ? 'text-orange-600 font-semibold' : ''}`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Industry
                     </label>
                     <input
@@ -635,7 +567,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.industry}
                       onChange={handleInputChange}
                       placeholder="e.g., Technology, Healthcare"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.industry ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -645,7 +577,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Country */}
                   <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.country ? 'text-orange-600 font-semibold' : ''}`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Country
                     </label>
                     <input
@@ -654,7 +586,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.country}
                       onChange={handleInputChange}
                       placeholder="Country"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.country ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -725,13 +657,13 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                         </label>
                         <input
                           type="email"
-                          name="email"
-                          value={companyData.email}
+                          name="email_1"
+                          value={companyData.email_1}
                           onChange={handleInputChange}
                           placeholder="Contact email"
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                            isDark 
-                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            isDark
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                           }`}
                         />
@@ -758,7 +690,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Company URL */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.url ? 'text-orange-600 font-semibold' : ''}`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Company Website
                     </label>
                     <input
@@ -767,7 +699,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.url}
                       onChange={handleInputChange}
                       placeholder="https://www.yourcompany.com"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.url ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -777,7 +709,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Description */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.description ? 'text-orange-600 font-semibold' : ''}`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Company Description
                     </label>
                     <textarea
@@ -786,7 +718,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       onChange={handleInputChange}
                       placeholder="Brief description of your company and what you do"
                       rows={3}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.description ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -799,7 +731,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                     <h3 className="text-lg font-semibold mb-4 text-orange-600">Financial Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.revenue ? 'text-orange-600 font-semibold' : ''}`}>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                           Annual Revenue
                         </label>
                         <input
@@ -808,7 +740,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                           value={companyData.revenue}
                           onChange={handleInputChange}
                           placeholder="e.g., $500K, $2M ARR"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.revenue ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                             isDark 
                               ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -816,7 +748,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                         />
                       </div>
                       <div>
-                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.valuation ? 'text-orange-600 font-semibold' : ''}`}>
+                        <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                           Current Valuation
                         </label>
                         <input
@@ -825,7 +757,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                           value={companyData.valuation}
                           onChange={handleInputChange}
                           placeholder="e.g., $10M pre-money"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.valuation ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                             isDark 
                               ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                               : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -837,7 +769,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Funding Terms */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.funding_terms ? 'text-orange-600 font-semibold' : ''}`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Funding Terms
                     </label>
                     <textarea
@@ -846,7 +778,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       onChange={handleInputChange}
                       placeholder="Describe your funding requirements, terms, and how you plan to use the investment"
                       rows={3}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.funding_terms ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -856,7 +788,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
 
                   {/* Key Team Members */}
                   <div className="md:col-span-2">
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1 ${extractionComplete && companyData.key_team_members ? 'text-orange-600 font-semibold' : ''}`}>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Key Team Members
                     </label>
                     <textarea
@@ -865,7 +797,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       onChange={handleInputChange}
                       placeholder="List key team members and their roles/backgrounds"
                       rows={3}
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${extractionComplete && companyData.key_team_members ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : ''} ${
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark 
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
