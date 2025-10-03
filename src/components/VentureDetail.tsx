@@ -39,12 +39,21 @@ interface AnalysisReport {
   generated_at: string;
 }
 
+interface Document {
+  id: string;
+  document_name: string;
+  description?: string;
+  path: string;
+  uploaded_at: string;
+}
+
 const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [analysisReports, setAnalysisReports] = useState<AnalysisReport[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +79,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       if (id) {
         await loadCompanyData(id);
         await loadAnalysisReports(id);
+        await loadDocuments(id);
       }
     };
     
@@ -110,7 +120,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const loadAnalysisReports = async (companyId: string) => {
     try {
       setIsLoadingReports(true);
-      
+
       const { data, error } = await supabase
         .from('analysis_reports')
         .select('*')
@@ -127,6 +137,25 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       console.error('Error loading analysis reports:', error);
     } finally {
       setIsLoadingReports(false);
+    }
+  };
+
+  const loadDocuments = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading documents:', error);
+        return;
+      }
+
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error loading documents:', error);
     }
   };
 
@@ -152,6 +181,31 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading report:', error);
+    }
+  };
+
+  const handleDownloadDocument = async (document: Document) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('company-documents')
+        .download(document.path);
+
+      if (error) {
+        console.error('Error downloading document:', error);
+        return;
+      }
+
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = document.document_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading document:', error);
     }
   };
 
@@ -589,6 +643,39 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 </div>
               )}
               
+              {/* Uploaded Documents */}
+              {documents.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Uploaded Documents</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold truncate">{doc.document_name}</h4>
+                            {doc.description && (
+                              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                                {doc.description}
+                              </p>
+                            )}
+                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
+                              Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleDownloadDocument(doc)}
+                            className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors ml-2 flex-shrink-0"
+                            title="Download document"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Downloadable Reports */}
               {analysisReports.length > 0 && (
                 <div>
