@@ -13,13 +13,16 @@ interface CompanyData {
   industry: string;
   address: string;
   country: string;
-  contact_name_1: string;
+  contact_name: string;
   title: string;
   email: string;
-  email_1: string;
   phone: string;
   description: string;
   funding_terms: string;
+  key_team_members?: string;
+  revenue?: string;
+  valuation?: string;
+  url?: string;
 }
 
 interface AnalysisResult {
@@ -43,13 +46,16 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     industry: '',
     address: '',
     country: '',
-    contact_name_1: '',
+    contact_name: '',
     title: '',
     email: '',
-    email_1: '',
     phone: '',
     description: '',
-    funding_terms: ''
+    funding_terms: '',
+    key_team_members: '',
+    revenue: '',
+    valuation: '',
+    url: ''
   });
   const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
   const [documentMetadata, setDocumentMetadata] = useState<{[key: string]: {name: string, description: string}}>({});
@@ -71,9 +77,8 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       // Prefill form with user registration data
       setCompanyData(prev => ({
         ...prev,
-        contact_name_1: currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
-        email: currentUser.email || '',
-        email_1: currentUser.email || ''
+        contact_name: currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
+        email: currentUser.email || ''
       }));
       
       setIsInitialized(true);
@@ -297,7 +302,7 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       return;
     }
 
-    if (!companyData.email.trim() && !companyData.email_1.trim()) {
+    if (!companyData.email.trim()) {
       setMessage({ type: 'error', text: 'Please enter a contact email' });
       return;
     }
@@ -708,14 +713,14 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <input
                         type="text"
-                        name="contact_name_1"
+                        name="contact_name"
                         required
-                        value={companyData.contact_name_1}
+                        value={companyData.contact_name}
                         onChange={handleInputChange}
                         placeholder="Contact name"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
@@ -788,6 +793,79 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                       value={companyData.funding_terms}
                       onChange={handleInputChange}
                       placeholder="e.g., $500K Series A, $2M Seed Round"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Additional Fields */}
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Revenue
+                    </label>
+                    <input
+                      type="text"
+                      name="revenue"
+                      value={companyData.revenue}
+                      onChange={handleInputChange}
+                      placeholder="e.g., $1M ARR"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Valuation
+                    </label>
+                    <input
+                      type="text"
+                      name="valuation"
+                      value={companyData.valuation}
+                      onChange={handleInputChange}
+                      placeholder="e.g., $10M"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Website URL
+                    </label>
+                    <input
+                      type="url"
+                      name="url"
+                      value={companyData.url}
+                      onChange={handleInputChange}
+                      placeholder="https://yourcompany.com"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Key Team Members
+                    </label>
+                    <input
+                      type="text"
+                      name="key_team_members"
+                      value={companyData.key_team_members}
+                      onChange={handleInputChange}
+                      placeholder="e.g., John Doe (CEO), Jane Smith (CTO)"
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                         isDark
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'

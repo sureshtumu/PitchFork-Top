@@ -14,10 +14,9 @@ interface Company {
   industry?: string;
   address?: string;
   country?: string;
-  contact_name_1?: string;
+  contact_name?: string;
   title?: string;
   email?: string;
-  email_1?: string;
   phone?: string;
   description?: string;
   funding_terms?: string;
@@ -463,49 +462,49 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <input
                         type="text"
-                        name="contact_name_1"
-                        value={formData.contact_name_1 || ''}
+                        name="contact_name"
+                        value={formData.contact_name || ''}
                         onChange={handleInputChange}
                         placeholder="Contact name"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="text"
-                        name="title_1"
-                        value={formData.title_1 || ''}
+                        name="title"
+                        value={formData.title || ''}
                         onChange={handleInputChange}
                         placeholder="Title"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="email"
-                        name="email_1"
-                        value={formData.email_1 || ''}
+                        name="email"
+                        value={formData.email || ''}
                         onChange={handleInputChange}
                         placeholder="Email"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
                       <input
                         type="tel"
-                        name="phone_1"
-                        value={formData.phone_1 || ''}
+                        name="phone"
+                        value={formData.phone || ''}
                         onChange={handleInputChange}
                         placeholder="Phone"
                         className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          isDark 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                             : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                         }`}
                       />
@@ -541,6 +540,78 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                       value={formData.funding_terms || ''}
                       onChange={handleInputChange}
                       placeholder="e.g., $500K Series A"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Revenue
+                    </label>
+                    <input
+                      type="text"
+                      name="revenue"
+                      value={formData.revenue || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g., $1M ARR"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Valuation
+                    </label>
+                    <input
+                      type="text"
+                      name="valuation"
+                      value={formData.valuation || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g., $10M"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Website URL
+                    </label>
+                    <input
+                      type="url"
+                      name="url"
+                      value={formData.url || ''}
+                      onChange={handleInputChange}
+                      placeholder="https://yourcompany.com"
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                      Key Team Members
+                    </label>
+                    <input
+                      type="text"
+                      name="key_team_members"
+                      value={formData.key_team_members || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g., John Doe (CEO), Jane Smith (CTO)"
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
