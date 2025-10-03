@@ -10,6 +10,7 @@ import FounderSubmission from './components/FounderSubmission';
 import VentureDetail from './components/VentureDetail';
 import FounderDashboard from './components/FounderDashboard';
 import EditPrompts from './components/EditPrompts';
+import CompanyList from './components/CompanyList';
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
   isDark: boolean;
@@ -431,9 +432,13 @@ function App() {
           path="/founder-dashboard" 
           element={<FounderDashboard isDark={isDark} toggleTheme={toggleTheme} />} 
         />
-        <Route 
-          path="/edit-prompts" 
-          element={<EditPrompts isDark={isDark} toggleTheme={toggleTheme} />} 
+        <Route
+          path="/edit-prompts"
+          element={<EditPrompts isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/company-list"
+          element={<CompanyList isDark={isDark} toggleTheme={toggleTheme} />}
         />
       </Routes>
     </Router>

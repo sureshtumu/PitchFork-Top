@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit3, Trash2, Save, X, User, ChevronDown, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Plus, CreditCard as Edit3, Trash2, Save, X, User, ChevronDown, MessageSquare } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface EditPromptsProps {
@@ -208,7 +208,7 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
                       <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Submit Files
                       </Link>
-                      <Link to="/edit-company" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
+                      <Link to="/company-list" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Edit Company
                       </Link>
                       <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
