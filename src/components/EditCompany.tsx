@@ -105,7 +105,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
         .from('documents')
         .select('*')
         .eq('company_id', companyId)
-        .order('uploaded_at', { ascending: false });
+        .order('date_added', { ascending: false });
 
       if (error) {
         console.error('Error loading documents:', error);
