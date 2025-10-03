@@ -537,13 +537,13 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     </label>
                     <input
                       type="text"
-                      name="funding_sought"
-                      value={formData.funding_sought || ''}
+                      name="funding_terms"
+                      value={formData.funding_terms || ''}
                       onChange={handleInputChange}
                       placeholder="e.g., $500K Series A"
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        isDark 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                           : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                       }`}
                     />
