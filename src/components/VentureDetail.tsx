@@ -214,10 +214,18 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
 
     try {
       setIsUpdating(true);
-      
+
+      // Map button labels to database status values
+      let dbStatus = newStatus;
+      if (newStatus === 'Diligence') {
+        dbStatus = 'In-Diligence';
+      } else if (newStatus === 'Diligence-Reject') {
+        dbStatus = 'DD-Rejected';
+      }
+
       const { error } = await supabase
         .from('companies')
-        .update({ status: newStatus })
+        .update({ status: dbStatus })
         .eq('id', company.id);
 
       if (error) {
@@ -226,7 +234,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       }
 
       // Update local state
-      setCompany(prev => prev ? { ...prev, status: newStatus } : null);
+      setCompany(prev => prev ? { ...prev, status: dbStatus } : null);
     } catch (error) {
       console.error('Error updating status:', error);
     } finally {
@@ -461,13 +469,15 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
             
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 mb-6">
-              {['Submitted', 'Analyze', 'Reject', 'Diligence', 'Invest'].map((status) => (
+              {['Submitted', 'Analyze', 'Reject', 'Diligence', 'Diligence-Reject'].map((status) => (
                 <button
                   key={status}
                   onClick={() => handleStatusChange(status)}
                   disabled={isUpdating}
                   className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                    company.status === status
+                    (status === 'Diligence-Reject' && company.status === 'DD-Rejected') ||
+                    (status === 'Diligence' && company.status === 'In-Diligence') ||
+                    (status !== 'Diligence-Reject' && status !== 'Diligence' && company.status === status)
                       ? 'bg-blue-600 text-white'
                       : isDark
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'

@@ -24,12 +24,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = React.useState({
     submitted: true,
-    pending: true,
     analyzed: true,
     inDiligence: true,
     rejected: true,
-    ddRejected: true,
-    invested: true
+    ddRejected: true
   });
   
   const [itemsToShow, setItemsToShow] = React.useState('10');
@@ -384,12 +382,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                 <div className="flex flex-wrap gap-4">
                   {[
                     { key: 'submitted', label: 'Submitted' },
-                    { key: 'pending', label: 'Pending' },
                     { key: 'analyzed', label: 'Analyzed' },
                     { key: 'inDiligence', label: 'In-Diligence' },
                     { key: 'rejected', label: 'Rejected' },
-                    { key: 'ddRejected', label: 'DD-Rejected' },
-                    { key: 'invested', label: 'Invested' }
+                    { key: 'ddRejected', label: 'DD-Rejected' }
                   ].map((filter) => (
                     <label key={filter.key} className="flex items-center">
                       <input
