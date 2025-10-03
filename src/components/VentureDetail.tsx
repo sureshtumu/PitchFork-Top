@@ -44,7 +44,7 @@ interface Document {
   document_name: string;
   description?: string;
   path: string;
-  uploaded_at: string;
+  date_added: string;
 }
 
 const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) => {
@@ -146,7 +146,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         .from('documents')
         .select('*')
         .eq('company_id', companyId)
-        .order('uploaded_at', { ascending: false });
+        .order('date_added', { ascending: false });
 
       if (error) {
         console.error('Error loading documents:', error);
@@ -659,7 +659,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                               </p>
                             )}
                             <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
-                              Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}
+                              Uploaded: {new Date(doc.date_added).toLocaleDateString()}
                             </p>
                           </div>
                           <button
