@@ -102,14 +102,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isDark, toggleTheme }) => {
             <form onSubmit={handleLogin} className="space-y-6">
               {/* Error Message */}
               {error && (
-                <div className="bg-danger-100 border border-danger-400 text-danger-700 px-4 py-3 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              {/* Error Message */}
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
                   {error}
                 </div>
               )}
