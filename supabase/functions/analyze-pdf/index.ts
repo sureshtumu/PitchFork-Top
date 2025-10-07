@@ -28,7 +28,7 @@ Deno.serve(async (req: Request) => {
       throw new Error('OPENAI_API_KEY environment variable is not set');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const openai = new OpenAI({ apiKey: openaiApiKey });
 
     const { file_path }: RequestBody = await req.json();
@@ -45,14 +45,20 @@ Deno.serve(async (req: Request) => {
 
     console.log('Generating signed URL for:', file_path);
 
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+    // Use service role key for storage operations
+    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
       .from('documents')
       .createSignedUrl(file_path, 3600);
 
     if (signedUrlError || !signedUrlData) {
       console.error('Error generating signed URL:', signedUrlError);
+      console.error('File path attempted:', file_path);
       return new Response(
-        JSON.stringify({ error: 'Failed to generate signed URL', details: signedUrlError }),
+        JSON.stringify({
+          error: 'Failed to generate signed URL',
+          details: signedUrlError,
+          file_path: file_path
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -165,7 +171,7 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log('Storing extracted data in database...');
-    const { data: insertedData, error: insertError } = await supabase
+    const { data: insertedData, error: insertError } = await supabaseAdmin
       .from('extracted_data')
       .insert({
         file_path: file_path,
