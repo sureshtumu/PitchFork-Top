@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
 
     // Use service role key for storage operations
     const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
-      .from('documents')
+      .from('company-documents')
       .createSignedUrl(file_path, 3600);
 
     if (signedUrlError || !signedUrlData) {
