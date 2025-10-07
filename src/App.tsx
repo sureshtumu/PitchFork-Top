@@ -11,6 +11,7 @@ import VentureDetail from './components/VentureDetail';
 import FounderDashboard from './components/FounderDashboard';
 import EditPrompts from './components/EditPrompts';
 import CompanyList from './components/CompanyList';
+import TestFiles from './components/TestFiles';
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
   isDark: boolean;
@@ -439,6 +440,10 @@ function App() {
         <Route
           path="/company-list"
           element={<CompanyList isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/test-files"
+          element={<TestFiles isDark={isDark} toggleTheme={toggleTheme} />}
         />
       </Routes>
     </Router>
