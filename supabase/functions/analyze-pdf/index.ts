@@ -9,6 +9,7 @@ const corsHeaders = {
 
 interface RequestBody {
   file_path: string;
+  company_id?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -31,7 +32,7 @@ Deno.serve(async (req: Request) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const openai = new OpenAI({ apiKey: openaiApiKey });
 
-    const { file_path }: RequestBody = await req.json();
+    const { file_path, company_id }: RequestBody = await req.json();
 
     if (!file_path) {
       return new Response(
@@ -42,6 +43,9 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
+
+    // Extract company_id from file_path if not provided
+    const companyId = company_id || file_path.split('/')[0];
 
     console.log('Generating signed URL for:', file_path);
 
@@ -94,7 +98,7 @@ Deno.serve(async (req: Request) => {
     console.log('Creating assistant...');
     const assistant = await openai.beta.assistants.create({
       name: 'PDF Analyzer',
-      instructions: 'You are an expert at analyzing pitch deck PDFs and extracting key information. Extract the company name, industry, and key team members from the document.',
+      instructions: 'You are an expert at analyzing pitch deck PDFs and extracting key information about startups and companies.',
       model: 'gpt-4-turbo-preview',
       tools: [{ type: 'file_search' }],
     });
@@ -122,7 +126,17 @@ Deno.serve(async (req: Request) => {
     console.log('Adding message to thread...');
     await openai.beta.threads.messages.create(thread.id, {
       role: 'user',
-      content: 'Please analyze this PDF and extract the following information in JSON format: company_name, industry, and key_team_members (as an array). Return only valid JSON.',
+      content: `Please analyze this pitch deck PDF and extract the following information in JSON format:
+- company_name: The name of the company
+- industry: The industry or sector the company operates in
+- key_team_members: Array of key team members and their roles
+- url: Company website URL if mentioned
+- valuation: Company valuation if mentioned (as a string, e.g., "$5M")
+- revenue: Revenue or revenue projections if mentioned (as a string)
+- description: A brief description of what the company does
+- funding_terms: Any funding terms, amount seeking, or investment details mentioned
+
+Return ONLY valid JSON with these fields. If a field is not found in the document, use null for that field.`,
     });
 
     console.log('Running assistant...');
@@ -185,6 +199,38 @@ Deno.serve(async (req: Request) => {
       throw new Error('Failed to store extracted data');
     }
 
+    // Update the companies table with extracted information
+    console.log('Updating companies table with extracted data...');
+    const updateData: any = {};
+
+    if (extractedInfo.company_name) updateData.name = extractedInfo.company_name;
+    if (extractedInfo.industry) updateData.industry = extractedInfo.industry;
+    if (extractedInfo.key_team_members) {
+      // Convert array to string if needed
+      updateData.key_team_members = Array.isArray(extractedInfo.key_team_members)
+        ? extractedInfo.key_team_members.join(', ')
+        : extractedInfo.key_team_members;
+    }
+    if (extractedInfo.url) updateData.url = extractedInfo.url;
+    if (extractedInfo.valuation) updateData.valuation = extractedInfo.valuation;
+    if (extractedInfo.revenue) updateData.revenue = extractedInfo.revenue;
+    if (extractedInfo.description) updateData.description = extractedInfo.description;
+    if (extractedInfo.funding_terms) updateData.funding_terms = extractedInfo.funding_terms;
+
+    if (Object.keys(updateData).length > 0) {
+      const { error: updateError } = await supabaseAdmin
+        .from('companies')
+        .update(updateData)
+        .eq('id', companyId);
+
+      if (updateError) {
+        console.error('Error updating companies table:', updateError);
+        // Don't throw error here, just log it
+      } else {
+        console.log('Companies table updated successfully');
+      }
+    }
+
     console.log('Cleaning up OpenAI resources...');
     try {
       await openai.beta.assistants.del(assistant.id);
@@ -199,6 +245,7 @@ Deno.serve(async (req: Request) => {
         success: true,
         data: insertedData,
         extracted_info: extractedInfo,
+        company_updated: Object.keys(updateData).length > 0,
       }),
       {
         status: 200,
