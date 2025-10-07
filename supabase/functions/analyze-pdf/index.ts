@@ -70,12 +70,17 @@ Deno.serve(async (req: Request) => {
     }
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
-    const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
     console.log('PDF downloaded, size:', pdfBuffer.byteLength);
+
+    // Extract filename from file_path
+    const filename = file_path.split('/').pop() || 'document.pdf';
+
+    // Create a File object from the buffer
+    const pdfFile = new File([pdfBuffer], filename, { type: 'application/pdf' });
 
     console.log('Uploading file to OpenAI...');
     const file = await openai.files.create({
-      file: pdfBlob as any,
+      file: pdfFile,
       purpose: 'assistants',
     });
     console.log('File uploaded to OpenAI:', file.id);
