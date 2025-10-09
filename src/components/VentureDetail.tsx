@@ -21,14 +21,26 @@ interface Company {
   description?: string;
   funding_terms?: string;
   status?: string;
-  overall_score?: number;
-  recommendation?: string;
   date_submitted: string;
   created_at: string;
   key_team_members?: string;
   revenue?: string;
   valuation?: string;
   url?: string;
+}
+
+interface Analysis {
+  id: string;
+  investor_id: string;
+  status: string;
+  overall_score?: number;
+  recommendation?: string;
+  comments?: string;
+  analyzed_at?: string;
+  investor?: {
+    name: string;
+    firm_name?: string;
+  };
 }
 
 interface AnalysisReport {
@@ -52,6 +64,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const { id } = useParams<{ id: string }>();
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis[]>([]);
   const [analysisReports, setAnalysisReports] = useState<AnalysisReport[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +91,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       
       if (id) {
         await loadCompanyData(id);
+        await loadAnalysis(id);
         await loadAnalysisReports(id);
         await loadDocuments(id);
       }
@@ -90,7 +104,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const { data, error } = await supabase
         .from('companies')
         .select('*')
@@ -114,6 +128,27 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       setError('Failed to load company data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadAnalysis = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('analysis')
+        .select(`
+          *,
+          investor:investors(name, firm_name)
+        `)
+        .eq('company_id', companyId);
+
+      if (error) {
+        console.error('Error loading analysis:', error);
+        return;
+      }
+
+      setAnalysis(data || []);
+    } catch (error) {
+      console.error('Error loading analysis:', error);
     }
   };
 

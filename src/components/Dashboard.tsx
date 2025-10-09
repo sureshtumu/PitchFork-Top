@@ -14,10 +14,22 @@ interface Company {
   name: string;
   industry?: string;
   status?: string;
-  overall_score?: number;
-  recommendation?: string;
   date_submitted: string;
   created_at: string;
+  analysis?: Analysis[];
+}
+
+interface Analysis {
+  id: string;
+  investor_id: string;
+  status: string;
+  overall_score?: number;
+  recommendation?: string;
+  comments?: string;
+  investor?: {
+    name: string;
+    firm_name?: string;
+  };
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
@@ -70,17 +82,37 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const loadCompanies = async () => {
     try {
       setIsLoadingCompanies(true);
-      const { data, error } = await supabase
+
+      // Load companies with their analysis records
+      const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
         .order('date_submitted', { ascending: false });
 
-      if (error) {
-        console.error('Error loading companies:', error);
+      if (companiesError) {
+        console.error('Error loading companies:', companiesError);
         return;
       }
 
-      setCompanies(data || []);
+      // Load all analysis records with investor info
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analysis')
+        .select(`
+          *,
+          investor:investors(name, firm_name)
+        `);
+
+      if (analysisError) {
+        console.error('Error loading analysis:', analysisError);
+      }
+
+      // Merge analysis data into companies
+      const companiesWithAnalysis = (companiesData || []).map(company => ({
+        ...company,
+        analysis: (analysisData || []).filter(a => a.company_id === company.id)
+      }));
+
+      setCompanies(companiesWithAnalysis);
     } catch (error) {
       console.error('Error loading companies:', error);
     } finally {

@@ -12,6 +12,27 @@ import FounderDashboard from './components/FounderDashboard';
 import EditPrompts from './components/EditPrompts';
 import CompanyList from './components/CompanyList';
 import TestFiles from './components/TestFiles';
+import InvestorSelection from './components/InvestorSelection';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+function InvestorSelectionWrapper() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const companyId = location.state?.companyId;
+
+  if (!companyId) {
+    navigate('/founder-dashboard');
+    return null;
+  }
+
+  return (
+    <InvestorSelection
+      companyId={companyId}
+      onComplete={() => navigate('/founder-dashboard')}
+      onCancel={() => navigate('/founder-dashboard')}
+    />
+  );
+}
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
   isDark: boolean;
@@ -444,6 +465,10 @@ function App() {
         <Route
           path="/test-files"
           element={<TestFiles isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/investor-selection"
+          element={<InvestorSelectionWrapper />}
         />
       </Routes>
     </Router>

@@ -266,7 +266,8 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
       // Redirect based on user type
       setTimeout(() => {
         if (isFounder) {
-          navigate('/founder-dashboard');
+          // Redirect to investor selection for founders
+          navigate('/investor-selection', { state: { companyId: company.id } });
         } else {
           navigate('/dashboard');
         }
