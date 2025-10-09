@@ -31,13 +31,13 @@ interface Company {
 
 interface Analysis {
   id: string;
-  investor_id: string;
+  investor_user_id: string;
   status: string;
   overall_score?: number;
   recommendation?: string;
   comments?: string;
   analyzed_at?: string;
-  investor?: {
+  investor_details?: {
     name: string;
     firm_name?: string;
   };
@@ -137,7 +137,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         .from('analysis')
         .select(`
           *,
-          investor:investors(name, firm_name)
+          investor_details:investor_details!investor_user_id(name, firm_name)
         `)
         .eq('company_id', companyId);
 

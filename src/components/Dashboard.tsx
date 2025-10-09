@@ -21,12 +21,12 @@ interface Company {
 
 interface Analysis {
   id: string;
-  investor_id: string;
+  investor_user_id: string;
   status: string;
   overall_score?: number;
   recommendation?: string;
   comments?: string;
-  investor?: {
+  investor_details?: {
     name: string;
     firm_name?: string;
   };
@@ -99,7 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         .from('analysis')
         .select(`
           *,
-          investor:investors(name, firm_name)
+          investor_details:investor_details!investor_user_id(name, firm_name)
         `);
 
       if (analysisError) {

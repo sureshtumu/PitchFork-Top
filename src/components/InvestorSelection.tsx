@@ -69,7 +69,7 @@ export default function InvestorSelection({ companyId, onComplete, onCancel }: I
     try {
       const analysisEntries = Array.from(selectedInvestors).map(investorUserId => ({
         company_id: companyId,
-        investor_id: investorUserId,
+        investor_user_id: investorUserId,
         status: 'submitted'
       }));
 
