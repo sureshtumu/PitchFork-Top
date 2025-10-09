@@ -30,45 +30,15 @@ export default function InvestorSelection({ companyId, onComplete, onCancel }: I
 
   const loadInvestors = async () => {
     try {
-      // Get all investor users with their details
+      // Get all investor details - includes name, email, firm info
       const { data: investorData, error: investorError } = await supabase
         .from('investor_details')
-        .select('user_id, firm_name, focus_areas, comment');
+        .select('user_id, name, email, firm_name, focus_areas, comment')
+        .order('name');
 
       if (investorError) throw investorError;
 
-      // Get user profiles for investors
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('user_id')
-        .eq('user_type', 'investor');
-
-      if (profileError) throw profileError;
-
-      // Get auth user data for names and emails
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-
-      if (usersError) {
-        console.error('Error loading user data:', usersError);
-      }
-
-      // Merge the data
-      const investorUserIds = new Set(profileData?.map(p => p.user_id) || []);
-      const investorDetailsMap = new Map((investorData || []).map(d => [d.user_id, d]));
-
-      const mergedInvestors = (users || []).filter(user => investorUserIds.has(user.id)).map(user => {
-        const details = investorDetailsMap.get(user.id);
-        return {
-          user_id: user.id,
-          name: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.email || 'Unknown',
-          email: user.email || '',
-          firm_name: details?.firm_name || null,
-          focus_areas: details?.focus_areas || null,
-          comment: details?.comment || null
-        };
-      });
-
-      setInvestors(mergedInvestors);
+      setInvestors(investorData || []);
     } catch (error) {
       console.error('Error loading investors:', error);
       setMessage({ type: 'error', text: 'Failed to load investors' });

@@ -139,6 +139,8 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
               .from('investor_details')
               .insert([{
                 user_id: data.user.id,
+                name: `${formData.firstName} ${formData.lastName}`.trim(),
+                email: formData.email,
                 firm_name: formData.firmName,
                 focus_areas: formData.focusAreas,
                 comment: formData.comment
