@@ -3,12 +3,12 @@ import { supabase } from '../lib/supabase';
 import { CheckCircle2, Circle, Building2, Target, Mail } from 'lucide-react';
 
 interface Investor {
-  id: string;
+  user_id: string;
   name: string;
+  email: string;
   firm_name: string | null;
-  email: string | null;
   focus_areas: string | null;
-  description: string | null;
+  comment: string | null;
 }
 
 interface InvestorSelectionProps {
@@ -30,14 +30,45 @@ export default function InvestorSelection({ companyId, onComplete, onCancel }: I
 
   const loadInvestors = async () => {
     try {
-      const { data, error } = await supabase
-        .from('investors')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
+      // Get all investor users with their details
+      const { data: investorData, error: investorError } = await supabase
+        .from('investor_details')
+        .select('user_id, firm_name, focus_areas, comment');
 
-      if (error) throw error;
-      setInvestors(data || []);
+      if (investorError) throw investorError;
+
+      // Get user profiles for investors
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_type', 'investor');
+
+      if (profileError) throw profileError;
+
+      // Get auth user data for names and emails
+      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+
+      if (usersError) {
+        console.error('Error loading user data:', usersError);
+      }
+
+      // Merge the data
+      const investorUserIds = new Set(profileData?.map(p => p.user_id) || []);
+      const investorDetailsMap = new Map((investorData || []).map(d => [d.user_id, d]));
+
+      const mergedInvestors = (users || []).filter(user => investorUserIds.has(user.id)).map(user => {
+        const details = investorDetailsMap.get(user.id);
+        return {
+          user_id: user.id,
+          name: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.email || 'Unknown',
+          email: user.email || '',
+          firm_name: details?.firm_name || null,
+          focus_areas: details?.focus_areas || null,
+          comment: details?.comment || null
+        };
+      });
+
+      setInvestors(mergedInvestors);
     } catch (error) {
       console.error('Error loading investors:', error);
       setMessage({ type: 'error', text: 'Failed to load investors' });
@@ -66,9 +97,9 @@ export default function InvestorSelection({ companyId, onComplete, onCancel }: I
     setMessage(null);
 
     try {
-      const analysisEntries = Array.from(selectedInvestors).map(investorId => ({
+      const analysisEntries = Array.from(selectedInvestors).map(investorUserId => ({
         company_id: companyId,
-        investor_id: investorId,
+        investor_id: investorUserId,
         status: 'submitted'
       }));
 
@@ -129,17 +160,17 @@ export default function InvestorSelection({ companyId, onComplete, onCancel }: I
             <div className="space-y-4">
               {investors.map((investor) => (
                 <div
-                  key={investor.id}
-                  onClick={() => !isSubmitting && toggleInvestor(investor.id)}
+                  key={investor.user_id}
+                  onClick={() => !isSubmitting && toggleInvestor(investor.user_id)}
                   className={`border rounded-xl p-6 cursor-pointer transition-all ${
-                    selectedInvestors.has(investor.id)
+                    selectedInvestors.has(investor.user_id)
                       ? 'border-blue-500 bg-blue-50 shadow-md'
                       : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 mt-1">
-                      {selectedInvestors.has(investor.id) ? (
+                      {selectedInvestors.has(investor.user_id) ? (
                         <CheckCircle2 className="w-6 h-6 text-blue-600" />
                       ) : (
                         <Circle className="w-6 h-6 text-slate-300" />
@@ -172,9 +203,9 @@ export default function InvestorSelection({ companyId, onComplete, onCancel }: I
                         </div>
                       )}
 
-                      {investor.description && (
+                      {investor.comment && (
                         <p className="text-sm text-slate-600 mt-3 leading-relaxed">
-                          {investor.description}
+                          {investor.comment}
                         </p>
                       )}
                     </div>

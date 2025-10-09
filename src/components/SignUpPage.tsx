@@ -18,7 +18,10 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'founder'
+    userType: 'founder',
+    firmName: '',
+    focusAreas: '',
+    comment: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -131,6 +134,23 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
               navigate('/submit-pitch-deck');
             }, 1500);
           } else {
+            // Create investor_details entry for investor
+            const { error: investorError } = await supabase
+              .from('investor_details')
+              .insert([{
+                user_id: data.user.id,
+                firm_name: formData.firmName,
+                focus_areas: formData.focusAreas,
+                comment: formData.comment
+              }]);
+
+            if (investorError) {
+              console.error('Error creating investor details:', investorError);
+              setError(`Account created but failed to save investor details: ${investorError.message}`);
+              setIsLoading(false);
+              return;
+            }
+
             setSuccess('Welcome to Pitch Fork! You can now access your investor dashboard.');
             setTimeout(() => {
               navigate('/dashboard');
@@ -278,46 +298,128 @@ const SignUpPage: React.FC<SignUpPageProps> = ({ isDark, toggleTheme }) => {
                 </div>
               </div>
 
-              {/* Company Name and Phone */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="companyName" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Company Name {formData.userType === 'founder' && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    id="companyName"
-                    name="companyName"
-                    type="text"
-                    required={formData.userType === 'founder'}
-                    value={formData.companyName}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      isDark
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                    }`}
-                    placeholder="Your company name"
-                  />
+              {/* Founder Fields */}
+              {formData.userType === 'founder' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="companyName" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="companyName"
+                      name="companyName"
+                      type="text"
+                      required
+                      value={formData.companyName}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="Your company name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phoneNumber" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Phone Number
+                    </label>
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="Your phone number"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="phoneNumber" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Phone Number
-                  </label>
-                  <input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                    }`}
-                    placeholder="Your phone number"
-                  />
-                </div>
-              </div>
+              )}
+
+              {/* Investor Fields */}
+              {formData.userType === 'investor' && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="firmName" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                        Firm Name
+                      </label>
+                      <input
+                        id="firmName"
+                        name="firmName"
+                        type="text"
+                        value={formData.firmName}
+                        onChange={handleInputChange}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        placeholder="Investment firm name"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="phoneNumber" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                        Phone Number
+                      </label>
+                      <input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        type="tel"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                          isDark
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        placeholder="Your phone number"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="focusAreas" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Focus Areas
+                    </label>
+                    <input
+                      id="focusAreas"
+                      name="focusAreas"
+                      type="text"
+                      value={formData.focusAreas}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="e.g., SaaS, FinTech, Healthcare"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="comment" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Comment / Description
+                    </label>
+                    <textarea
+                      id="comment"
+                      name="comment"
+                      rows={3}
+                      value={formData.comment}
+                      onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                        isDark
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      placeholder="Brief description of your investment approach"
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Email Field */}
               <div>
