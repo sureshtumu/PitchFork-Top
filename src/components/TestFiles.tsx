@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, User, ChevronDown, FileText, TestTube, X } from 'lucide-react';
+import { ArrowLeft, User, ChevronDown, FileText, TestTube, X, Download } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface TestFilesProps {
@@ -26,9 +26,16 @@ interface ExtractedData {
   extracted_info: {
     company_name?: string;
     industry?: string;
-    key_team_members?: string[];
     raw_response?: string;
     parse_error?: string;
+    analysis_type?: string;
+    analysis_result?: string;
+    prompt_used?: string;
+    model_used?: string;
+    pdf_download_url?: string;
+    pdf_file_name?: string;
+    analysis_id?: string;
+    report_id?: string;
   };
   created_at: string;
 }
@@ -40,6 +47,7 @@ const TestFiles: React.FC<TestFilesProps> = ({ isDark, toggleTheme }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [testingFile, setTestingFile] = useState<string | null>(null);
+  const [analyzingTeam, setAnalyzingTeam] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [showExtractedData, setShowExtractedData] = useState(false);
@@ -201,6 +209,79 @@ const TestFiles: React.FC<TestFilesProps> = ({ isDark, toggleTheme }) => {
     }
   };
 
+  const handleAnalyzeTeam = async (fileId: string, fileName: string, filePath: string) => {
+    setAnalyzingTeam(fileId);
+    setMessage({ type: 'success', text: `Analyzing team for: ${fileName}... This may take a minute.` });
+    setExtractedData(null);
+    setShowExtractedData(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setMessage({ type: 'error', text: 'Not authenticated' });
+        setAnalyzingTeam(null);
+        return;
+      }
+
+      // Call the new analyze-team edge function
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-team`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_path: filePath,
+          company_id: filePath.split('/')[0] // Extract company_id from path
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to analyze team');
+      }
+
+      const result = await response.json();
+      
+      // Display the analysis result directly from the response
+      if (result.analysis) {
+        setExtractedData({
+          id: result.report?.id || 'temp-' + Date.now(),
+          file_path: filePath,
+          extracted_info: {
+            analysis_type: 'team',
+            analysis_result: result.analysis,
+            prompt_used: result.prompt_used,
+            model_used: result.model_used,
+            pdf_download_url: result.report?.download_url,
+            pdf_file_name: result.report?.file_name,
+            analysis_id: result.analysis_id,
+            report_id: result.report?.id,
+          },
+          created_at: new Date().toISOString(),
+        });
+        setShowExtractedData(true);
+        
+        // Show success message with PDF info
+        setMessage({ 
+          type: 'success', 
+          text: `Team analysis completed! PDF report generated: ${result.report?.file_name || fileName}` 
+        });
+      }
+
+      setAnalyzingTeam(null);
+    } catch (error) {
+      console.error('Error analyzing team:', error);
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to analyze team'
+      });
+      setAnalyzingTeam(null);
+    }
+  };
+
   const handleLogout = async () => {
     const { error } = await signOut();
     if (!error) {
@@ -332,20 +413,37 @@ const TestFiles: React.FC<TestFilesProps> = ({ isDark, toggleTheme }) => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <button
-                            onClick={() => handleTest(file.id, file.filename, file.path)}
-                            disabled={testingFile === file.id}
-                            className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center ${
-                              testingFile === file.id
-                                ? 'bg-gray-400 text-white cursor-not-allowed'
-                                : isDark
-                                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                  : 'bg-blue-500 text-white hover:bg-blue-600'
-                            }`}
-                          >
-                            <TestTube className="w-4 h-4 mr-2" />
-                            {testingFile === file.id ? 'Analyzing...' : 'Test'}
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleTest(file.id, file.filename, file.path)}
+                              disabled={testingFile === file.id || analyzingTeam === file.id}
+                              className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center ${
+                                testingFile === file.id
+                                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                                  : isDark
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                              }`}
+                            >
+                              <TestTube className="w-4 h-4 mr-2" />
+                              {testingFile === file.id ? 'Analyzing...' : 'Test'}
+                            </button>
+                            
+                            <button
+                              onClick={() => handleAnalyzeTeam(file.id, file.filename, file.path)}
+                              disabled={testingFile === file.id || analyzingTeam === file.id}
+                              className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center ${
+                                analyzingTeam === file.id
+                                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                                  : isDark
+                                    ? 'bg-green-600 text-white hover:bg-green-700'
+                                    : 'bg-green-500 text-white hover:bg-green-600'
+                              }`}
+                            >
+                              <User className="w-4 h-4 mr-2" />
+                              {analyzingTeam === file.id ? 'Analyzing...' : 'Analyze Team'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -359,11 +457,13 @@ const TestFiles: React.FC<TestFilesProps> = ({ isDark, toggleTheme }) => {
         {/* Extracted Data Modal */}
         {showExtractedData && extractedData && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto`}>
+            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto`}>
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Extracted Data
+                    {extractedData.extracted_info.analysis_type === 'team' 
+                      ? '👥 Team Analysis Results' 
+                      : 'Extracted Data'}
                   </h2>
                   <button
                     onClick={() => setShowExtractedData(false)}
@@ -382,6 +482,72 @@ const TestFiles: React.FC<TestFilesProps> = ({ isDark, toggleTheme }) => {
                       {extractedData.file_path}
                     </p>
                   </div>
+
+                  {/* Team Analysis Result */}
+                  {extractedData.extracted_info.analysis_result && (
+                    <div>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2 font-semibold`}>
+                        Analysis Report
+                      </p>
+                      <div className={`${isDark ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-800'} p-4 rounded-lg whitespace-pre-wrap leading-relaxed`}>
+                        {extractedData.extracted_info.analysis_result}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Model Used */}
+                  {extractedData.extracted_info.model_used && (
+                    <div className={`${isDark ? 'bg-blue-900 bg-opacity-30' : 'bg-blue-50'} p-3 rounded-lg`}>
+                      <p className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-700'} font-semibold mb-1`}>
+                        AI Model Used
+                      </p>
+                      <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-blue-900'}`}>
+                        {extractedData.extracted_info.model_used}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* PDF Download Button */}
+                  {extractedData.extracted_info.pdf_download_url && (
+                    <div className={`${isDark ? 'bg-green-900 bg-opacity-30 border-green-700' : 'bg-green-50 border-green-200'} border-2 p-4 rounded-lg`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className={`font-semibold ${isDark ? 'text-green-300' : 'text-green-800'} mb-1`}>
+                            📄 PDF Report Generated
+                          </p>
+                          <p className={`text-sm ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+                            {extractedData.extracted_info.pdf_file_name}
+                          </p>
+                        </div>
+                        <a
+                          href={extractedData.extracted_info.pdf_download_url}
+                          download={extractedData.extracted_info.pdf_file_name}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex items-center px-4 py-2 rounded-lg font-semibold transition-colors ${
+                            isDark
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-green-500 text-white hover:bg-green-600'
+                          }`}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download PDF
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show prompt used (collapsible) */}
+                  {extractedData.extracted_info.prompt_used && (
+                    <details className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded`}>
+                      <summary className={`cursor-pointer font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} hover:${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        View Prompt Used
+                      </summary>
+                      <p className={`mt-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} whitespace-pre-wrap`}>
+                        {extractedData.extracted_info.prompt_used}
+                      </p>
+                    </details>
+                  )}
 
                   {extractedData.extracted_info.company_name && (
                     <div>
@@ -402,19 +568,6 @@ const TestFiles: React.FC<TestFilesProps> = ({ isDark, toggleTheme }) => {
                       <p className={`${isDark ? 'text-white' : 'text-gray-900'}`}>
                         {extractedData.extracted_info.industry}
                       </p>
-                    </div>
-                  )}
-
-                  {extractedData.extracted_info.key_team_members && extractedData.extracted_info.key_team_members.length > 0 && (
-                    <div>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
-                        Key Team Members
-                      </p>
-                      <ul className={`list-disc list-inside space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {extractedData.extracted_info.key_team_members.map((member, index) => (
-                          <li key={index}>{member}</li>
-                        ))}
-                      </ul>
                     </div>
                   )}
 

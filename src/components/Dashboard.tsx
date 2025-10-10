@@ -26,16 +26,13 @@ interface Analysis {
   overall_score?: number;
   recommendation?: string;
   comments?: string;
-  investor_details?: {
-    name: string;
-    firm_name?: string;
-  };
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = React.useState({
     submitted: true,
+    screened: true,
     analyzed: true,
     inDiligence: true,
     rejected: true,
@@ -83,38 +80,88 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
     try {
       setIsLoadingCompanies(true);
 
-      // Load companies with their analysis records
-      const { data: companiesData, error: companiesError } = await supabase
-        .from('companies')
-        .select('*')
-        .order('date_submitted', { ascending: false });
-
-      if (companiesError) {
-        console.error('Error loading companies:', companiesError);
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        console.log('Dashboard: No current user found');
         return;
       }
 
-      // Load all analysis records with investor info
+      console.log('Dashboard: Loading companies for user:', currentUser.id, currentUser.email);
+
+      // Load only companies assigned to this investor (have entry in analysis table)
+      // Note: We don't join investor_details because there's no direct FK relationship
+      // between analysis and investor_details (they both link to auth.users)
       const { data: analysisData, error: analysisError } = await supabase
         .from('analysis')
         .select(`
           *,
-          investor_details:investor_details!investor_user_id(name, firm_name)
-        `);
+          companies:company_id(*)
+        `)
+        .eq('investor_user_id', currentUser.id);
+
+      console.log('Dashboard: Analysis query result:', { 
+        dataCount: analysisData?.length || 0, 
+        error: analysisError,
+        sampleData: analysisData?.[0]
+      });
 
       if (analysisError) {
         console.error('Error loading analysis:', analysisError);
+        alert(`Error loading companies: ${analysisError.message}`);
+        return;
       }
 
-      // Merge analysis data into companies
-      const companiesWithAnalysis = (companiesData || []).map(company => ({
-        ...company,
-        analysis: (analysisData || []).filter(a => a.company_id === company.id)
-      }));
+      if (!analysisData || analysisData.length === 0) {
+        console.log('Dashboard: No analysis records found for this investor');
+        setCompanies([]);
+        return;
+      }
+
+      // Transform data: extract companies and attach their analysis records
+      const companiesMap = new Map<string, Company>();
+      
+      (analysisData || []).forEach(analysis => {
+        console.log('Dashboard: Processing analysis:', {
+          analysisId: analysis.id,
+          companyId: analysis.company_id,
+          hasCompanyData: !!analysis.companies
+        });
+
+        const company = analysis.companies;
+        if (company) {
+          if (!companiesMap.has(company.id)) {
+            companiesMap.set(company.id, {
+              ...company,
+              analysis: []
+            });
+          }
+          companiesMap.get(company.id)!.analysis!.push({
+            id: analysis.id,
+            investor_user_id: analysis.investor_user_id,
+            status: analysis.status,
+            overall_score: analysis.overall_score,
+            recommendation: analysis.recommendation,
+            comments: analysis.comments
+          });
+        } else {
+          console.warn('Dashboard: Analysis has no company data:', analysis.id);
+        }
+      });
+
+      // Convert map to array and sort by date_submitted
+      const companiesWithAnalysis = Array.from(companiesMap.values()).sort((a, b) => {
+        return new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime();
+      });
+
+      console.log('Dashboard: Final companies list:', {
+        count: companiesWithAnalysis.length,
+        companies: companiesWithAnalysis.map(c => ({ id: c.id, name: c.name, status: c.status }))
+      });
 
       setCompanies(companiesWithAnalysis);
     } catch (error) {
       console.error('Error loading companies:', error);
+      alert(`Error loading companies: ${error}`);
     } finally {
       setIsLoadingCompanies(false);
     }
@@ -216,6 +263,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const filteredCompanies = companies.filter(company => {
     const status = company.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
     if (status === 'submitted' && filters.submitted) return true;
+    if (status === 'screened' && filters.screened) return true;
     if (status === 'pending' && filters.pending) return true;
     if (status === 'analyzed' && filters.analyzed) return true;
     if (status === 'indiligence' && filters.inDiligence) return true;
@@ -295,14 +343,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                   </button>
                   {showUtilitiesMenu && (
                     <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} rounded-lg shadow-financial border z-50`}>
-                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
-                        Submit Files
-                      </Link>
                       <Link to="/company-list" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Edit Company
                       </Link>
-                      <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
-                        Investor Criteria
+                      <Link to="/investor-preferences" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
+                        Investor Preferences
                       </Link>
                       <Link to="/edit-prompts" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Edit Prompts
@@ -417,6 +462,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                 <div className="flex flex-wrap gap-4">
                   {[
                     { key: 'submitted', label: 'Submitted' },
+                    { key: 'screened', label: 'Screened' },
                     { key: 'analyzed', label: 'Analyzed' },
                     { key: 'inDiligence', label: 'In-Diligence' },
                     { key: 'rejected', label: 'Rejected' },
@@ -511,6 +557,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                         <h3 className="text-lg font-bold text-gold-600">{company.name}</h3>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           company.status === 'Submitted' ? 'bg-silver-100 text-silver-800' :
+                          company.status === 'Screened' ? 'bg-blue-100 text-blue-800' :
                           company.status === 'Pending' ? 'bg-gold-100 text-gold-800' :
                           company.status === 'Analyzed' ? 'bg-navy-100 text-navy-800' :
                           company.status === 'Invested' ? 'bg-success-100 text-success-800' :
@@ -518,6 +565,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                         'bg-danger-100 text-danger-800'
                       }`}>
                           {company.status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
+                           company.status === 'Screened' ? <Filter className="w-3 h-3 mr-1" /> :
                            company.status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
                            company.status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
                            company.status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :

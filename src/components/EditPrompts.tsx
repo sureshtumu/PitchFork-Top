@@ -205,17 +205,17 @@ const EditPrompts: React.FC<EditPromptsProps> = ({ isDark, toggleTheme }) => {
                   </button>
                   {showUtilitiesMenu && (
                     <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} rounded-lg shadow-financial border z-50`}>
-                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
-                        Submit Files
-                      </Link>
                       <Link to="/company-list" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Edit Company
                       </Link>
-                      <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
-                        Investor Criteria
+                      <Link to="/investor-preferences" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
+                        Investor Preferences
                       </Link>
                       <Link to="/edit-prompts" className={`block px-4 py-2 text-sm text-gold-600 font-bold bg-gold-50 dark:bg-gold-900/20`}>
                         Edit Prompts
+                      </Link>
+                      <Link to="/test-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
+                        Test Files
                       </Link>
                     </div>
                   )}

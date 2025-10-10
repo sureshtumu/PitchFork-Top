@@ -23,7 +23,6 @@ interface Company {
   status?: string;
   date_submitted: string;
   created_at: string;
-  key_team_members?: string;
   revenue?: string;
   valuation?: string;
   url?: string;

@@ -25,7 +25,6 @@ interface Company {
   date_submitted?: string;
   overall_score?: number;
   recommendation?: string;
-  key_team_members?: string;
   revenue?: string;
   valuation?: string;
   url?: string;
@@ -331,17 +330,17 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                     </button>
                     {showUtilitiesMenu && (
                       <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                        <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                          Submit Files
-                        </Link>
                         <Link to="/company-list" className={`block px-4 py-2 text-sm text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/20`}>
                           Edit Company
                         </Link>
-                        <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                          Investor Criteria
+                        <Link to="/investor-preferences" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                          Investor Preferences
                         </Link>
                         <Link to="/edit-prompts" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
                           Edit Prompts
+                        </Link>
+                        <Link to="/test-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                          Test Files
                         </Link>
                       </div>
                     )}
@@ -674,24 +673,6 @@ const EditCompany: React.FC<EditCompanyProps> = ({ isDark, toggleTheme }) => {
                       value={formData.url || ''}
                       onChange={handleInputChange}
                       placeholder="https://yourcompany.com"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        isDark
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                      Key Team Members
-                    </label>
-                    <input
-                      type="text"
-                      name="key_team_members"
-                      value={formData.key_team_members || ''}
-                      onChange={handleInputChange}
-                      placeholder="e.g., John Doe (CEO), Jane Smith (CTO)"
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDark
                           ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'

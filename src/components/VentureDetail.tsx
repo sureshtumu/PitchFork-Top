@@ -23,7 +23,6 @@ interface Company {
   status?: string;
   date_submitted: string;
   created_at: string;
-  key_team_members?: string;
   revenue?: string;
   valuation?: string;
   url?: string;
@@ -155,11 +154,38 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const loadAnalysisReports = async (companyId: string) => {
     try {
       setIsLoadingReports(true);
+      const currentUser = await getCurrentUser();
+      
+      if (!currentUser) {
+        setAnalysisReports([]);
+        return;
+      }
 
+      // Get the analysis ID for this investor-company pair
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analysis')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('investor_user_id', currentUser.id)
+        .maybeSingle();
+
+      if (analysisError) {
+        console.error('Error loading analysis:', analysisError);
+        setAnalysisReports([]);
+        return;
+      }
+
+      if (!analysisData) {
+        // No analysis for this investor-company pair yet
+        setAnalysisReports([]);
+        return;
+      }
+
+      // Load reports for this specific analysis
       const { data, error } = await supabase
         .from('analysis_reports')
         .select('*')
-        .eq('company_id', companyId)
+        .eq('analysis_id', analysisData.id)
         .order('generated_at', { ascending: false });
 
       if (error) {
@@ -196,8 +222,8 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
 
   const handleDownloadReport = async (report: AnalysisReport) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('company-documents')
+      const { data, error} = await supabase.storage
+        .from('analysis-output-docs')
         .download(report.file_path);
 
       if (error) {
@@ -402,14 +428,17 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                   </button>
                   {showUtilitiesMenu && (
                     <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} z-50`}>
-                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
-                        Submit Files
-                      </Link>
                       <Link to="/company-list" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
                         Edit Company
                       </Link>
+                      <Link to="/investor-preferences" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                        Investor Preferences
+                      </Link>
                       <Link to="/edit-prompts" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
                         Edit Prompts
+                      </Link>
+                      <Link to="/test-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors`}>
+                        Test Files
                       </Link>
                     </div>
                   )}
@@ -674,84 +703,90 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 </div>
               </div>
               
-              {/* Summary Score and Recommendation */}
-              {analysisReports.find(r => r.report_type === 'summary') && (
-                <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-blue-50'} mb-4`}>
-                  <h3 className="text-lg font-semibold text-blue-600 mb-2">Summary Score and Recommendation</h3>
-                  <button
-                    onClick={() => handleDownloadReport(analysisReports.find(r => r.report_type === 'summary')!)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Summary Report
-                  </button>
-                </div>
-              )}
-              
-              {/* Uploaded Documents */}
-              {documents.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-4">Uploaded Documents</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {documents.map((doc) => (
-                      <div key={doc.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold truncate">{doc.document_name}</h4>
-                            {doc.description && (
-                              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
-                                {doc.description}
-                              </p>
-                            )}
-                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
-                              Uploaded: {new Date(doc.date_added).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleDownloadDocument(doc)}
-                            className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors ml-2 flex-shrink-0"
-                            title="Download document"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            </div>
+          </div>
+        )}
 
-              {/* Downloadable Reports */}
-              {analysisReports.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Analysis Reports</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {analysisReports.map((report) => (
-                      <div key={report.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h4 className="font-semibold capitalize">
-                              {report.report_type === 'summary' ? 'Summary Report' :
-                               report.report_type === 'detailed' ? 'Detailed Analysis' :
-                               'Company Feedback'}
-                            </h4>
-                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                              Generated: {new Date(report.generated_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleDownloadReport(report)}
-                            className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
-                            title="Download report"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        </div>
+        {/* Uploaded Documents Section - Always Visible */}
+        {documents.length > 0 && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-blue-600 flex items-center">
+                <FileText className="w-5 h-5 mr-2" />
+                Uploaded Documents
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {documents.map((doc) => (
+                  <div key={doc.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{doc.document_name}</h4>
+                        {doc.description && (
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                            {doc.description}
+                          </p>
+                        )}
+                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
+                          Uploaded: {new Date(doc.date_added).toLocaleDateString()}
+                        </p>
                       </div>
-                    ))}
+                      <button
+                        onClick={() => handleDownloadDocument(doc)}
+                        className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors ml-2 flex-shrink-0"
+                        title="Download document"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Reports Section - Always Visible if Reports Exist */}
+        {analysisReports.length > 0 && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-blue-600 flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2" />
+                My Analysis Reports
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {analysisReports.map((report) => (
+                  <div key={report.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className={`font-semibold capitalize mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {report.report_type === 'summary' ? '📊 Summary Report' :
+                           report.report_type === 'detailed' ? '📈 Detailed Analysis' :
+                           report.report_type === 'team-analysis' ? '👥 Team Analysis' :
+                           report.report_type === 'feedback' ? '💬 Company Feedback' :
+                           report.report_type.replace(/-/g, ' ')}
+                        </h4>
+                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mb-1`}>
+                          {report.file_name}
+                        </p>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Generated: {new Date(report.generated_at).toLocaleDateString()} {new Date(report.generated_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDownloadReport(report)}
+                        className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors flex-shrink-0"
+                        title="Download report"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -816,9 +851,76 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                   Funding Sought
                 </label>
                 <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                  {company.funding_sought || 'Not specified'}
+                  {company.funding_terms || 'Not specified'}
                 </p>
               </div>
+
+              {/* Revenue */}
+              {company.revenue && (
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Revenue
+                  </label>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-semibold`}>
+                    {company.revenue}
+                  </p>
+                </div>
+              )}
+
+              {/* Valuation */}
+              {company.valuation && (
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Valuation
+                  </label>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-semibold`}>
+                    {company.valuation}
+                  </p>
+                </div>
+              )}
+
+              {/* Website URL */}
+              {company.url && (
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Website
+                  </label>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <a 
+                      href={company.url.startsWith('http') ? company.url : `https://${company.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 transition-colors underline"
+                    >
+                      {company.url}
+                    </a>
+                  </p>
+                </div>
+              )}
+
+              {/* Address */}
+              {company.address && (
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Address
+                  </label>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                    {company.address}
+                  </p>
+                </div>
+              )}
+
+              {/* Country */}
+              {company.country && (
+                <div>
+                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    Country
+                  </label>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
+                    {company.country}
+                  </p>
+                </div>
+              )}
 
               {/* Description */}
               <div className="md:col-span-2">

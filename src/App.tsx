@@ -13,6 +13,7 @@ import EditPrompts from './components/EditPrompts';
 import CompanyList from './components/CompanyList';
 import TestFiles from './components/TestFiles';
 import InvestorSelection from './components/InvestorSelection';
+import InvestorPreferences from './components/InvestorPreferences';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 function InvestorSelectionWrapper() {
@@ -469,6 +470,10 @@ function App() {
         <Route
           path="/investor-selection"
           element={<InvestorSelectionWrapper />}
+        />
+        <Route
+          path="/investor-preferences"
+          element={<InvestorPreferences isDark={isDark} toggleTheme={toggleTheme} />}
         />
       </Routes>
     </Router>
