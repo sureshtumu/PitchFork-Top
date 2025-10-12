@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye, MessageCircle, CreditCard as Edit3 } from 'lucide-react';
+import { Building2, Calendar, FileText, User, ChevronDown, Upload, BarChart3, Trash2, Eye, MessageCircle, Users, CreditCard as Edit3 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface FounderDashboardProps {
@@ -20,26 +20,12 @@ interface Company {
   phone?: string;
   description?: string;
   funding_terms?: string;
-  status?: string;
+  funding_stage?: string;
   date_submitted: string;
   created_at: string;
   revenue?: string;
   valuation?: string;
   url?: string;
-}
-
-interface Message {
-  id: string;
-  company_id: string;
-  sender_type: string;
-  sender_id?: string;
-  recipient_type: string;
-  recipient_id?: string;
-  message_title: string;
-  message_detail: string;
-  message_status: string;
-  date_sent: string;
-  created_at: string;
 }
 
 interface Document {
@@ -52,15 +38,30 @@ interface Document {
   date_added: string;
 }
 
+interface InvestorAnalysis {
+  id: string;
+  investor_user_id: string;
+  status: string;
+  recommendation?: string;
+  history?: string;
+  updated_at: string;
+  investor_details: {
+    name: string;
+    email: string;
+    firm_name?: string;
+  };
+}
+
 const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [investorAnalyses, setInvestorAnalyses] = useState<InvestorAnalysis[]>([]);
+  const [messageTexts, setMessageTexts] = useState<Record<string, string>>({});
+  const [sendingMessage, setSendingMessage] = useState<Record<string, boolean>>({});
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   // Check authentication and load data
   useEffect(() => {
@@ -83,14 +84,27 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       
       // Get current user
       const currentUser = await getCurrentUser();
-      if (!currentUser) return;
+      if (!currentUser) {
+        console.log('FounderDashboard: No current user');
+        return;
+      }
 
-      // Look for companies where the founder is the contact
+      console.log('FounderDashboard: Loading company for user:', currentUser.id, currentUser.email);
+
+      // Look for companies where the founder is the owner (user_id)
       const { data: companyData, error: companyError } = await supabase
         .from('companies')
         .select('*')
-        .eq('email', currentUser.email)
+        .eq('user_id', currentUser.id)
         .maybeSingle();
+
+      console.log('FounderDashboard: Company query result:', {
+        found: !!companyData,
+        error: companyError,
+        companyId: companyData?.id,
+        companyName: companyData?.name,
+        userId: companyData?.user_id
+      });
 
       if (companyError) {
         console.error('Error loading company:', companyError);
@@ -99,14 +113,87 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
       }
 
       if (companyData) {
+        console.log('FounderDashboard: Company found:', companyData.name);
         setCompany(companyData);
         await loadDocuments(companyData.id);
-        await loadMessages(companyData.id);
+        await loadInvestorAnalyses(companyData.id);
+      } else {
+        console.log('FounderDashboard: No company found for this user');
       }
     } catch (error) {
       console.error('Error loading founder data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadInvestorAnalyses = async (companyId: string) => {
+    try {
+      console.log('FounderDashboard: Loading investor analyses for company:', companyId);
+      
+      // First, get analysis records
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analysis')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      console.log('FounderDashboard: Analysis records:', {
+        count: analysisData?.length || 0,
+        error: analysisError,
+        data: analysisData
+      });
+
+      if (analysisError) {
+        console.error('Error loading investor analyses:', analysisError);
+        return;
+      }
+
+      if (!analysisData || analysisData.length === 0) {
+        console.log('FounderDashboard: No analysis records found');
+        setInvestorAnalyses([]);
+        return;
+      }
+
+      // Get unique investor user IDs
+      const investorUserIds = [...new Set(analysisData.map(a => a.investor_user_id))];
+      console.log('FounderDashboard: Loading details for investors:', investorUserIds);
+
+      // Fetch investor details for all investors
+      const { data: investorDetailsData, error: investorError } = await supabase
+        .from('investor_details')
+        .select('user_id, name, email, firm_name')
+        .in('user_id', investorUserIds);
+
+      console.log('FounderDashboard: Investor details:', {
+        count: investorDetailsData?.length || 0,
+        error: investorError,
+        data: investorDetailsData
+      });
+
+      if (investorError) {
+        console.error('Error loading investor details:', investorError);
+      }
+
+      // Merge investor details into analysis records
+      const investorDetailsMap = new Map(
+        (investorDetailsData || []).map(inv => [inv.user_id, inv])
+      );
+
+      const analysesWithInvestorDetails = analysisData.map(analysis => ({
+        ...analysis,
+        investor_details: investorDetailsMap.get(analysis.investor_user_id) || {
+          name: 'Unknown Investor',
+          email: '',
+          firm_name: null
+        }
+      }));
+
+      console.log('FounderDashboard: Final analyses with details:', analysesWithInvestorDetails);
+
+      setInvestorAnalyses(analysesWithInvestorDetails);
+    } catch (error) {
+      console.error('Error loading investor analyses:', error);
     }
   };
 
@@ -129,47 +216,41 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
     }
   };
 
-  const loadMessages = async (companyId: string) => {
+
+  const handleSendMessage = async (investorUserId: string, investorName: string) => {
+    const messageText = messageTexts[investorUserId];
+    if (!messageText?.trim() || !company) return;
+
     try {
-      setIsLoadingMessages(true);
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('company_id', companyId)
-        .eq('recipient_type', 'founder')
-        .order('date_sent', { ascending: false });
+      setSendingMessage(prev => ({ ...prev, [investorUserId]: true }));
 
-      if (error) {
-        console.error('Error loading messages:', error);
-        return;
-      }
-
-      setMessages(data || []);
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  };
-
-  const markMessageAsRead = async (messageId: string) => {
-    try {
       const { error } = await supabase
         .from('messages')
-        .update({ message_status: 'read' })
-        .eq('id', messageId);
+        .insert({
+          company_id: company.id,
+          sender_type: 'founder',
+          sender_id: user?.id,
+          recipient_type: 'investor',
+          recipient_id: investorUserId,
+          message_title: `Message from ${company.name}`,
+          message_detail: messageText,
+          message_status: 'unread'
+        });
 
       if (error) {
-        console.error('Error marking message as read:', error);
+        console.error('Error sending message:', error);
+        alert('Failed to send message');
         return;
       }
 
-      // Update local state
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, message_status: 'read' } : msg
-      ));
+      // Clear the message text
+      setMessageTexts(prev => ({ ...prev, [investorUserId]: '' }));
+      alert(`Message sent to ${investorName}!`);
     } catch (error) {
-      console.error('Error marking message as read:', error);
+      console.error('Error sending message:', error);
+      alert('Failed to send message');
+    } finally {
+      setSendingMessage(prev => ({ ...prev, [investorUserId]: false }));
     }
   };
 
@@ -378,117 +459,10 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
           </p>
         </div>
 
-        {/* Company Status Card */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-          <div className="p-6">
-            {/* Company Name and Status - Side by side */}
-            <div className="flex justify-between items-start mb-6">
-              <h2 className="text-2xl font-bold text-orange-600">{company.name}</h2>
-              <div className="text-right">
-                <span className="text-lg font-medium text-blue-600">Status: </span>
-                <span className="text-2xl font-bold text-orange-500">{company.status || 'Submitted'}</span>
-              </div>
-            </div>
-            
-            {/* Show Analysis Button */}
-            <div className="mb-4">
-              
-              {/* Show Analysis Button - only if status is not "Submitted" */}
-              {company.status && company.status !== 'Submitted' && (
-                <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center">
-                  <BarChart3 className="w-5 h-5 mr-2" />
-                  Show Analysis
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Messages Section */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-bold text-blue-600 flex items-center">
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Messages
-            </h2>
-          </div>
-          <div className="p-6">
-            {isLoadingMessages ? (
-              <div className="text-center py-4">
-                <div className="text-gray-500">Loading messages...</div>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageCircle className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No messages yet</div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div 
-                    key={message.id} 
-                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                      message.message_status === 'unread'
-                        ? isDark 
-                          ? 'border-orange-500 bg-orange-900/20' 
-                          : 'border-orange-300 bg-orange-50'
-                        : isDark 
-                          ? 'border-gray-600 bg-gray-700' 
-                          : 'border-gray-200 bg-gray-50'
-                    }`}
-                    onClick={() => {
-                      if (message.message_status === 'unread') {
-                        markMessageAsRead(message.id);
-                      }
-                    }}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className={`font-semibold ${
-                        message.message_status === 'unread' ? 'text-orange-600' : ''
-                      }`}>
-                        {message.message_title}
-                      </h4>
-                      <div className="flex items-center space-x-2">
-                        {message.message_status === 'unread' && (
-                          <span className="inline-block w-2 h-2 bg-orange-500 rounded-full"></span>
-                        )}
-                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {new Date(message.date_sent).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {message.message_detail}
-                    </p>
-                    <div className="flex items-center mt-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        message.sender_type === 'system' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        From: {message.sender_type === 'system' ? 'System' : 'Investor'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Company Information Summary */}
+        {/* Company Information - Now at Top */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-blue-600 flex items-center">
-              <Building2 className="w-5 h-5 mr-2" />
-              Company Information
-            </h2>
+            <h2 className="text-2xl font-bold text-orange-600">{company.name}</h2>
             <button 
               onClick={() => navigate('/edit-company', { state: { company } })}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center"
@@ -498,81 +472,156 @@ const FounderDashboard: React.FC<FounderDashboardProps> = ({ isDark, toggleTheme
             </button>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              {/* Company Title */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {company.industry && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Industry</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{company.industry}</p>
+                </div>
+              )}
+              {company.funding_stage && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Funding Stage</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{company.funding_stage}</p>
+                </div>
+              )}
+              {company.revenue && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Revenue</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{company.revenue}</p>
+                </div>
+              )}
+              {company.valuation && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Valuation</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{company.valuation}</p>
+                </div>
+              )}
+              {company.contact_name && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Contact</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{company.contact_name}</p>
+                </div>
+              )}
+              {company.email && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{company.email}</p>
+                </div>
+              )}
+              {company.phone && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Phone</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{company.phone}</p>
+                </div>
+              )}
+              {company.url && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Website</span>
+                  <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <a href={company.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      {company.url}
+                    </a>
+                  </p>
+                </div>
+              )}
               <div>
-                <h3 className="text-lg font-semibold text-blue-600 mb-1">Company Title</h3>
-                <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                  {company.name}
+                <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Date Submitted</span>
+                <p className={`mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {new Date(company.date_submitted).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
                 </p>
               </div>
-
-              {/* Description */}
-              <div>
-                <h3 className="text-lg font-semibold text-blue-600 mb-1">Description</h3>
-                <div className="flex items-start">
-                  <FileText className="w-4 h-4 mr-2 text-orange-500 mt-1 flex-shrink-0" />
-                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                    {company.description || 'No description provided'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Date Submitted */}
-              <div>
-                <h3 className="text-lg font-semibold text-blue-600 mb-1">Date Submitted</h3>
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-orange-500" />
-                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                    {new Date(company.date_submitted).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </div>
-              </div>
             </div>
+            {company.description && (
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {company.description}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Documents Section */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        {/* Investor Submissions Section */}
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold text-blue-600 flex items-center">
-              <FileText className="w-5 h-5 mr-2" />
-              Uploaded Documents
+              <Users className="w-5 h-5 mr-2" />
+              Investor Submissions ({investorAnalyses.length})
             </h2>
           </div>
           <div className="p-6">
-            {documents.length === 0 ? (
+            {investorAnalyses.length === 0 ? (
               <div className="text-center py-8">
-                <FileText className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No documents uploaded yet</div>
+                <Users className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                <div className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No investor submissions yet</div>
               </div>
             ) : (
-              <div className="space-y-4">
-                {documents.map((document) => (
-                  <div key={document.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          <FileText className="w-4 h-4 mr-2 text-orange-500" />
-                          <h4 className="font-semibold">{document.document_name}</h4>
-                        </div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                          {document.description || 'No description'}
-                        </p>
-                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                          File: {document.filename} • Added: {new Date(document.date_added).toLocaleDateString()}
-                        </p>
+              <div className="space-y-6">
+                {investorAnalyses.map((analysis) => (
+                  <div key={analysis.id} className={`p-6 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                    {/* Investor Header */}
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {analysis.investor_details.name}
+                        </h3>
+                        {analysis.investor_details.firm_name && (
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {analysis.investor_details.firm_name}
+                          </p>
+                        )}
                       </div>
-                      <div className="flex space-x-2 ml-4">
-                        <button className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors">
-                          <Trash2 className="w-4 h-4" />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        analysis.status === 'Screened' ? 'bg-blue-100 text-blue-800' :
+                        analysis.status === 'Analyzed' ? 'bg-green-100 text-green-800' :
+                        analysis.status === 'submitted' ? 'bg-gray-100 text-gray-800' :
+                        'bg-purple-100 text-purple-800'
+                      }`}>
+                        {analysis.status}
+                      </span>
+                    </div>
+
+                    {/* History Timeline */}
+                    {analysis.history && (
+                      <div className="mb-4">
+                        <h4 className={`text-sm font-semibold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>History:</h4>
+                        <div className="space-y-1">
+                          {analysis.history.split('\n').map((entry, index) => (
+                            <div key={index} className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'} flex items-center`}>
+                              <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                              {entry}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Send Message */}
+                    <div className={`pt-4 border-t ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                      <p className={`text-sm font-semibold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Send Message</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={messageTexts[analysis.investor_user_id] || ''}
+                          onChange={(e) => setMessageTexts(prev => ({ ...prev, [analysis.investor_user_id]: e.target.value }))}
+                          placeholder="Type your message..."
+                          className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            isDark 
+                              ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                        <button
+                          onClick={() => handleSendMessage(analysis.investor_user_id, analysis.investor_details.name)}
+                          disabled={!messageTexts[analysis.investor_user_id]?.trim() || sendingMessage[analysis.investor_user_id]}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {sendingMessage[analysis.investor_user_id] ? 'Sending...' : 'Send'}
                         </button>
                       </div>
                     </div>

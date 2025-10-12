@@ -130,13 +130,55 @@ Deno.serve(async (req: Request) => {
 - company_name: The name of the company
 - industry: The industry or sector the company operates in
 - key_team_members: Array of key team members and their roles
-- url: Company website URL if mentioned
-- valuation: Company valuation if mentioned (as a string, e.g., "$5M")
-- revenue: Revenue or revenue projections if mentioned (as a string)
-- description: A brief description of what the company does
-- funding_terms: Any funding terms, amount seeking, or investment details mentioned
+- url: Company website URL (see detailed instructions below)
+- valuation: Company valuation. Look for explicit valuation statements. ALSO check the funding terms - if you see terms like "SAFE at $36M cap" or "priced round at $20M valuation" or "post-money valuation of $15M", extract that number as the valuation. For example: "SAFE at $36M cap" → valuation should be "$36M". Return as a string (e.g., "$5M", "$36M").
+- revenue: Revenue or revenue projections if mentioned (as a string, e.g., "$1.2M ARR", "$500K MRR")
+- description: A brief 2-3 sentence description of what the company does, their value proposition, and target market
+- funding_terms: Any funding terms, amount seeking, investment structure (SAFE, priced round, convertible note), or investment details mentioned
 
-Return ONLY valid JSON with these fields. If a field is not found in the document, use null for that field.`,
+CRITICAL INSTRUCTIONS FOR FINDING THE COMPANY URL:
+
+**Step 1: Look for explicit URLs in the pitch deck**
+- Check for URLs on contact slides, footer, header, or "Learn More" sections
+- Look for email addresses - the domain after @ is often their website
+- Check social media handles/links which may reference their domain
+
+**Step 2: If URL is not found, INFER the correct website using the company name and description**
+
+Based on the company name and what they do, determine the most likely website pattern:
+- For tech/SaaS companies: Usually [companyname].com, [companyname].io, or get[companyname].com
+- For AI companies: Often [companyname].ai
+- For apps: May be [appname].app or [companyname].com
+- For consumer brands: Usually [brandname].com
+- For B2B software: Often [companyname].io or [companyname].com
+
+**Step 3: Use business description to validate your inference**
+- If the company is "NeuralTech - AI-powered analytics", likely URL is https://neuraltech.ai or https://neuraltech.com
+- If the company is "QuickCart - Mobile shopping app", likely URL is https://quickcart.app or https://getquickcart.com
+- If the company is "DataFlow Inc - Enterprise data platform", likely URL is https://dataflow.io or https://dataflow.com
+
+**Step 4: Final URL must be FULLY FORMED with protocol:**
+- Must include https:// protocol at the start
+- All lowercase domain
+- Include proper domain extension (.com, .io, .ai, .app, etc.)
+- No "www" prefix
+- Format: https://domain.extension
+- Example: "https://acmecorp.com" NOT "acmecorp.com" or "www.acmecorp.com"
+
+**CRITICAL: Always include https:// protocol. The URL must be complete and clickable.**
+
+**URL Inference Examples (with proper protocol):**
+- "TechFlow" (SaaS analytics) → https://techflow.io or https://techflow.com
+- "SmartHealth AI" (Healthcare AI) → https://smarthealth.ai
+- "QuickMeet" (Meeting scheduler app) → https://quickmeet.com or https://getquickmeet.com
+- "DataVault Inc" (Enterprise software) → https://datavault.io
+
+IMPORTANT INSTRUCTIONS:
+1. For URL: Use the company name AND description to make an intelligent, contextual inference if URL is not explicitly stated
+2. For valuation: Check both explicit valuation statements AND funding terms. SAFE caps, priced round valuations, and post-money valuations all indicate the company's valuation.
+3. For funding_terms: Include the structure (SAFE/equity/convertible), amount, cap/valuation, and any other key terms
+
+Return ONLY valid JSON with these fields. If a field cannot be determined even with inference, use null for that field.`,
     });
 
     console.log('Running assistant...');

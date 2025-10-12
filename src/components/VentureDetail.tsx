@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send, Download, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send, Download, BarChart3, Users } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface VentureDetailProps {
@@ -17,7 +17,9 @@ interface Company {
   contact_name?: string;
   title?: string;
   email?: string;
+  email_1?: string;
   phone?: string;
+  phone_1?: string;
   description?: string;
   funding_terms?: string;
   status?: string;
@@ -34,8 +36,10 @@ interface Analysis {
   status: string;
   overall_score?: number;
   recommendation?: string;
+  recommendation_reason?: string;
   comments?: string;
   analyzed_at?: string;
+  history?: string;
   investor_details?: {
     name: string;
     firm_name?: string;
@@ -61,13 +65,11 @@ interface Document {
 const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [user, setUser] = useState<any>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [analysis, setAnalysis] = useState<Analysis[]>([]);
   const [analysisReports, setAnalysisReports] = useState<AnalysisReport[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUtilitiesMenu, setShowUtilitiesMenu] = useState(false);
@@ -77,6 +79,8 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const [messageDetail, setMessageDetail] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [messageStatus, setMessageStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isAnalyzingTeam, setIsAnalyzingTeam] = useState(false);
+  const [teamAnalysisResult, setTeamAnalysisResult] = useState<string | null>(null);
 
   // Check authentication and load company data
   useEffect(() => {
@@ -86,7 +90,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         navigate('/login');
         return;
       }
-      setUser(currentUser);
+      
       
       if (id) {
         await loadCompanyData(id);
@@ -103,6 +107,12 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     try {
       setIsLoading(true);
       setError(null);
+
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        setError('User not authenticated');
+        return;
+      }
 
       const { data, error } = await supabase
         .from('companies')
@@ -132,28 +142,34 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
 
   const loadAnalysis = async (companyId: string) => {
     try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        console.error('User not authenticated');
+        setAnalysis([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('analysis')
-        .select(`
-          *,
-          investor_details:investor_details!investor_user_id(name, firm_name)
-        `)
-        .eq('company_id', companyId);
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('investor_user_id', currentUser.id);
 
       if (error) {
         console.error('Error loading analysis:', error);
+        setAnalysis([]);
         return;
       }
 
       setAnalysis(data || []);
     } catch (error) {
       console.error('Error loading analysis:', error);
+      setAnalysis([]);
     }
   };
 
   const loadAnalysisReports = async (companyId: string) => {
     try {
-      setIsLoadingReports(true);
       const currentUser = await getCurrentUser();
       
       if (!currentUser) {
@@ -196,8 +212,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       setAnalysisReports(data || []);
     } catch (error) {
       console.error('Error loading analysis reports:', error);
-    } finally {
-      setIsLoadingReports(false);
     }
   };
 
@@ -222,51 +236,221 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
 
   const handleDownloadReport = async (report: AnalysisReport) => {
     try {
-      const { data, error} = await supabase.storage
+      console.log('=== DOWNLOAD WORKFLOW STARTED ===');
+      console.log('1. Report from database:');
+      console.log('   - file_path:', report.file_path);
+      console.log('   - file_name:', report.file_name);
+      console.log('   - report_type:', report.report_type);
+      console.log('   - report_id:', report.id);
+      setMessageStatus({ type: 'success', text: 'Downloading report...' });
+      
+      // First, verify the file exists in storage
+      const pathParts = report.file_path.split('/');
+      const folderPath = pathParts[0];
+      const fileName = pathParts[pathParts.length - 1];
+      console.log('2. Parsed path:');
+      console.log('   - folder:', folderPath);
+      console.log('   - fileName from path:', fileName);
+      console.log('   - file_name field:', report.file_name);
+      console.log('   - Match?', fileName === report.file_name);
+      
+      console.log('3. Listing files in storage bucket analysis-output-docs...');
+      const { data: fileList, error: listError } = await supabase.storage
         .from('analysis-output-docs')
-        .download(report.file_path);
+        .list(folderPath, {
+          search: report.file_name
+        });
 
-      if (error) {
-        console.error('Error downloading report:', error);
+      if (listError) {
+        console.warn('4. List operation failed:', listError.message);
+        console.log('   Reason: Likely RLS restriction on bucket');
+        console.log('   Will proceed with direct download attempt...');
+      } else if (!fileList || fileList.length === 0) {
+        console.warn('4. List returned empty (file not found via search)');
+        console.log('   Searching for:', report.file_name);
+        console.log('   In folder:', folderPath);
+        
+        // List ALL files in the folder to see what's actually there
+        console.log('5. Listing ALL files in folder for debugging...');
+        const { data: allFiles, error: listAllError } = await supabase.storage
+          .from('analysis-output-docs')
+          .list(folderPath);
+        
+        if (listAllError) {
+          console.warn('   Cannot list files (RLS restriction):', listAllError.message);
+        } else if (allFiles && allFiles.length > 0) {
+          console.log('   Files actually in storage:');
+          allFiles.forEach((file, index) => {
+            console.log(`   ${index + 1}. "${file.name}" (id: ${file.id})`);
+          });
+          console.log('   ');
+          console.log('   COMPARISON:');
+          console.log('   Looking for: "' + report.file_name + '"');
+          console.log('   Length:', report.file_name.length, 'chars');
+          allFiles.forEach(file => {
+            if (file.name.includes('team-analysis')) {
+              console.log('   Found match: "' + file.name + '"');
+              console.log('   Length:', file.name.length, 'chars');
+              console.log('   Exact match?', file.name === report.file_name);
+              if (file.name !== report.file_name) {
+                console.log('   MISMATCH DETECTED!');
+                console.log('   Database has: "' + report.file_name + '"');
+                console.log('   Storage has:  "' + file.name + '"');
+              }
+            }
+          });
+        } else {
+          console.log('   Folder is empty or does not exist');
+        }
+        
+        console.log('   Will proceed with download attempt anyway...');
+      } else {
+        console.log('4. File verified in storage via list operation');
+        console.log('   Found:', fileList.length, 'matching file(s)');
+      }
+
+      console.log('6. Creating signed URL via edge function...');
+      console.log('   Edge function URL: /functions/v1/get-report-download-url');
+      console.log('   Requesting signed URL for path:', report.file_path);
+      
+      // Call edge function to create signed URL (bypasses RLS restrictions)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nsimmsznrutwgtkkblgw.supabase.co';
+      const functionUrl = `${supabaseUrl}/functions/v1/get-report-download-url`;
+      const session = await supabase.auth.getSession();
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
+        },
+        body: JSON.stringify({
+          file_path: report.file_path,
+          expires_in: 60
+        })
+      });
+      
+      console.log('7. Edge function response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('   ❌ Edge function failed!');
+        console.error('   Error:', errorData);
+        setMessageStatus({ 
+          type: 'error', 
+          text: `Failed to create download link: ${errorData.error || response.statusText}` 
+        });
         return;
       }
 
+      const signedUrlResult = await response.json();
+      console.log('   ✅ Edge function succeeded');
+      console.log('   Response:', signedUrlResult);
+      
+      if (!signedUrlResult?.signed_url) {
+        console.error('   ❌ No signed URL in response!');
+        console.error('   Response data:', signedUrlResult);
+        setMessageStatus({ type: 'error', text: 'Failed to generate download link' });
+        return;
+      }
+
+      const signedUrl = signedUrlResult.signed_url;
+      console.log('   Signed URL obtained:', signedUrl.substring(0, 100) + '...');
+
+      console.log('8. Downloading file from signed URL...');
+      const fileResponse = await fetch(signedUrl);
+      console.log('   Response status:', fileResponse.status, fileResponse.statusText);
+      
+      if (!fileResponse.ok) {
+        console.error('   ❌ Failed to fetch file from signed URL');
+        console.error('   Status:', fileResponse.status);
+        console.error('   Status text:', fileResponse.statusText);
+        setMessageStatus({ type: 'error', text: `Failed to download file: ${fileResponse.statusText}` });
+        return;
+      }
+
+      const blob = await fileResponse.blob();
+      console.log('   ✅ File downloaded successfully');
+      console.log('   File size:', blob.size, 'bytes');
+      console.log('   File type:', blob.type);
+
       // Create download link
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      console.log('9. Triggering browser download...');
+      console.log('   Download as:', report.file_name);
+      const url = URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
       a.href = url;
       a.download = report.file_name;
-      document.body.appendChild(a);
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      console.log('=== DOWNLOAD WORKFLOW COMPLETED SUCCESSFULLY ===');
+      setMessageStatus({ type: 'success', text: 'Report downloaded successfully!' });
+      setTimeout(() => setMessageStatus(null), 3000);
     } catch (error) {
-      console.error('Error downloading report:', error);
+      console.error('=== DOWNLOAD WORKFLOW FAILED ===');
+      console.error('Error:', error);
+      console.error('Stack:', error instanceof Error ? error.stack : 'No stack trace');
+      setMessageStatus({ 
+        type: 'error', 
+        text: 'Failed to download report. Check console for details.' 
+      });
     }
   };
 
-  const handleDownloadDocument = async (document: Document) => {
+  const handleDownloadDocument = async (doc: Document) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('company-documents')
-        .download(document.path);
+      console.log('Downloading document:', doc.path);
+      setMessageStatus({ type: 'success', text: 'Downloading document...' });
 
-      if (error) {
-        console.error('Error downloading document:', error);
+      // Create a signed URL for secure download
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from('company-documents')
+        .createSignedUrl(doc.path, 60); // 60 seconds expiry
+
+      if (signedUrlError) {
+        console.error('Error creating signed URL:', signedUrlError);
+        setMessageStatus({ type: 'error', text: `Failed to create download link: ${signedUrlError.message}` });
         return;
       }
 
+      if (!signedUrlData?.signedUrl) {
+        console.error('No signed URL returned');
+        setMessageStatus({ type: 'error', text: 'Failed to generate download link' });
+        return;
+      }
+
+      console.log('Signed URL created successfully');
+
+      // Download the file using the signed URL
+      const response = await fetch(signedUrlData.signedUrl);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch file:', response.status, response.statusText);
+        setMessageStatus({ type: 'error', text: `Failed to download file: ${response.statusText}` });
+        return;
+      }
+
+      const blob = await response.blob();
+      console.log('Download successful, file size:', blob.size);
+
       // Create download link
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
       a.href = url;
-      a.download = document.document_name;
-      document.body.appendChild(a);
+      a.download = doc.document_name;
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      setMessageStatus({ type: 'success', text: 'Document downloaded successfully!' });
+      setTimeout(() => setMessageStatus(null), 3000);
     } catch (error) {
       console.error('Error downloading document:', error);
+      setMessageStatus({ type: 'error', text: 'Failed to download document' });
     }
   };
 
@@ -276,26 +460,32 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     try {
       setIsUpdating(true);
 
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        console.error('User not authenticated');
+        return;
+      }
+
       // Map button labels to database status values
       let dbStatus = newStatus;
       if (newStatus === 'Diligence') {
         dbStatus = 'In-Diligence';
-      } else if (newStatus === 'Diligence-Reject') {
-        dbStatus = 'DD-Rejected';
       }
 
+      // Update status in analysis table for this investor-company pair
       const { error } = await supabase
-        .from('companies')
+        .from('analysis')
         .update({ status: dbStatus })
-        .eq('id', company.id);
+        .eq('company_id', company.id)
+        .eq('investor_user_id', currentUser.id);
 
       if (error) {
         console.error('Error updating status:', error);
         return;
       }
 
-      // Update local state
-      setCompany(prev => prev ? { ...prev, status: dbStatus } : null);
+      // Reload analysis to update local state
+      await loadAnalysis(company.id);
     } catch (error) {
       console.error('Error updating status:', error);
     } finally {
@@ -307,6 +497,259 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     const { error } = await signOut();
     if (!error) {
       navigate('/');
+    }
+  };
+
+  const handleAnalyzeTeam = async () => {
+    if (!company) {
+      setMessageStatus({ type: 'error', text: 'Company information not available' });
+      return;
+    }
+
+    try {
+      setIsAnalyzingTeam(true);
+      setMessageStatus(null);
+
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        setMessageStatus({ type: 'error', text: 'You must be logged in to perform team analysis' });
+        return;
+      }
+
+      // Get or create analysis record for this investor-company pair
+      let analysisId = analysis.length > 0 ? analysis[0].id : null;
+      
+      if (!analysisId) {
+        // Create analysis record if it doesn't exist
+        const { data: newAnalysis, error: analysisError } = await supabase
+          .from('analysis')
+          .insert([{
+            company_id: company.id,
+            investor_user_id: currentUser.id,
+            status: 'Screened'
+          }])
+          .select('id')
+          .single();
+
+        if (analysisError) {
+          console.error('Error creating analysis record:', analysisError);
+          setMessageStatus({ type: 'error', text: 'Failed to create analysis record' });
+          return;
+        }
+        analysisId = newAnalysis.id;
+      }
+
+      // Get the Team-Analysis prompt from prompts table
+      const { data: promptData, error: promptError } = await supabase
+        .from('prompts')
+        .select('prompt_detail')
+        .eq('prompt_name', 'Team-Analysis')
+        .single();
+
+      if (promptError) {
+        console.error('Error fetching Team-Analysis prompt:', promptError);
+        setMessageStatus({ type: 'error', text: 'Team-Analysis prompt not found in database. Please add it to the prompts table.' });
+        return;
+      }
+
+      if (!promptData || !promptData.prompt_detail) {
+        console.error('Prompt data is empty');
+        setMessageStatus({ type: 'error', text: 'Team-Analysis prompt is empty' });
+        return;
+      }
+
+      console.log('Found prompt, length:', promptData.prompt_detail.length);
+
+      // Get company documents
+      const { data: documentsData, error: documentsError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('company_id', company.id);
+
+      if (documentsError) {
+        console.error('Error fetching company documents:', documentsError);
+        setMessageStatus({ type: 'error', text: 'Failed to fetch company documents' });
+        return;
+      }
+
+      if (!documentsData || documentsData.length === 0) {
+        setMessageStatus({ type: 'error', text: 'No documents found for team analysis' });
+        return;
+      }
+
+      console.log('Documents to analyze:', documentsData.map(doc => ({
+        id: doc.id,
+        name: doc.document_name,
+        path: doc.path
+      })));
+
+      // Call the team analysis function
+      const requestBody = {
+        companyId: company.id,
+        companyName: company.name,
+        analysisId: analysisId,
+        prompt: promptData.prompt_detail,
+        documents: documentsData.map(doc => ({
+          id: doc.id,
+          name: doc.document_name,
+          path: doc.path
+        }))
+      };
+      
+      console.log('Calling analyze-team function with:', {
+        companyId: requestBody.companyId,
+        companyName: requestBody.companyName,
+        analysisId: requestBody.analysisId,
+        promptLength: requestBody.prompt?.length,
+        documentsCount: requestBody.documents.length,
+        documentPaths: requestBody.documents.map(d => d.path)
+      });
+
+      // Make a direct fetch call to get better error details
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nsimmsznrutwgtkkblgw.supabase.co';
+      const functionUrl = `${supabaseUrl}/functions/v1/analyze-team`;
+      const session = await supabase.auth.getSession();
+      
+      console.log('Making request to:', functionUrl);
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      console.log('Response status:', response.status);
+      
+      const responseText = await response.text();
+      console.log('Response body:', responseText);
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to perform team analysis';
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.error) {
+            errorMessage = `Analysis failed: ${errorData.error}`;
+          }
+          console.error('Parsed error:', errorData);
+        } catch (e) {
+          console.error('Could not parse error response:', responseText);
+          errorMessage = `Failed to perform team analysis (${response.status})`;
+        }
+        setMessageStatus({ type: 'error', text: errorMessage });
+        return;
+      }
+
+      const analysisResult = JSON.parse(responseText);
+      console.log('Analysis result:', analysisResult);
+
+      // Check if the response indicates an error
+      if (analysisResult?.error) {
+        console.error('Team analysis function returned error:', analysisResult.error);
+        console.error('Error details:', analysisResult.details);
+        setMessageStatus({ type: 'error', text: `Analysis failed: ${analysisResult.error}` });
+        return;
+      }
+
+      // Display the analysis result on screen
+      if (analysisResult?.analysis) {
+        setTeamAnalysisResult(analysisResult.analysis);
+        console.log('Team analysis set successfully');
+      } else {
+        console.warn('No analysis text in result:', analysisResult);
+      }
+
+      setMessageStatus({ type: 'success', text: 'Team analysis completed successfully!' });
+      
+      // Update analysis history
+      const currentDate = new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      const currentHistory = analysis.length > 0 && analysis[0].history ? analysis[0].history : '';
+      const newHistoryEntry = `${currentDate}: Analyze-Team - Complete`;
+      const updatedHistory = currentHistory ? `${currentHistory}\n${newHistoryEntry}` : newHistoryEntry;
+      
+      await supabase
+        .from('analysis')
+        .update({ history: updatedHistory })
+        .eq('id', analysisId);
+      
+      // Reload analysis to show updated history
+      await loadAnalysis(company.id);
+      
+      // Reload analysis reports to show the new report
+      await loadAnalysisReports(company.id);
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setMessageStatus(null);
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error performing team analysis:', error);
+      setMessageStatus({ type: 'error', text: 'An unexpected error occurred during team analysis' });
+    } finally {
+      setIsAnalyzingTeam(false);
+    }
+  };
+
+  const handleQuickMessage = async () => {
+    if (!messageTitle.trim()) {
+      setMessageStatus({ type: 'error', text: 'Please enter a message' });
+      return;
+    }
+
+    if (!company) {
+      setMessageStatus({ type: 'error', text: 'Company information not available' });
+      return;
+    }
+
+    try {
+      setIsSendingMessage(true);
+      setMessageStatus(null);
+
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        setMessageStatus({ type: 'error', text: 'You must be logged in to send messages' });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('messages')
+        .insert([{
+          company_id: company.id,
+          sender_type: 'investor',
+          sender_id: currentUser.id,
+          recipient_type: 'founder',
+          recipient_id: null, // Will be handled by RLS policies
+          message_title: messageTitle.trim(),
+          message_detail: messageTitle.trim(), // Use same content for both
+          message_status: 'unread'
+        }]);
+
+      if (error) {
+        console.error('Error sending message:', error);
+        setMessageStatus({ type: 'error', text: 'Failed to send message. Please try again.' });
+        return;
+      }
+
+      setMessageStatus({ type: 'success', text: 'Message sent successfully!' });
+      setMessageTitle('');
+      
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setMessageStatus(null);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessageStatus({ type: 'error', text: 'An unexpected error occurred' });
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -533,50 +976,130 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
             
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 mb-6">
-              {['Submitted', 'Analyze', 'Reject', 'Diligence', 'Diligence-Reject'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => handleStatusChange(status)}
-                  disabled={isUpdating}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                    (status === 'Diligence-Reject' && company.status === 'DD-Rejected') ||
-                    (status === 'Diligence' && company.status === 'In-Diligence') ||
-                    (status !== 'Diligence-Reject' && status !== 'Diligence' && company.status === status)
-                      ? 'bg-blue-600 text-white'
-                      : isDark
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {isUpdating ? 'Updating...' : status}
-                </button>
-              ))}
-              
-              {/* Send Message Button */}
-              <button
-                onClick={() => setShowMessageForm(!showMessageForm)}
-                className="px-4 py-2 rounded-lg font-semibold transition-colors bg-green-600 text-white hover:bg-green-700 flex items-center"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Send Message
-              </button>
+              {(() => {
+                // Get current status from analysis table
+                const currentAnalysisStatus = analysis.length > 0 ? analysis[0].status : 'Submitted';
+                
+                // Define which buttons to show based on current status
+                let availableButtons: string[] = [];
+                if (currentAnalysisStatus === 'Screened') {
+                  availableButtons = ['Analyze', 'Analyze-Team', 'Reject'];
+                } else if (currentAnalysisStatus === 'Analyzed') {
+                  availableButtons = ['Analyze-Team', 'Diligence', 'Reject'];
+                } else if (currentAnalysisStatus === 'In-Diligence') {
+                  availableButtons = ['Analyze-Team', 'Invested', 'Reject'];
+                } else {
+                  // For other statuses (Submitted, Rejected, etc.), show basic options
+                  availableButtons = ['Analyze', 'Analyze-Team', 'Reject'];
+                }
+                
+                return availableButtons.map((status) => {
+                  const isActive = 
+                    (status === 'Diligence' && currentAnalysisStatus === 'In-Diligence') ||
+                    (status === 'Invested' && currentAnalysisStatus === 'Invested') ||
+                    (status !== 'Diligence' && status !== 'Invested' && currentAnalysisStatus === status);
+                  
+                  const isDisabled = isUpdating || (status === 'Analyze-Team' && isAnalyzingTeam);
+                  
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        if (status === 'Analyze-Team') {
+                          handleAnalyzeTeam();
+                        } else {
+                          handleStatusChange(status);
+                        }
+                      }}
+                      disabled={isDisabled}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isActive
+                          ? 'bg-blue-600 text-white'
+                          : status === 'Analyze-Team'
+                            ? 'bg-purple-600 text-white hover:bg-purple-700'
+                            : isDark
+                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {isDisabled && status === 'Analyze-Team' ? 'Analyzing...' : 
+                       isUpdating ? 'Updating...' : status}
+                    </button>
+                  );
+                });
+              })()}
             </div>
             
-            {/* Current Status Display */}
-            <div className="flex items-center">
-              <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mr-2`}>
-                Current Status:
-              </span>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
-                company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
-                company.status === 'Invested' ? 'bg-green-100 text-green-800' :
-                company.status === 'Diligence' ? 'bg-purple-100 text-purple-800' :
-                'bg-red-100 text-red-800'
-              }`}>
-                {company.status || 'Submitted'}
-              </span>
+            {/* Current Status, Recommendation, and Reason Display */}
+            <div className="space-y-3">
+              
+              {/* Current Status */}
+              <div>
+                <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Current Status:{' '}
+                </span>
+                <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
+                  {analysis.length > 0 ? analysis[0].status : 'Submitted'}
+                </span>
+              </div>
+
+              {/* Recommendation */}
+              {analysis.length > 0 && analysis[0].recommendation && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Recommendation:{' '}
+                  </span>
+                  <span className={`text-sm font-medium ${
+                    analysis[0].recommendation === 'Invest' || analysis[0].recommendation === 'Analyze' ? 'text-green-600' :
+                    analysis[0].recommendation === 'Consider' ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {analysis[0].recommendation}
+                  </span>
+                </div>
+              )}
+
+              {/* Recommendation Reason */}
+              {analysis.length > 0 && analysis[0].recommendation_reason && (
+                <div>
+                  <span className={`text-sm font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Recommendation Reason:{' '}
+                  </span>
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {analysis[0].recommendation_reason}
+                  </span>
+                </div>
+              )}
+
+              {/* Quick Message Input */}
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={messageTitle}
+                    onChange={(e) => setMessageTitle(e.target.value)}
+                    placeholder="Type a message to send to founder..."
+                    className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && messageTitle.trim()) {
+                        handleQuickMessage();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleQuickMessage}
+                    disabled={isSendingMessage || !messageTitle.trim()}
+                    className="px-4 py-2 rounded-lg font-semibold transition-colors bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-sm"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    {isSendingMessage ? 'Sending...' : 'Send'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -655,7 +1178,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         )}
 
         {/* Analysis Results Section */}
-        {company.status === 'Analyzed' && company.overall_score && (
+        {analysis.length > 0 && (analysis[0].status === 'Screened' || analysis[0].status === 'Analyzed' || analysis[0].status === 'In-Diligence') && (
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-bold text-blue-600 flex items-center">
@@ -668,7 +1191,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 {/* Overall Score */}
                 <div className="text-center">
                   <div className="text-3xl font-bold text-blue-600 mb-2">
-                    {company.overall_score}/10
+                    {analysis[0].overall_score ? `${analysis[0].overall_score}/10` : 'Pending'}
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     Overall Score
@@ -678,11 +1201,11 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 {/* Recommendation */}
                 <div className="text-center">
                   <div className={`text-2xl font-bold mb-2 ${
-                    company.recommendation === 'Invest' ? 'text-green-600' :
-                    company.recommendation === 'Consider' ? 'text-yellow-600' :
+                    analysis[0].recommendation === 'Invest' || analysis[0].recommendation === 'Analyze' ? 'text-green-600' :
+                    analysis[0].recommendation === 'Consider' ? 'text-yellow-600' :
                     'text-red-600'
                   }`}>
-                    {company.recommendation}
+                    {analysis[0].recommendation || 'Pending'}
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     Recommendation
@@ -692,9 +1215,11 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 {/* Analysis Date */}
                 <div className="text-center">
                   <div className={`text-lg font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    {analysisReports.length > 0 
-                      ? new Date(analysisReports[0].generated_at).toLocaleDateString()
-                      : 'N/A'
+                    {analysis[0].analyzed_at 
+                      ? new Date(analysis[0].analyzed_at).toLocaleDateString()
+                      : analysisReports.length > 0 
+                        ? new Date(analysisReports[0].generated_at).toLocaleDateString()
+                        : 'N/A'
                     }
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -703,6 +1228,110 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 </div>
               </div>
               
+              {/* Analysis History */}
+              {analysis[0].history && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className={`text-sm font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-3 flex items-center`}>
+                    📋 Analysis History
+                  </h3>
+                  <div className="space-y-2">
+                    {analysis[0].history.split('\n').map((entry, index) => {
+                      if (!entry.trim()) return null;
+                      const [date, ...action] = entry.split(':');
+                      return (
+                        <div key={index} className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} flex`}>
+                          <span className="font-medium min-w-[120px]">{date}:</span>
+                          <span className="ml-2">{action.join(':')}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Team Analysis Results Section */}
+        {teamAnalysisResult && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-purple-600 flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                Team Analysis Results
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-wrap leading-relaxed`}>
+                {teamAnalysisResult}
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setTeamAnalysisResult(null)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                    isDark 
+                      ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Hide Results
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Reports Section - Always Visible if Reports Exist */}
+        {analysisReports.length > 0 && (
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-blue-600 flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Generated Analysis Reports
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {analysisReports.map((report) => (
+                  <div key={report.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className={`font-semibold capitalize mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {report.report_type === 'summary' ? '📊 Summary Report' :
+                           report.report_type === 'detailed' ? '📈 Detailed Analysis' :
+                           report.report_type === 'team-analysis' ? '👥 Team Analysis' :
+                           report.report_type === 'feedback' ? '💬 Company Feedback' :
+                           report.report_type.replace(/-/g, ' ')}
+                        </h4>
+                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mb-1`}>
+                          {report.file_name}
+                        </p>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Generated: {new Date(report.generated_at).toLocaleDateString()} {new Date(report.generated_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDownloadReport(report)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors flex-shrink-0"
+                          title="Download report"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        {report.report_type === 'team-analysis' && (
+                          <button
+                            onClick={() => handleDownloadReport(report)}
+                            className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors flex-shrink-0"
+                            title="Download report (alternative)"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -736,50 +1365,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                         onClick={() => handleDownloadDocument(doc)}
                         className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors ml-2 flex-shrink-0"
                         title="Download document"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Analysis Reports Section - Always Visible if Reports Exist */}
-        {analysisReports.length > 0 && (
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-blue-600 flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                My Analysis Reports
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {analysisReports.map((report) => (
-                  <div key={report.id} className={`p-4 rounded-lg border ${isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <h4 className={`font-semibold capitalize mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {report.report_type === 'summary' ? '📊 Summary Report' :
-                           report.report_type === 'detailed' ? '📈 Detailed Analysis' :
-                           report.report_type === 'team-analysis' ? '👥 Team Analysis' :
-                           report.report_type === 'feedback' ? '💬 Company Feedback' :
-                           report.report_type.replace(/-/g, ' ')}
-                        </h4>
-                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mb-1`}>
-                          {report.file_name}
-                        </p>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                          Generated: {new Date(report.generated_at).toLocaleDateString()} {new Date(report.generated_at).toLocaleTimeString()}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleDownloadReport(report)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors flex-shrink-0"
-                        title="Download report"
                       >
                         <Download className="w-4 h-4" />
                       </button>
@@ -826,23 +1411,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                     })}
                   </p>
                 </div>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                  Status
-                </label>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  company.status === 'Submitted' ? 'bg-gray-100 text-gray-800' :
-                  company.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                  company.status === 'Analyzed' ? 'bg-blue-100 text-blue-800' :
-                  company.status === 'Invested' ? 'bg-green-100 text-green-800' :
-                  company.status === 'In-Diligence' ? 'bg-purple-100 text-purple-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {company.status || 'Submitted'}
-                </span>
               </div>
 
               {/* Funding Sought */}

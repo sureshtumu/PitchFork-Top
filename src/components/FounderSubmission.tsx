@@ -401,6 +401,13 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       }
 
       // UPDATE existing company with edited information
+      console.log('FounderSubmission: Updating company:', companyId);
+      console.log('FounderSubmission: Update data:', {
+        name: companyData.name,
+        industry: companyData.industry,
+        email: companyData.email
+      });
+
       const { error: updateError } = await supabase
         .from('companies')
         .update({
@@ -421,10 +428,18 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         .eq('id', companyId);
 
       if (updateError) {
-        console.error('Error updating company:', updateError);
-        setMessage({ type: 'error', text: 'Failed to update company information' });
+        console.error('FounderSubmission: Error updating company:', updateError);
+        console.error('FounderSubmission: Error details:', {
+          code: updateError.code,
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint
+        });
+        setMessage({ type: 'error', text: `Failed to update company information: ${updateError.message}` });
         return;
       }
+
+      console.log('FounderSubmission: Company updated successfully');
 
       // NOTE: Pitch deck was already uploaded in analyzePitchDeck function
       // Only upload additional files here if any

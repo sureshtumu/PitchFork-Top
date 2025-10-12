@@ -67,26 +67,60 @@ export default function InvestorSelection({ companyId, onComplete, onCancel }: I
     setMessage(null);
 
     try {
+      // Step 1: Create analysis entries with 'submitted' status
+      const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
       const analysisEntries = Array.from(selectedInvestors).map(investorUserId => ({
         company_id: companyId,
         investor_user_id: investorUserId,
-        status: 'submitted'
+        status: 'submitted',
+        history: `${currentDate}: Submitted`
       }));
 
-      const { error } = await supabase
+      const { data: insertedAnalysis, error: insertError } = await supabase
         .from('analysis')
-        .insert(analysisEntries);
+        .insert(analysisEntries)
+        .select();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       setMessage({
         type: 'success',
-        text: `Successfully submitted to ${selectedInvestors.size} investor${selectedInvestors.size > 1 ? 's' : ''}`
+        text: `Submitted to ${selectedInvestors.size} investor${selectedInvestors.size > 1 ? 's' : ''}. Running AI screening...`
+      });
+
+      // Step 2: Run AI screening for each investor
+      const screeningPromises = insertedAnalysis.map(async (analysis) => {
+        try {
+          const response = await supabase.functions.invoke('screen-investor-match', {
+            body: {
+              company_id: companyId,
+              investor_user_id: analysis.investor_user_id,
+              analysis_id: analysis.id
+            }
+          });
+
+          if (response.error) {
+            console.error(`Screening failed for investor ${analysis.investor_user_id}:`, response.error);
+          } else {
+            console.log(`Screening completed for investor ${analysis.investor_user_id}:`, response.data);
+          }
+        } catch (error) {
+          console.error(`Error screening investor ${analysis.investor_user_id}:`, error);
+          // Don't throw - continue with other investors
+        }
+      });
+
+      // Wait for all screening to complete (or fail)
+      await Promise.allSettled(screeningPromises);
+
+      setMessage({
+        type: 'success',
+        text: `AI screening complete! Submitted to ${selectedInvestors.size} investor${selectedInvestors.size > 1 ? 's' : ''}`
       });
 
       setTimeout(() => {
         onComplete();
-      }, 1500);
+      }, 2000);
     } catch (error) {
       console.error('Error submitting to investors:', error);
       setMessage({ type: 'error', text: 'Failed to submit to investors' });

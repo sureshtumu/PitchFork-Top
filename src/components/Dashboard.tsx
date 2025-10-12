@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, Filter, Calendar, Building2, ChevronDown, User, FileText, Settings, HelpCircle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, Filter, Calendar, Building2, ChevronDown, User } from 'lucide-react';
 import { signOut, getCurrentUser, supabase } from '../lib/supabase';
 import { analyzeCompany, generateReportPDFs, saveAnalysisReports } from '../lib/analysisService';
 
@@ -13,10 +13,12 @@ interface Company {
   id: string;
   name: string;
   industry?: string;
-  status?: string;
   date_submitted: string;
   created_at: string;
-  analysis?: Analysis[];
+  overall_score?: number;
+  valuation_value?: number;
+  valuation_units?: string;
+  analysis?: Analysis[]; // Status and recommendation come from here
 }
 
 interface Analysis {
@@ -25,6 +27,7 @@ interface Analysis {
   status: string;
   overall_score?: number;
   recommendation?: string;
+  recommendation_reason?: string;
   comments?: string;
 }
 
@@ -98,6 +101,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
           companies:company_id(*)
         `)
         .eq('investor_user_id', currentUser.id);
+      
+      console.log('Dashboard: Raw analysis data:', analysisData);
 
       console.log('Dashboard: Analysis query result:', { 
         dataCount: analysisData?.length || 0, 
@@ -141,6 +146,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             status: analysis.status,
             overall_score: analysis.overall_score,
             recommendation: analysis.recommendation,
+            recommendation_reason: analysis.recommendation_reason,
             comments: analysis.comments
           });
         } else {
@@ -155,7 +161,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
       console.log('Dashboard: Final companies list:', {
         count: companiesWithAnalysis.length,
-        companies: companiesWithAnalysis.map(c => ({ id: c.id, name: c.name, status: c.status }))
+        companies: companiesWithAnalysis.map(c => ({ id: c.id, name: c.name, analysisStatus: c.analysis?.[0]?.status }))
       });
 
       setCompanies(companiesWithAnalysis);
@@ -260,16 +266,16 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   };
 
   // Filter companies based on selected filters
+  // Status comes from analysis table (first analysis record for this investor)
   const filteredCompanies = companies.filter(company => {
-    const status = company.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
-    if (status === 'submitted' && filters.submitted) return true;
-    if (status === 'screened' && filters.screened) return true;
-    if (status === 'pending' && filters.pending) return true;
-    if (status === 'analyzed' && filters.analyzed) return true;
-    if (status === 'indiligence' && filters.inDiligence) return true;
-    if (status === 'rejected' && filters.rejected) return true;
-    if (status === 'ddrejected' && filters.ddRejected) return true;
-    if (status === 'invested' && filters.invested) return true;
+    // Get status from the analysis record (should only be one per investor)
+    const analysisStatus = company.analysis?.[0]?.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
+    if (analysisStatus === 'submitted' && filters.submitted) return true;
+    if (analysisStatus === 'screened' && filters.screened) return true;
+    if (analysisStatus === 'analyzed' && filters.analyzed) return true;
+    if (analysisStatus === 'indiligence' && filters.inDiligence) return true;
+    if (analysisStatus === 'rejected' && filters.rejected) return true;
+    if (analysisStatus === 'ddrejected' && filters.ddRejected) return true;
     return false;
   });
 
@@ -309,8 +315,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
   const stats = [
     { label: "Total Deals", value: companies.length.toString(), icon: <BarChart3 className="w-6 h-6" /> },
-    { label: "Investments", value: companies.filter(c => c.status === 'Invested').length.toString(), icon: <TrendingUp className="w-6 h-6" /> },
-    { label: "In Review", value: companies.filter(c => c.status === 'Pending' || c.status === 'Analyzed').length.toString(), icon: <Clock className="w-6 h-6" /> }
+    { label: "Investments", value: companies.filter(c => c.analysis?.[0]?.status === 'Invested').length.toString(), icon: <TrendingUp className="w-6 h-6" /> },
+    { label: "In Review", value: companies.filter(c => {
+      const status = c.analysis?.[0]?.status;
+      return status === 'Pending' || status === 'Analyzed' || status === 'Screened';
+    }).length.toString(), icon: <Clock className="w-6 h-6" /> }
   ];
 
   return (
@@ -540,7 +549,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {sortedAndLimitedCompanies.map((company) => {
-                  const recommendation = getRecommendation(company.overall_score);
+                  // Get status and recommendation from analysis table
+                  const analysis = company.analysis?.[0];
+                  const status = analysis?.status || 'Submitted';
+                  const recommendation = analysis?.recommendation || getRecommendation(company.overall_score ?? null);
                   const isAnalyzing = analyzingCompanies.has(company.id);
                 return (
                     <div 
@@ -556,22 +568,22 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-lg font-bold text-gold-600">{company.name}</h3>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          company.status === 'Submitted' ? 'bg-silver-100 text-silver-800' :
-                          company.status === 'Screened' ? 'bg-blue-100 text-blue-800' :
-                          company.status === 'Pending' ? 'bg-gold-100 text-gold-800' :
-                          company.status === 'Analyzed' ? 'bg-navy-100 text-navy-800' :
-                          company.status === 'Invested' ? 'bg-success-100 text-success-800' :
-                          company.status === 'In-Diligence' ? 'bg-gold-100 text-gold-800' :
+                          status === 'submitted' || status === 'Submitted' ? 'bg-silver-100 text-silver-800' :
+                          status === 'Screened' ? 'bg-blue-100 text-blue-800' :
+                          status === 'Pending' ? 'bg-gold-100 text-gold-800' :
+                          status === 'Analyzed' ? 'bg-navy-100 text-navy-800' :
+                          status === 'Invested' ? 'bg-success-100 text-success-800' :
+                          status === 'In-Diligence' ? 'bg-gold-100 text-gold-800' :
                         'bg-danger-100 text-danger-800'
                       }`}>
-                          {company.status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
-                           company.status === 'Screened' ? <Filter className="w-3 h-3 mr-1" /> :
-                           company.status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
-                           company.status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
-                           company.status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :
-                           company.status === 'In-Diligence' ? <Users className="w-3 h-3 mr-1" /> :
+                          {status === 'submitted' || status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
+                           status === 'Screened' ? <Filter className="w-3 h-3 mr-1" /> :
+                           status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
+                           status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
+                           status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :
+                           status === 'In-Diligence' ? <Users className="w-3 h-3 mr-1" /> :
                          <XCircle className="w-3 h-3 mr-1" />}
-                          {company.status || 'Submitted'}
+                          {status}
                       </span>
                     </div>
 
@@ -616,21 +628,28 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     {/* Recommendation */}
                     <div>
                       <p className={`text-xs font-semibold ${isDark ? 'text-silver-400' : 'text-navy-500'} mb-1`}>Recommendation</p>
-                        {company.recommendation && company.recommendation !== 'Pending Analysis' ? (
-                        <p className={`text-sm font-medium ${
-                            company.recommendation === 'Invest' ? 'text-success-600' :
-                            company.recommendation === 'Consider' ? 'text-gold-600' :
-                          'text-danger-600'
-                        }`}>
-                            {company.recommendation}
-                        </p>
+                        {recommendation && recommendation !== 'Pending Analysis' ? (
+                        <>
+                          <p className={`text-sm font-medium ${
+                              recommendation === 'Invest' || recommendation === 'Analyze' ? 'text-success-600' :
+                              recommendation === 'Consider' ? 'text-gold-600' :
+                            'text-danger-600'
+                          }`}>
+                              {recommendation}
+                          </p>
+                          {analysis?.recommendation_reason && (
+                            <p className={`text-xs mt-1 ${isDark ? 'text-silver-400' : 'text-navy-600'}`}>
+                              {analysis.recommendation_reason}
+                            </p>
+                          )}
+                        </>
                       ) : (
                           <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-navy-500'}`}>Pending Analysis</p>
                       )}
                     </div>
 
                     {/* Analyze Button for Submitted Status */}
-                      {company.status === 'Submitted' && (
+                      {(status === 'submitted' || status === 'Submitted') && (
                       <div className="mt-4 pt-3 border-t border-silver-200 dark:border-navy-600">
                         <button
                             onClick={(e) => handleAnalyze(company.id, company.name, e)}

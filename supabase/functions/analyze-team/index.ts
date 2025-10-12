@@ -9,8 +9,17 @@ const corsHeaders = {
 };
 
 interface RequestBody {
-  file_path: string;
+  file_path?: string;
   company_id?: string;
+  companyId?: string;
+  companyName?: string;
+  analysisId?: string;
+  prompt?: string;
+  documents?: Array<{
+    id: string;
+    name: string;
+    path: string;
+  }>;
 }
 
 Deno.serve(async (req: Request) => {
@@ -51,11 +60,24 @@ Deno.serve(async (req: Request) => {
       throw new Error('Unable to authenticate user');
     }
 
-    const { file_path, company_id: providedCompanyId }: RequestBody = await req.json();
+    const requestBody: RequestBody = await req.json();
+    const { 
+      file_path, 
+      company_id: providedCompanyId, 
+      companyId: requestCompanyId,
+      companyName: requestCompanyName,
+      analysisId: requestAnalysisId,
+      prompt: requestPrompt,
+      documents: requestDocuments
+    } = requestBody;
 
-    if (!file_path) {
+    // Handle both old format (single file) and new format (multiple documents)
+    const companyId = requestCompanyId || providedCompanyId || (file_path ? file_path.split('/')[0] : null);
+    const investorUserId = user.id;
+
+    if (!companyId) {
       return new Response(
-        JSON.stringify({ error: 'file_path is required' }),
+        JSON.stringify({ error: 'company_id is required' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -63,117 +85,186 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const companyId = providedCompanyId || file_path.split('/')[0];
-    const investorUserId = user.id;
+    // If using new format, validate required fields
+    if (requestDocuments && requestDocuments.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'No documents provided for analysis' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     console.log('Processing team analysis for:', { companyId, investorUserId, file_path });
 
     // Step 1: Get company details
-    const { data: company, error: companyError } = await supabaseAdmin
-      .from('companies')
-      .select('name')
-      .eq('id', companyId)
-      .single();
-
-    if (companyError || !company) {
-      throw new Error('Company not found');
-    }
-
-    // Step 2: Find or create analysis entry
-    let analysisId: string;
-    const { data: existingAnalysis } = await supabaseAdmin
-      .from('analysis')
-      .select('id')
-      .eq('company_id', companyId)
-      .eq('investor_user_id', investorUserId)
-      .maybeSingle();
-
-    if (existingAnalysis) {
-      analysisId = existingAnalysis.id;
-      // Update status to in_progress
-      await supabaseAdmin
-        .from('analysis')
-        .update({ 
-          status: 'in_progress',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', analysisId);
-      console.log('Using existing analysis:', analysisId);
-    } else {
-      // Create new analysis entry
-      const { data: newAnalysis, error: analysisError } = await supabaseAdmin
-        .from('analysis')
-        .insert({
-          company_id: companyId,
-          investor_user_id: investorUserId,
-          status: 'in_progress',
-        })
-        .select('id')
+    let companyName = requestCompanyName;
+    if (!companyName) {
+      const { data: company, error: companyError } = await supabaseAdmin
+        .from('companies')
+        .select('name')
+        .eq('id', companyId)
         .single();
 
-      if (analysisError || !newAnalysis) {
-        console.error('Failed to create analysis:', analysisError);
-        throw new Error('Failed to create analysis entry');
+      if (companyError || !company) {
+        throw new Error('Company not found');
       }
-      analysisId = newAnalysis.id;
-      console.log('Created new analysis:', analysisId);
+      companyName = company.name;
     }
 
-    // Step 3: Fetch the Team-Analysis prompt from database
-    console.log('Fetching Team-Analysis prompt...');
-    const { data: promptData, error: promptError } = await supabaseAdmin
-      .from('prompts')
-      .select('prompt_detail, preferred_llm')
-      .eq('prompt_name', 'Team-Analysis')
-      .single();
+    // Step 2: Use provided analysis ID or find/create analysis entry
+    let analysisId: string = requestAnalysisId || '';
+    
+    if (!analysisId) {
+      const { data: existingAnalysis } = await supabaseAdmin
+        .from('analysis')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('investor_user_id', investorUserId)
+        .maybeSingle();
 
-    if (promptError || !promptData) {
-      console.error('Error fetching prompt:', promptError);
-      throw new Error('Team-Analysis prompt not found in database. Please ensure the prompt exists in the prompts table.');
+      if (existingAnalysis) {
+        analysisId = existingAnalysis.id;
+        // Update status to in_progress
+        await supabaseAdmin
+          .from('analysis')
+          .update({ 
+            status: 'in_progress',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', analysisId);
+        console.log('Using existing analysis:', analysisId);
+      } else {
+        // Create new analysis entry
+        const { data: newAnalysis, error: analysisError } = await supabaseAdmin
+          .from('analysis')
+          .insert({
+            company_id: companyId,
+            investor_user_id: investorUserId,
+            status: 'in_progress',
+          })
+          .select('id')
+          .single();
+
+        if (analysisError || !newAnalysis) {
+          console.error('Failed to create analysis:', analysisError);
+          throw new Error('Failed to create analysis entry');
+        }
+        analysisId = newAnalysis.id;
+        console.log('Created new analysis:', analysisId);
+      }
     }
 
-    console.log('Using prompt from database');
+    // Step 3: Get the prompt (from request or database)
+    let promptText: string;
+    if (requestPrompt) {
+      promptText = requestPrompt;
+      console.log('Using prompt from request');
+    } else {
+      console.log('Fetching Team-Analysis prompt...');
+      const { data: promptData, error: promptError } = await supabaseAdmin
+        .from('prompts')
+        .select('prompt_detail, preferred_llm')
+        .eq('prompt_name', 'Team-Analysis')
+        .single();
 
-    // Step 4: Download PDF from Supabase Storage
-    console.log('Generating signed URL for:', file_path);
-    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
-      .from('company-documents')
-      .createSignedUrl(file_path, 3600);
-
-    if (signedUrlError || !signedUrlData) {
-      console.error('Error generating signed URL:', signedUrlError);
-      throw new Error('Failed to generate signed URL for file');
+      if (promptError || !promptData) {
+        console.error('Error fetching prompt:', promptError);
+        throw new Error('Team-Analysis prompt not found in database. Please ensure the prompt exists in the prompts table.');
+      }
+      promptText = promptData.prompt_detail;
+      console.log('Using prompt from database');
     }
 
-    const signedUrl = signedUrlData.signedUrl;
-    console.log('Signed URL generated successfully');
+    // Step 4: Handle documents (single file or multiple documents)
+    let fileIds: string[] = [];
+    
+    if (requestDocuments && requestDocuments.length > 0) {
+      // New format: multiple documents
+      console.log(`Processing ${requestDocuments.length} documents...`);
+      
+      for (const doc of requestDocuments) {
+        console.log('Generating signed URL for:', doc.path);
+        const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
+          .from('company-documents')
+          .createSignedUrl(doc.path, 3600);
 
-    // Step 5: Download the PDF
-    console.log('Downloading PDF from signed URL...');
-    const pdfResponse = await fetch(signedUrl);
-    if (!pdfResponse.ok) {
-      throw new Error(`Failed to download PDF: ${pdfResponse.statusText}`);
+        if (signedUrlError || !signedUrlData) {
+          console.error('Error generating signed URL:', signedUrlError);
+          throw new Error(`Failed to generate signed URL for file: ${doc.name}`);
+        }
+
+        const signedUrl = signedUrlData.signedUrl;
+        console.log('Signed URL generated successfully');
+
+        // Download the PDF
+        console.log('Downloading PDF from signed URL...');
+        const pdfResponse = await fetch(signedUrl);
+        if (!pdfResponse.ok) {
+          throw new Error(`Failed to download PDF: ${pdfResponse.statusText}`);
+        }
+
+        const pdfBuffer = await pdfResponse.arrayBuffer();
+        console.log('PDF downloaded, size:', pdfBuffer.byteLength);
+
+        const filename = doc.path.split('/').pop() || doc.name;
+        const pdfFile = new File([pdfBuffer], filename, { type: 'application/pdf' });
+
+        // Upload to OpenAI
+        console.log('Uploading file to OpenAI...');
+        const file = await openai.files.create({
+          file: pdfFile,
+          purpose: 'assistants',
+        });
+        console.log('File uploaded to OpenAI:', file.id);
+        fileIds.push(file.id);
+      }
+    } else if (file_path) {
+      // Legacy format: single file
+      console.log('Generating signed URL for:', file_path);
+      const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
+        .from('company-documents')
+        .createSignedUrl(file_path, 3600);
+
+      if (signedUrlError || !signedUrlData) {
+        console.error('Error generating signed URL:', signedUrlError);
+        throw new Error('Failed to generate signed URL for file');
+      }
+
+      const signedUrl = signedUrlData.signedUrl;
+      console.log('Signed URL generated successfully');
+
+      // Download the PDF
+      console.log('Downloading PDF from signed URL...');
+      const pdfResponse = await fetch(signedUrl);
+      if (!pdfResponse.ok) {
+        throw new Error(`Failed to download PDF: ${pdfResponse.statusText}`);
+      }
+
+      const pdfBuffer = await pdfResponse.arrayBuffer();
+      console.log('PDF downloaded, size:', pdfBuffer.byteLength);
+
+      const filename = file_path.split('/').pop() || 'document.pdf';
+      const pdfFile = new File([pdfBuffer], filename, { type: 'application/pdf' });
+
+      // Upload to OpenAI
+      console.log('Uploading file to OpenAI...');
+      const file = await openai.files.create({
+        file: pdfFile,
+        purpose: 'assistants',
+      });
+      console.log('File uploaded to OpenAI:', file.id);
+      fileIds.push(file.id);
+    } else {
+      throw new Error('No documents provided for analysis');
     }
 
-    const pdfBuffer = await pdfResponse.arrayBuffer();
-    console.log('PDF downloaded, size:', pdfBuffer.byteLength);
-
-    const filename = file_path.split('/').pop() || 'document.pdf';
-    const pdfFile = new File([pdfBuffer], filename, { type: 'application/pdf' });
-
-    // Step 6: Upload to OpenAI
-    console.log('Uploading file to OpenAI...');
-    const file = await openai.files.create({
-      file: pdfFile,
-      purpose: 'assistants',
-    });
-    console.log('File uploaded to OpenAI:', file.id);
-
-    // Step 7: Create vector store
+    // Step 5: Create vector store
     console.log('Creating vector store...');
     const vectorStore = await openai.beta.vectorStores.create({
       name: 'Team Analysis',
-      file_ids: [file.id],
+      file_ids: fileIds,
     });
     console.log('Vector store created:', vectorStore.id);
 
@@ -200,7 +291,7 @@ Deno.serve(async (req: Request) => {
     console.log('Adding message to thread with custom prompt...');
     await openai.beta.threads.messages.create(thread.id, {
       role: 'user',
-      content: promptData.prompt_detail,
+      content: promptText,
     });
 
     // Step 10: Run the assistant
@@ -220,7 +311,23 @@ Deno.serve(async (req: Request) => {
     }
 
     if (runStatus.status !== 'completed') {
-      throw new Error(`Run failed with status: ${runStatus.status}`);
+      console.error('Run failed. Full status object:', JSON.stringify(runStatus, null, 2));
+      
+      // Get detailed error information
+      let errorDetails = `Run failed with status: ${runStatus.status}`;
+      
+      if (runStatus.last_error) {
+        errorDetails += `\nError code: ${runStatus.last_error.code}`;
+        errorDetails += `\nError message: ${runStatus.last_error.message}`;
+        console.error('Last error:', runStatus.last_error);
+      }
+      
+      if (runStatus.status === 'failed' && runStatus.incomplete_details) {
+        console.error('Incomplete details:', runStatus.incomplete_details);
+        errorDetails += `\nIncomplete reason: ${runStatus.incomplete_details.reason}`;
+      }
+      
+      throw new Error(errorDetails);
     }
 
     // Step 11: Get the response
@@ -253,7 +360,7 @@ Deno.serve(async (req: Request) => {
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(75, 85, 99); // Medium gray
-    pdf.text(`Company: ${company.name}`, margin, margin + 12);
+    pdf.text(`Company: ${companyName}`, margin, margin + 12);
 
     // Add date and metadata
     pdf.setFontSize(10);
@@ -349,12 +456,15 @@ Deno.serve(async (req: Request) => {
 
     // Step 13: Upload PDF to Supabase Storage
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
-    const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    // Clean up company name: replace non-alphanumeric with dash, remove consecutive dashes, trim dashes from ends
+    const companySlug = companyName.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric sequences with single dash
+      .replace(/^-+|-+$/g, '');      // Remove leading/trailing dashes
     const reportFileName = `${companySlug}_team-analysis_${timestamp}.pdf`;
     const reportPath = `${companyId}/${reportFileName}`;
 
     console.log('Uploading PDF to storage:', reportPath);
-    const { error: uploadError } = await supabaseAdmin.storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('analysis-output-docs')
       .upload(reportPath, pdfBlob, {
         contentType: 'application/pdf',
@@ -367,7 +477,31 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Failed to upload PDF: ${uploadError.message}`);
     }
 
-    console.log('PDF uploaded successfully');
+    if (!uploadData) {
+      throw new Error('Upload completed but no data returned - upload may have failed');
+    }
+
+    console.log('PDF uploaded successfully, path:', uploadData.path);
+
+    // Verify the file actually exists in storage
+    console.log('Verifying file exists in storage...');
+    const { data: fileCheck, error: verifyError } = await supabaseAdmin.storage
+      .from('analysis-output-docs')
+      .list(companyId, {
+        search: reportFileName
+      });
+
+    if (verifyError) {
+      console.error('Error verifying file upload:', verifyError);
+      throw new Error(`File upload verification failed: ${verifyError.message}`);
+    }
+
+    if (!fileCheck || fileCheck.length === 0) {
+      console.error('File not found in storage after upload. Expected:', reportFileName);
+      throw new Error('File upload verification failed - file not found in storage after upload');
+    }
+
+    console.log('File verified in storage:', fileCheck[0].name);
 
     // Step 14: Create entry in analysis_reports table
     const { data: reportRecord, error: reportError } = await supabaseAdmin
@@ -390,40 +524,62 @@ Deno.serve(async (req: Request) => {
 
     console.log('Report record created:', reportRecord.id);
 
-    // Step 15: Update analysis status to completed
+    // Step 15: Update analysis status to Analyzed
     await supabaseAdmin
       .from('analysis')
       .update({
-        status: 'completed',
+        status: 'Analyzed',
         analyzed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', analysisId);
 
-    console.log('Analysis status updated to completed');
+    console.log('Analysis status updated to Analyzed');
 
-    // Step 16: Store in extracted_data for display
-    await supabaseAdmin
-      .from('extracted_data')
-      .insert({
-        file_path: file_path,
-        extracted_info: {
-          analysis_type: 'team',
-          analysis_result: analysisResult,
-          prompt_used: promptData.prompt_detail,
-          model_used: 'gpt-4-turbo-preview',
-          company_id: companyId,
-          analysis_id: analysisId,
-          report_id: reportRecord.id,
-        },
-      });
+    // Step 16: Store in extracted_data for display (only if file_path exists for backward compatibility)
+    if (file_path) {
+      await supabaseAdmin
+        .from('extracted_data')
+        .insert({
+          file_path: file_path,
+          extracted_info: {
+            analysis_type: 'team',
+            analysis_result: analysisResult,
+            prompt_used: promptText,
+            model_used: 'gpt-4-turbo-preview',
+            company_id: companyId,
+            analysis_id: analysisId,
+            report_id: reportRecord.id,
+          },
+        });
+    } else {
+      // For new format with multiple documents, store with the report path
+      await supabaseAdmin
+        .from('extracted_data')
+        .insert({
+          file_path: reportPath,
+          extracted_info: {
+            analysis_type: 'team',
+            analysis_result: analysisResult,
+            prompt_used: promptText,
+            model_used: 'gpt-4-turbo-preview',
+            company_id: companyId,
+            analysis_id: analysisId,
+            report_id: reportRecord.id,
+            documents_analyzed: requestDocuments?.map(d => d.name).join(', '),
+          },
+        });
+    }
 
     // Step 17: Cleanup OpenAI resources
     console.log('Cleaning up OpenAI resources...');
     try {
       await openai.beta.assistants.del(assistant.id);
       await openai.beta.vectorStores.del(vectorStore.id);
-      await openai.files.del(file.id);
+      // Delete all uploaded files
+      for (const fileId of fileIds) {
+        await openai.files.del(fileId);
+      }
       console.log('Cleanup completed');
     } catch (cleanupError) {
       console.error('Error during cleanup:', cleanupError);
@@ -445,7 +601,7 @@ Deno.serve(async (req: Request) => {
           file_path: reportPath,
           download_url: pdfSignedUrl?.signedUrl,
         },
-        company: company.name,
+        company: companyName,
         model_used: 'gpt-4-turbo-preview',
       }),
       {
