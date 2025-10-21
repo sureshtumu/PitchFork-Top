@@ -81,3 +81,5 @@ WHERE a.company_id = '4819f923-493f-40c9-9d8b-5679662acbdf'
 GROUP BY a.id, a.status, a.analyzed_at, a.investor_user_id, u.email;
 
 
+
+

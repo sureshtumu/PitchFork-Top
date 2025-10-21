@@ -111,3 +111,5 @@ The history will now appear at the bottom of the Analysis Results section instea
 The Analysis History is now properly integrated into the Analysis Results section where it belongs!
 
 
+
+

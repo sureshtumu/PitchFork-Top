@@ -81,6 +81,13 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
   const [messageStatus, setMessageStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isAnalyzingTeam, setIsAnalyzingTeam] = useState(false);
   const [teamAnalysisResult, setTeamAnalysisResult] = useState<string | null>(null);
+  const [isAnalyzingProduct, setIsAnalyzingProduct] = useState(false);
+  const [isAnalyzingMarket, setIsAnalyzingMarket] = useState(false);
+  const [isAnalyzingFinancials, setIsAnalyzingFinancials] = useState(false);
+  const [isCreatingScoreCard, setIsCreatingScoreCard] = useState(false);
+  const [isCreatingDetailReport, setIsCreatingDetailReport] = useState(false);
+  const [isCreatingDiligenceQuestions, setIsCreatingDiligenceQuestions] = useState(false);
+  const [isCreatingFounderReport, setIsCreatingFounderReport] = useState(false);
 
   // Check authentication and load company data
   useEffect(() => {
@@ -500,19 +507,29 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     }
   };
 
-  const handleAnalyzeTeam = async () => {
+  // Generic analysis handler for all analysis types
+  const handleAnalysis = async (analysisType: 'team' | 'product' | 'market' | 'financial') => {
     if (!company) {
       setMessageStatus({ type: 'error', text: 'Company information not available' });
       return;
     }
 
+    const typeConfig = {
+      team: { setLoading: setIsAnalyzingTeam, promptName: 'Team-Analysis', label: 'Team', historyLabel: 'Analyze-Team' },
+      product: { setLoading: setIsAnalyzingProduct, promptName: 'Product-Analysis', label: 'Product', historyLabel: 'Analyze-Product' },
+      market: { setLoading: setIsAnalyzingMarket, promptName: 'Market-Analysis', label: 'Market', historyLabel: 'Analyze-Market' },
+      financial: { setLoading: setIsAnalyzingFinancials, promptName: 'Financial-Analysis', label: 'Financial', historyLabel: 'Analyze-Financials' },
+    };
+
+    const config = typeConfig[analysisType];
+
     try {
-      setIsAnalyzingTeam(true);
+      config.setLoading(true);
       setMessageStatus(null);
 
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        setMessageStatus({ type: 'error', text: 'You must be logged in to perform team analysis' });
+        setMessageStatus({ type: 'error', text: `You must be logged in to perform ${config.label.toLowerCase()} analysis` });
         return;
       }
 
@@ -520,7 +537,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       let analysisId = analysis.length > 0 ? analysis[0].id : null;
       
       if (!analysisId) {
-        // Create analysis record if it doesn't exist
         const { data: newAnalysis, error: analysisError } = await supabase
           .from('analysis')
           .insert([{
@@ -539,22 +555,22 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         analysisId = newAnalysis.id;
       }
 
-      // Get the Team-Analysis prompt from prompts table
+      // Get the prompt from prompts table
       const { data: promptData, error: promptError } = await supabase
         .from('prompts')
         .select('prompt_detail')
-        .eq('prompt_name', 'Team-Analysis')
+        .eq('prompt_name', config.promptName)
         .single();
 
       if (promptError) {
-        console.error('Error fetching Team-Analysis prompt:', promptError);
-        setMessageStatus({ type: 'error', text: 'Team-Analysis prompt not found in database. Please add it to the prompts table.' });
+        console.error(`Error fetching ${config.promptName} prompt:`, promptError);
+        setMessageStatus({ type: 'error', text: `${config.promptName} prompt not found in database. Please add it to the prompts table.` });
         return;
       }
 
       if (!promptData || !promptData.prompt_detail) {
         console.error('Prompt data is empty');
-        setMessageStatus({ type: 'error', text: 'Team-Analysis prompt is empty' });
+        setMessageStatus({ type: 'error', text: `${config.promptName} prompt is empty` });
         return;
       }
 
@@ -573,7 +589,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       }
 
       if (!documentsData || documentsData.length === 0) {
-        setMessageStatus({ type: 'error', text: 'No documents found for team analysis' });
+        setMessageStatus({ type: 'error', text: `No documents found for ${config.label.toLowerCase()} analysis` });
         return;
       }
 
@@ -583,11 +599,12 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         path: doc.path
       })));
 
-      // Call the team analysis function
+      // Call the generic analyze-company function
       const requestBody = {
         companyId: company.id,
         companyName: company.name,
         analysisId: analysisId,
+        analysisType: analysisType,
         prompt: promptData.prompt_detail,
         documents: documentsData.map(doc => ({
           id: doc.id,
@@ -596,18 +613,17 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         }))
       };
       
-      console.log('Calling analyze-team function with:', {
+      console.log('Calling analyze-company function with:', {
         companyId: requestBody.companyId,
         companyName: requestBody.companyName,
         analysisId: requestBody.analysisId,
+        analysisType: requestBody.analysisType,
         promptLength: requestBody.prompt?.length,
         documentsCount: requestBody.documents.length,
-        documentPaths: requestBody.documents.map(d => d.path)
       });
 
-      // Make a direct fetch call to get better error details
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nsimmsznrutwgtkkblgw.supabase.co';
-      const functionUrl = `${supabaseUrl}/functions/v1/analyze-team`;
+      const functionUrl = `${supabaseUrl}/functions/v1/analyze-company`;
       const session = await supabase.auth.getSession();
       
       console.log('Making request to:', functionUrl);
@@ -627,7 +643,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       console.log('Response body:', responseText);
 
       if (!response.ok) {
-        let errorMessage = 'Failed to perform team analysis';
+        let errorMessage = `Failed to perform ${config.label.toLowerCase()} analysis`;
         try {
           const errorData = JSON.parse(responseText);
           if (errorData.error) {
@@ -636,7 +652,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
           console.error('Parsed error:', errorData);
         } catch (e) {
           console.error('Could not parse error response:', responseText);
-          errorMessage = `Failed to perform team analysis (${response.status})`;
+          errorMessage = `Failed to perform ${config.label.toLowerCase()} analysis (${response.status})`;
         }
         setMessageStatus({ type: 'error', text: errorMessage });
         return;
@@ -645,23 +661,14 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       const analysisResult = JSON.parse(responseText);
       console.log('Analysis result:', analysisResult);
 
-      // Check if the response indicates an error
       if (analysisResult?.error) {
-        console.error('Team analysis function returned error:', analysisResult.error);
+        console.error(`${config.label} analysis function returned error:`, analysisResult.error);
         console.error('Error details:', analysisResult.details);
         setMessageStatus({ type: 'error', text: `Analysis failed: ${analysisResult.error}` });
         return;
       }
 
-      // Display the analysis result on screen
-      if (analysisResult?.analysis) {
-        setTeamAnalysisResult(analysisResult.analysis);
-        console.log('Team analysis set successfully');
-      } else {
-        console.warn('No analysis text in result:', analysisResult);
-      }
-
-      setMessageStatus({ type: 'success', text: 'Team analysis completed successfully!' });
+      setMessageStatus({ type: 'success', text: `${config.label} analysis completed successfully!` });
       
       // Update analysis history
       const currentDate = new Date().toLocaleDateString('en-US', { 
@@ -670,7 +677,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         day: 'numeric' 
       });
       const currentHistory = analysis.length > 0 && analysis[0].history ? analysis[0].history : '';
-      const newHistoryEntry = `${currentDate}: Analyze-Team - Complete`;
+      const newHistoryEntry = `${currentDate}: ${config.historyLabel} - Complete`;
       const updatedHistory = currentHistory ? `${currentHistory}\n${newHistoryEntry}` : newHistoryEntry;
       
       await supabase
@@ -690,10 +697,372 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       }, 5000);
 
     } catch (error) {
-      console.error('Error performing team analysis:', error);
-      setMessageStatus({ type: 'error', text: 'An unexpected error occurred during team analysis' });
+      console.error(`Error performing ${config.label.toLowerCase()} analysis:`, error);
+      setMessageStatus({ type: 'error', text: `An unexpected error occurred during ${config.label.toLowerCase()} analysis` });
     } finally {
-      setIsAnalyzingTeam(false);
+      config.setLoading(false);
+    }
+  };
+
+  // Wrapper functions for each analysis type
+  const handleAnalyzeTeam = () => handleAnalysis('team');
+  const handleAnalyzeProduct = () => handleAnalysis('product');
+  const handleAnalyzeMarket = () => handleAnalysis('market');
+  const handleAnalyzeFinancials = () => handleAnalysis('financial');
+
+  const handleCreateScoreCard = async () => {
+    if (!company || !id) {
+      alert('Company information not available');
+      return;
+    }
+
+    if (analysisReports.length === 0) {
+      alert('No analysis reports available. Please run at least one analysis first.');
+      return;
+    }
+
+    setIsCreatingScoreCard(true);
+    try {
+      console.log('Creating score card for company:', company.name);
+
+      // Get current user
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get analysis ID
+      let analysisId = analysis.length > 0 ? analysis[0].id : '';
+
+      // Prepare existing reports summary for the AI
+      const reportsSummary = analysisReports.map(report => ({
+        type: report.report_type,
+        path: report.report_path,
+        generated_at: report.generated_at
+      }));
+
+      console.log('Existing reports:', reportsSummary);
+
+      // Call the analyze-company edge function with scorecard type
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-company`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            companyId: id,
+            companyName: company.name,
+            analysisId: analysisId,
+            analysisType: 'scorecard',
+            documents: documents.map(doc => ({
+              id: doc.id,
+              name: doc.name,
+              path: doc.path
+            })),
+            existingReports: reportsSummary
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to create score card';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('Score card created:', result);
+
+      // Reload the analysis reports to show the new score card
+      await loadAnalysisReports(id);
+      
+      alert('Score card created successfully!');
+    } catch (error) {
+      console.error('Error creating score card:', error);
+      alert(`Failed to create score card: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreatingScoreCard(false);
+    }
+  };
+
+  const handleCreateDetailReport = async () => {
+    if (!company || !id) {
+      alert('Company information not available');
+      return;
+    }
+
+    if (analysisReports.length === 0) {
+      alert('No analysis reports available. Please run at least one analysis first.');
+      return;
+    }
+
+    setIsCreatingDetailReport(true);
+    try {
+      console.log('Creating detail report for company:', company.name);
+
+      // Get current user
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get analysis ID
+      let analysisId = analysis.length > 0 ? analysis[0].id : '';
+
+      // Prepare existing reports summary for the AI
+      const reportsSummary = analysisReports.map(report => ({
+        type: report.report_type,
+        path: report.report_path,
+        generated_at: report.generated_at
+      }));
+
+      console.log('Existing reports for detail compilation:', reportsSummary);
+
+      // Call the analyze-company edge function with detail-report type
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-company`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            companyId: id,
+            companyName: company.name,
+            analysisId: analysisId,
+            analysisType: 'detail-report',
+            documents: documents.map(doc => ({
+              id: doc.id,
+              name: doc.name,
+              path: doc.path
+            })),
+            existingReports: reportsSummary
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to create detail report';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('Detail report created:', result);
+
+      // Reload the analysis reports to show the new detail report
+      await loadAnalysisReports(id);
+      
+      alert('Detail report created successfully!');
+    } catch (error) {
+      console.error('Error creating detail report:', error);
+      alert(`Failed to create detail report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreatingDetailReport(false);
+    }
+  };
+
+  const handleCreateDiligenceQuestions = async () => {
+    if (!company || !id) {
+      alert('Company information not available');
+      return;
+    }
+
+    if (analysisReports.length === 0) {
+      alert('No analysis reports available. Please run at least one analysis first.');
+      return;
+    }
+
+    setIsCreatingDiligenceQuestions(true);
+    try {
+      console.log('Creating diligence questions for company:', company.name);
+
+      // Get current user
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get analysis ID
+      let analysisId = analysis.length > 0 ? analysis[0].id : '';
+
+      // Prepare existing reports summary for the AI
+      const reportsSummary = analysisReports.map(report => ({
+        type: report.report_type,
+        path: report.report_path,
+        generated_at: report.generated_at
+      }));
+
+      console.log('Existing reports for diligence questions:', reportsSummary);
+
+      // Call the analyze-company edge function with diligence-questions type
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-company`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            companyId: id,
+            companyName: company.name,
+            analysisId: analysisId,
+            analysisType: 'diligence-questions',
+            documents: documents.map(doc => ({
+              id: doc.id,
+              name: doc.name,
+              path: doc.path
+            })),
+            existingReports: reportsSummary
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to create diligence questions';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('Diligence questions created:', result);
+
+      // Reload the analysis reports to show the new diligence questions
+      await loadAnalysisReports(id);
+      
+      alert('Diligence questions created successfully!');
+    } catch (error) {
+      console.error('Error creating diligence questions:', error);
+      alert(`Failed to create diligence questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreatingDiligenceQuestions(false);
+    }
+  };
+
+  const handleCreateFounderReport = async () => {
+    if (!company || !id) {
+      alert('Company information not available');
+      return;
+    }
+
+    if (analysisReports.length === 0) {
+      alert('No analysis reports available. Please run at least one analysis first.');
+      return;
+    }
+
+    setIsCreatingFounderReport(true);
+    try {
+      console.log('Creating founder report for company:', company.name);
+
+      // Get current user
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get analysis ID
+      let analysisId = analysis.length > 0 ? analysis[0].id : '';
+
+      // Prepare existing reports summary for the AI
+      const reportsSummary = analysisReports.map(report => ({
+        type: report.report_type,
+        path: report.report_path,
+        generated_at: report.generated_at
+      }));
+
+      console.log('Existing reports for founder feedback:', reportsSummary);
+
+      // Call the analyze-company edge function with founder-report type
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-company`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            companyId: id,
+            companyName: company.name,
+            analysisId: analysisId,
+            analysisType: 'founder-report',
+            documents: documents.map(doc => ({
+              id: doc.id,
+              name: doc.name,
+              path: doc.path
+            })),
+            existingReports: reportsSummary
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to create founder report';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('Founder report created:', result);
+
+      // Reload the analysis reports to show the new founder report
+      await loadAnalysisReports(id);
+      
+      alert('Founder report created successfully!');
+    } catch (error) {
+      console.error('Error creating founder report:', error);
+      alert(`Failed to create founder report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreatingFounderReport(false);
     }
   };
 
@@ -718,6 +1087,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         return;
       }
 
+      // Save message to database
       const { error } = await supabase
         .from('messages')
         .insert([{
@@ -735,6 +1105,47 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         console.error('Error sending message:', error);
         setMessageStatus({ type: 'error', text: 'Failed to send message. Please try again.' });
         return;
+      }
+
+      // Send email notification
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nsimmsznrutwgtkkblgw.supabase.co';
+        const functionUrl = `${supabaseUrl}/functions/v1/send-message-email`;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session?.access_token) {
+          console.error('No valid session for email notification:', sessionError);
+          // Don't fail the whole operation if email fails
+          return;
+        }
+        
+        console.log('Calling email function with session...');
+        
+        const emailResponse = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            companyName: company.name,
+            messageTitle: messageTitle.trim(),
+            messageDetail: messageTitle.trim(),
+          })
+        });
+
+        console.log('Email response status:', emailResponse.status);
+        
+        if (!emailResponse.ok) {
+          const errorText = await emailResponse.text();
+          console.error('Failed to send email notification:', errorText);
+          // Don't fail the whole operation if email fails
+        } else {
+          console.log('Email notification sent successfully');
+        }
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Don't fail the whole operation if email fails
       }
 
       setMessageStatus({ type: 'success', text: 'Message sent successfully!' });
@@ -774,6 +1185,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         return;
       }
 
+      // Save message to database
       const { error } = await supabase
         .from('messages')
         .insert([{
@@ -793,6 +1205,47 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
         return;
       }
 
+      // Send email notification
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nsimmsznrutwgtkkblgw.supabase.co';
+        const functionUrl = `${supabaseUrl}/functions/v1/send-message-email`;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session?.access_token) {
+          console.error('No valid session for email notification:', sessionError);
+          // Don't fail the whole operation if email fails
+          return;
+        }
+        
+        console.log('Calling email function with session...');
+        
+        const emailResponse = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            companyName: company.name,
+            messageTitle: messageTitle.trim(),
+            messageDetail: messageDetail.trim(),
+          })
+        });
+
+        console.log('Email response status:', emailResponse.status);
+        
+        if (!emailResponse.ok) {
+          const errorText = await emailResponse.text();
+          console.error('Failed to send email notification:', errorText);
+          // Don't fail the whole operation if email fails
+        } else {
+          console.log('Email notification sent successfully');
+        }
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Don't fail the whole operation if email fails
+      }
+
       setMessageStatus({ type: 'success', text: 'Message sent successfully!' });
       setMessageTitle('');
       setMessageDetail('');
@@ -809,6 +1262,13 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     } finally {
       setIsSendingMessage(false);
     }
+  };
+
+  // Helper function to check if all 4 required analyze reports exist
+  const hasAllRequiredAnalysisReports = (): boolean => {
+    const requiredReports = ['product-analysis', 'team-analysis', 'market-analysis', 'financial-analysis'];
+    const existingReportTypes = analysisReports.map(report => report.report_type.toLowerCase());
+    return requiredReports.every(reportType => existingReportTypes.includes(reportType));
   };
 
   if (isLoading) {
@@ -974,32 +1434,66 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
           <div className="p-6">
             <h2 className="text-2xl font-bold text-blue-600 mb-4">{company.name}</h2>
             
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3 mb-6">
+            {/* Action Buttons - Organized in 3 Rows */}
+            <div className="space-y-3 mb-6">
               {(() => {
                 // Get current status from analysis table
                 const currentAnalysisStatus = analysis.length > 0 ? analysis[0].status : 'Submitted';
                 
-                // Define which buttons to show based on current status
-                let availableButtons: string[] = [];
-                if (currentAnalysisStatus === 'Screened') {
-                  availableButtons = ['Analyze', 'Analyze-Team', 'Reject'];
-                } else if (currentAnalysisStatus === 'Analyzed') {
-                  availableButtons = ['Analyze-Team', 'Diligence', 'Reject'];
+                // Row 1: Analysis buttons (in specific order)
+                const row1Buttons = ['Analyze-Product', 'Analyze-Market', 'Analyze-Team', 'Analyze-Financials'];
+                
+                // Row 2: Create buttons
+                const row2Buttons = ['Create-ScoreCard', 'Create-DetailReport', 'Create-DiligenceQuestions', 'Create-FounderReport'];
+                
+                // Row 3: Status buttons (based on current status)
+                let row3Buttons: string[] = [];
+                if (currentAnalysisStatus === 'Analyzed') {
+                  row3Buttons = ['Diligence', 'Reject'];
                 } else if (currentAnalysisStatus === 'In-Diligence') {
-                  availableButtons = ['Analyze-Team', 'Invested', 'Reject'];
+                  row3Buttons = ['Invested', 'Reject'];
                 } else {
-                  // For other statuses (Submitted, Rejected, etc.), show basic options
-                  availableButtons = ['Analyze', 'Analyze-Team', 'Reject'];
+                  row3Buttons = ['Reject'];
                 }
                 
-                return availableButtons.map((status) => {
+                const renderButton = (status: string) => {
                   const isActive = 
                     (status === 'Diligence' && currentAnalysisStatus === 'In-Diligence') ||
                     (status === 'Invested' && currentAnalysisStatus === 'Invested') ||
                     (status !== 'Diligence' && status !== 'Invested' && currentAnalysisStatus === status);
                   
-                  const isDisabled = isUpdating || (status === 'Analyze-Team' && isAnalyzingTeam);
+                  // Determine button style based on type
+                  const isAnalysisButton = status.startsWith('Analyze-');
+                  const isCreateButton = status.startsWith('Create-');
+                  
+                  // Check if all required analysis reports exist (for Create buttons)
+                  const allAnalysisReportsExist = hasAllRequiredAnalysisReports();
+                  
+                  // Check if this specific analysis report has been generated
+                  const existingReportTypes = analysisReports.map(report => report.report_type.toLowerCase());
+                  const isAnalysisComplete = 
+                    (status === 'Analyze-Product' && existingReportTypes.includes('product-analysis')) ||
+                    (status === 'Analyze-Team' && existingReportTypes.includes('team-analysis')) ||
+                    (status === 'Analyze-Market' && existingReportTypes.includes('market-analysis')) ||
+                    (status === 'Analyze-Financials' && existingReportTypes.includes('financial-analysis'));
+                  
+                  const isDisabled = isUpdating || 
+                    (status === 'Analyze-Team' && isAnalyzingTeam) ||
+                    (status === 'Analyze-Product' && isAnalyzingProduct) ||
+                    (status === 'Analyze-Market' && isAnalyzingMarket) ||
+                    (status === 'Analyze-Financials' && isAnalyzingFinancials) ||
+                    (status === 'Create-ScoreCard' && (isCreatingScoreCard || !allAnalysisReportsExist)) ||
+                    (status === 'Create-DetailReport' && (isCreatingDetailReport || !allAnalysisReportsExist)) ||
+                    (status === 'Create-DiligenceQuestions' && (isCreatingDiligenceQuestions || !allAnalysisReportsExist)) ||
+                    (status === 'Create-FounderReport' && (isCreatingFounderReport || !allAnalysisReportsExist));
+                  
+                  // Generate tooltip for Create buttons when disabled due to missing reports
+                  // Also add tooltip for completed analysis buttons
+                  const tooltipText = isCreateButton && !allAnalysisReportsExist
+                    ? 'All 4 Analyze reports (Product, Team, Market, Financials) must be generated first'
+                    : isAnalysisComplete
+                    ? 'This analysis has been completed'
+                    : undefined;
                   
                   return (
                     <button
@@ -1007,26 +1501,75 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                       onClick={() => {
                         if (status === 'Analyze-Team') {
                           handleAnalyzeTeam();
+                        } else if (status === 'Analyze-Product') {
+                          handleAnalyzeProduct();
+                        } else if (status === 'Analyze-Market') {
+                          handleAnalyzeMarket();
+                        } else if (status === 'Analyze-Financials') {
+                          handleAnalyzeFinancials();
+                        } else if (status === 'Create-ScoreCard') {
+                          handleCreateScoreCard();
+                        } else if (status === 'Create-DetailReport') {
+                          handleCreateDetailReport();
+                        } else if (status === 'Create-DiligenceQuestions') {
+                          handleCreateDiligenceQuestions();
+                        } else if (status === 'Create-FounderReport') {
+                          handleCreateFounderReport();
                         } else {
                           handleStatusChange(status);
                         }
                       }}
                       disabled={isDisabled}
+                      title={tooltipText}
                       className={`px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                         isActive
                           ? 'bg-blue-600 text-white'
-                          : status === 'Analyze-Team'
-                            ? 'bg-purple-600 text-white hover:bg-purple-700'
-                            : isDark
-                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          : isAnalysisButton && isAnalysisComplete
+                            ? isDark
+                              ? 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                              : 'bg-gray-400 text-white hover:bg-gray-500'
+                            : isAnalysisButton
+                              ? 'bg-purple-600 text-white hover:bg-purple-700'
+                              : isCreateButton
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : isDark
+                                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                     >
-                      {isDisabled && status === 'Analyze-Team' ? 'Analyzing...' : 
-                       isUpdating ? 'Updating...' : status}
+                      {isDisabled && status.startsWith('Analyze-') ? 'Analyzing...' : 
+                       isDisabled && status.startsWith('Create-') ? 'Creating...' :
+                       isUpdating ? 'Updating...' : 
+                       status.replace(/-/g, ' ')}
                     </button>
                   );
-                });
+                };
+                
+                return (
+                  <>
+                    {/* Row 1: Analysis Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                      {row1Buttons.map(renderButton)}
+                    </div>
+                    
+                    {/* Row 2: Create Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                      {row2Buttons.map(renderButton)}
+                    </div>
+                    
+                    {/* Info message when Create buttons are disabled */}
+                    {!hasAllRequiredAnalysisReports() && (
+                      <div className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 rounded-lg border border-amber-200 dark:border-amber-800">
+                        ℹ️ <strong>Note:</strong> All 4 Analyze reports (Product, Team, Market, Financials) must be generated before you can create ScoreCard, DetailReport, DiligenceQuestions, or FounderReport.
+                      </div>
+                    )}
+                    
+                    {/* Row 3: Status Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                      {row3Buttons.map(renderButton)}
+                    </div>
+                  </>
+                );
               })()}
             </div>
             
@@ -1318,15 +1861,6 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                         >
                           <Download className="w-4 h-4" />
                         </button>
-                        {report.report_type === 'team-analysis' && (
-                          <button
-                            onClick={() => handleDownloadReport(report)}
-                            className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors flex-shrink-0"
-                            title="Download report (alternative)"
-                          >
-                            <FileText className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>

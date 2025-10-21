@@ -114,3 +114,5 @@ Consider caching signed URLs temporarily to avoid regenerating them for repeated
 The `analyze-team` function already creates signed URLs when generating reports (line 565-567 in `supabase/functions/analyze-team/index.ts`). This fix ensures the frontend uses the same secure approach for downloads.
 
 
+
+
