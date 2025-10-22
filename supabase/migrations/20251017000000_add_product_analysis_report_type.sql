@@ -27,3 +27,4 @@ ALTER TABLE analysis_reports
 COMMENT ON COLUMN analysis_reports.report_type IS 'Type of analysis report: summary, detailed, feedback, team-analysis, product-analysis, market-analysis, financial-analysis';
 
 
+

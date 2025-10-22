@@ -144,3 +144,4 @@ SELECT prompt_name, LEFT(prompt_detail, 100) as prompt_preview, preferred_llm, c
 FROM prompts
 WHERE prompt_name = 'Create-Diligence-Questions';
 
+
