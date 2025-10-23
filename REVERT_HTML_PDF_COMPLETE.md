@@ -107,3 +107,4 @@ If you want to re-implement the HTML+CSS+Playwright approach later, you would ne
 The analyze-company function now uses the same simple jsPDF approach as analyze-team, providing basic but functional PDF reports.
 
 
+

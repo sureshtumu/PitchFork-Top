@@ -133,3 +133,4 @@ All future PDFs generated (Score Cards, Detail Reports, DD Questions, Founder Re
 **Generate a new Score Card for DAC and the tables will be perfectly aligned!** 🎉
 
 
+

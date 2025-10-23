@@ -34,12 +34,10 @@ interface Analysis {
 const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = React.useState({
-    submitted: true,
     screened: true,
     analyzed: true,
     inDiligence: true,
-    rejected: true,
-    ddRejected: true
+    rejected: true
   });
   
   const [itemsToShow, setItemsToShow] = React.useState('10');
@@ -268,14 +266,11 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   // Filter companies based on selected filters
   // Status comes from analysis table (first analysis record for this investor)
   const filteredCompanies = companies.filter(company => {
-    // Get status from the analysis record (should only be one per investor)
-    const analysisStatus = company.analysis?.[0]?.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
-    if (analysisStatus === 'submitted' && filters.submitted) return true;
+    const analysisStatus = company.analysis?.[0]?.status?.toLowerCase().replace('-', '').replace(' ', '') || 'screened';
     if (analysisStatus === 'screened' && filters.screened) return true;
     if (analysisStatus === 'analyzed' && filters.analyzed) return true;
     if (analysisStatus === 'indiligence' && filters.inDiligence) return true;
     if (analysisStatus === 'rejected' && filters.rejected) return true;
-    if (analysisStatus === 'ddrejected' && filters.ddRejected) return true;
     return false;
   });
 
@@ -315,11 +310,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
   const stats = [
     { label: "Total Deals", value: companies.length.toString(), icon: <BarChart3 className="w-6 h-6" /> },
-    { label: "Investments", value: companies.filter(c => c.analysis?.[0]?.status === 'Invested').length.toString(), icon: <TrendingUp className="w-6 h-6" /> },
-    { label: "In Review", value: companies.filter(c => {
-      const status = c.analysis?.[0]?.status;
-      return status === 'Pending' || status === 'Analyzed' || status === 'Screened';
-    }).length.toString(), icon: <Clock className="w-6 h-6" /> }
+    { label: "Screened", value: companies.filter(c => c.analysis?.[0]?.status === 'Screened').length.toString(), icon: <CheckCircle className="w-6 h-6" /> },
+    { label: "Analyzed", value: companies.filter(c => c.analysis?.[0]?.status === 'Analyzed').length.toString(), icon: <BarChart3 className="w-6 h-6" /> },
+    { label: "Diligence", value: companies.filter(c => c.analysis?.[0]?.status === 'In-Diligence').length.toString(), icon: <Users className="w-6 h-6" /> },
+    { label: "Rejected", value: companies.filter(c => c.analysis?.[0]?.status === 'Rejected').length.toString(), icon: <XCircle className="w-6 h-6" /> }
   ];
 
   return (
@@ -432,7 +426,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
           {stats.map((stat, index) => (
             <div key={index} className={`${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} p-8 rounded-xl shadow-financial border hover:shadow-gold transition-all duration-300`}>
               <div className="flex items-center justify-between">
@@ -463,12 +457,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                 <h3 className="text-sm font-bold mb-3 text-navy-800 dark:text-silver-200">Status</h3>
                 <div className="flex flex-wrap gap-4">
                   {[
-                    { key: 'submitted', label: 'Submitted' },
                     { key: 'screened', label: 'Screened' },
                     { key: 'analyzed', label: 'Analyzed' },
                     { key: 'inDiligence', label: 'In-Diligence' },
-                    { key: 'rejected', label: 'Rejected' },
-                    { key: 'ddRejected', label: 'DD-Rejected' }
+                    { key: 'rejected', label: 'Rejected' }
                   ].map((filter) => (
                     <label key={filter.key} className="flex items-center">
                       <input

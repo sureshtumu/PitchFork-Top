@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send, Download, BarChart3, Users } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, User, Mail, Phone, FileText, ChevronDown, MessageCircle, Send, Download, BarChart3, Users, Trash2 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '../lib/supabase';
 
 interface VentureDetailProps {
@@ -177,12 +177,18 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
 
   const loadAnalysisReports = async (companyId: string) => {
     try {
+      console.log('=== LOADING ANALYSIS REPORTS ===');
+      console.log('Company ID:', companyId);
+      
       const currentUser = await getCurrentUser();
       
       if (!currentUser) {
+        console.log('No current user, setting reports to empty');
         setAnalysisReports([]);
         return;
       }
+
+      console.log('Current user:', currentUser.id);
 
       // Get the analysis ID for this investor-company pair
       const { data: analysisData, error: analysisError } = await supabase
@@ -200,9 +206,12 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
 
       if (!analysisData) {
         // No analysis for this investor-company pair yet
+        console.log('No analysis data found for this investor-company pair');
         setAnalysisReports([]);
         return;
       }
+
+      console.log('Analysis ID:', analysisData.id);
 
       // Load reports for this specific analysis
       const { data, error } = await supabase
@@ -214,6 +223,14 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
       if (error) {
         console.error('Error loading analysis reports:', error);
         return;
+      }
+
+      console.log('Found reports:', data?.length || 0);
+      if (data && data.length > 0) {
+        console.log('Report details:');
+        data.forEach((report, index) => {
+          console.log(`  ${index + 1}. ${report.report_type} - ${report.file_name} (ID: ${report.id})`);
+        });
       }
 
       setAnalysisReports(data || []);
@@ -407,6 +424,123 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
     }
   };
 
+  const handleDeleteReport = async (report: AnalysisReport) => {
+    if (!confirm(`Are you sure you want to delete "${report.file_name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setMessageStatus({ type: 'success', text: 'Deleting report...' });
+      console.log('=== DELETE REPORT STARTED ===');
+      console.log('Report to delete:', {
+        id: report.id,
+        file_name: report.file_name,
+        file_path: report.file_path,
+        report_type: report.report_type
+      });
+
+      // Delete the file from storage
+      console.log('1. Deleting file from storage:', report.file_path);
+      const { error: storageError } = await supabase.storage
+        .from('analysis-output-docs')
+        .remove([report.file_path]);
+
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continue with database deletion even if storage deletion fails
+      } else {
+        console.log('✅ File deleted from storage successfully');
+      }
+
+      // Verify the entry exists before deletion
+      console.log('2a. Verifying entry exists before deletion...');
+      const { data: beforeData, error: beforeError } = await supabase
+        .from('analysis_reports')
+        .select('*')
+        .eq('id', report.id)
+        .single();
+
+      if (beforeError) {
+        console.error('Error checking if entry exists:', beforeError);
+        setMessageStatus({ 
+          type: 'error', 
+          text: 'Could not verify report exists' 
+        });
+        return;
+      }
+
+      if (!beforeData) {
+        console.log('❌ Report entry not found in database - may have already been deleted');
+        setMessageStatus({ 
+          type: 'error', 
+          text: 'Report not found in database' 
+        });
+        return;
+      }
+
+      console.log('✅ Report entry confirmed to exist:', {
+        id: beforeData.id,
+        file_name: beforeData.file_name,
+        report_type: beforeData.report_type
+      });
+
+      // Delete the database entry
+      console.log('2b. Deleting database entry with ID:', report.id);
+      const { error: dbError } = await supabase
+        .from('analysis_reports')
+        .delete()
+        .eq('id', report.id);
+
+      if (dbError) {
+        console.error('Error deleting report from database:', dbError);
+        setMessageStatus({ 
+          type: 'error', 
+          text: 'Failed to delete report from database' 
+        });
+        return;
+      } else {
+        console.log('✅ Database delete command executed successfully');
+      }
+
+      // Verify the entry is gone after deletion
+      console.log('2c. Verifying entry is deleted...');
+      const { data: afterData, error: afterError } = await supabase
+        .from('analysis_reports')
+        .select('*')
+        .eq('id', report.id)
+        .maybeSingle();
+
+      if (afterError) {
+        console.error('Error checking if entry was deleted:', afterError);
+      } else if (afterData) {
+        console.log('❌ PROBLEM: Entry still exists after deletion!', afterData);
+        setMessageStatus({ 
+          type: 'error', 
+          text: 'Report was not deleted from database' 
+        });
+        return;
+      } else {
+        console.log('✅ Database entry confirmed to be deleted');
+      }
+
+      // Reload the reports list to update the UI
+      console.log('3. Reloading analysis reports...');
+      await loadAnalysisReports(id!);
+      
+      console.log('=== DELETE REPORT COMPLETED ===');
+      setMessageStatus({ 
+        type: 'success', 
+        text: 'Report deleted successfully' 
+      });
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      setMessageStatus({ 
+        type: 'error', 
+        text: 'Failed to delete report' 
+      });
+    }
+  };
+
   const handleDownloadDocument = async (doc: Document) => {
     try {
       console.log('Downloading document:', doc.path);
@@ -475,14 +609,43 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
 
       // Map button labels to database status values
       let dbStatus = newStatus;
-      if (newStatus === 'Diligence') {
+      if (newStatus === 'Move to Diligence') {
         dbStatus = 'In-Diligence';
+      } else if (newStatus === 'Reject') {
+        dbStatus = 'Rejected';
       }
 
-      // Update status in analysis table for this investor-company pair
+      // Get current history from the analysis record
+      const { data: currentAnalysis } = await supabase
+        .from('analysis')
+        .select('history')
+        .eq('company_id', company.id)
+        .eq('investor_user_id', currentUser.id)
+        .single();
+
+      // Create new history entry
+      const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const currentHistory = currentAnalysis?.history || '';
+      
+      let historyEntry = '';
+      if (newStatus === 'Reject') {
+        historyEntry = `${currentDate}: Rejected`;
+      } else if (newStatus === 'Move to Diligence') {
+        historyEntry = `${currentDate}: Diligence`;
+      }
+
+      // Append new history entry
+      const updatedHistory = currentHistory 
+        ? `${currentHistory}\n${historyEntry}` 
+        : historyEntry;
+
+      // Update status and history in analysis table for this investor-company pair
       const { error } = await supabase
         .from('analysis')
-        .update({ status: dbStatus })
+        .update({ 
+          status: dbStatus,
+          history: updatedHistory
+        })
         .eq('company_id', company.id)
         .eq('investor_user_id', currentUser.id);
 
@@ -1441,19 +1604,17 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                 
                 // Row 3: Status buttons (based on current status)
                 let row3Buttons: string[] = [];
-                if (currentAnalysisStatus === 'Analyzed') {
-                  row3Buttons = ['Diligence', 'Reject'];
-                } else if (currentAnalysisStatus === 'In-Diligence') {
-                  row3Buttons = ['Invested', 'Reject'];
+                if (currentAnalysisStatus === 'Analyzed' || currentAnalysisStatus === 'In-Diligence') {
+                  row3Buttons = ['Move to Diligence', 'Reject'];
                 } else {
                   row3Buttons = ['Reject'];
                 }
                 
                 const renderButton = (status: string) => {
                   const isActive = 
-                    (status === 'Diligence' && currentAnalysisStatus === 'In-Diligence') ||
+                    (status === 'Move to Diligence' && currentAnalysisStatus === 'In-Diligence') ||
                     (status === 'Invested' && currentAnalysisStatus === 'Invested') ||
-                    (status !== 'Diligence' && status !== 'Invested' && currentAnalysisStatus === status);
+                    (status !== 'Move to Diligence' && status !== 'Invested' && currentAnalysisStatus === status);
                   
                   // Determine button style based on type
                   const isAnalysisButton = status.startsWith('Analyze-');
@@ -1478,7 +1639,8 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                     (status === 'Create-ScoreCard' && (isCreatingScoreCard || !allAnalysisReportsExist)) ||
                     (status === 'Create-DetailReport' && (isCreatingDetailReport || !allAnalysisReportsExist)) ||
                     (status === 'Create-DiligenceQuestions' && (isCreatingDiligenceQuestions || !allAnalysisReportsExist)) ||
-                    (status === 'Create-FounderReport' && (isCreatingFounderReport || !allAnalysisReportsExist));
+                    (status === 'Create-FounderReport' && (isCreatingFounderReport || !allAnalysisReportsExist)) ||
+                    (status === 'Move to Diligence' && currentAnalysisStatus === 'In-Diligence');
                   
                   // Generate tooltip for Create buttons when disabled due to missing reports
                   // Also add tooltip for completed analysis buttons
@@ -1524,7 +1686,14 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                             : isAnalysisButton
                               ? 'bg-purple-600 text-white hover:bg-purple-700'
                               : isCreateButton
-                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                ? (status === 'Create-ScoreCard' && existingReportTypes.includes('scorecard')) ||
+                                  (status === 'Create-DetailReport' && existingReportTypes.includes('detail-report')) ||
+                                  (status === 'Create-DiligenceQuestions' && existingReportTypes.includes('diligence-questions')) ||
+                                  (status === 'Create-FounderReport' && existingReportTypes.includes('founder-report'))
+                                  ? isDark
+                                    ? 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                                    : 'bg-gray-400 text-white hover:bg-gray-500'
+                                  : 'bg-green-600 text-white hover:bg-green-700'
                                 : isDark
                                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -1835,7 +2004,7 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                         <h4 className={`font-semibold capitalize mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                           {report.report_type === 'summary' ? '📊 Summary Report' :
                            report.report_type === 'detailed' ? '📈 Detailed Analysis' :
-                           report.report_type === 'team-analysis' ? '👥 Team Analysis' :
+                           report.report_type === 'team-analysis' ? 'Team Analysis' :
                            report.report_type === 'feedback' ? '💬 Company Feedback' :
                            report.report_type.replace(/-/g, ' ')}
                         </h4>
@@ -1853,6 +2022,13 @@ const VentureDetail: React.FC<VentureDetailProps> = ({ isDark, toggleTheme }) =>
                           title="Download report"
                         >
                           <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteReport(report)}
+                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors flex-shrink-0"
+                          title="Delete report"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

@@ -1,10 +1,8 @@
--- Insert or update the Create-Detail-Report prompt
--- This prompt compiles all analysis reports into a comprehensive detail report
+-- Update the Detail Report prompt to fix the summarization issue
+-- This script updates the Create-Detail-Report prompt in the database
 
-INSERT INTO prompts (prompt_name, prompt_detail, preferred_llm) 
-VALUES (
-  'Create-Detail-Report', 
-  'Create a Comprehensive Detail Report by assembling the provided analysis reports into a single document. Do NOT summarize, condense, or synthesize the content - include each report in its entirety.
+UPDATE prompts 
+SET prompt_detail = 'Create a Comprehensive Detail Report by assembling the provided analysis reports into a single document. Do NOT summarize, condense, or synthesize the content - include each report in its entirety.
 
 **CRITICAL INSTRUCTIONS:**
 - Include each analysis report as a complete, separate section
@@ -41,18 +39,11 @@ Include the complete Score Card report exactly as it was generated. Do not modif
 - Do NOT add transitions or commentary between reports
 - Simply present each report as a complete section
 
-**REMINDER:** This is an assembly task, not a compilation task. Include the full content of each report without any modifications.'
-  'GPT-4'
-)
-ON CONFLICT (prompt_name) DO UPDATE 
-SET prompt_detail = EXCLUDED.prompt_detail,
-    preferred_llm = EXCLUDED.preferred_llm,
-    updated_at = now();
-
--- Verify the prompt was inserted
-SELECT prompt_name, LEFT(prompt_detail, 100) as prompt_preview, preferred_llm, created_at
-FROM prompts
+**REMINDER:** This is an assembly task, not a compilation task. Include the full content of each report without any modifications.',
+    updated_at = now()
 WHERE prompt_name = 'Create-Detail-Report';
 
-
-
+-- Verify the update
+SELECT prompt_name, LEFT(prompt_detail, 100) as prompt_preview, updated_at
+FROM prompts
+WHERE prompt_name = 'Create-Detail-Report';

@@ -143,3 +143,4 @@ To test the new buttons:
 The buttons are now visible and functional (showing alerts). The next phase is to implement the actual report generation logic for each button.
 
 
+

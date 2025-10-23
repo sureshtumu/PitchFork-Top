@@ -121,3 +121,4 @@ After running the SQL:
 **Next Step**: Run the SQL script `UPDATE_REPORT_TYPE_NAMES.sql` in your Supabase SQL Editor, then test the Create buttons! 🎉
 
 
+
