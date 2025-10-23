@@ -71,9 +71,9 @@ const analysisConfig = {
   'detail-report': {
     promptName: 'Create-Detail-Report',
     reportTitle: 'Comprehensive Detail Report',
-    assistantName: 'Report Compiler',
-    assistantInstructions: 'You are an expert at compiling comprehensive investment reports. Review all provided analysis reports and create a detailed, cohesive document that preserves important details while removing redundancies. Synthesize the information into a well-structured comprehensive report.',
-    vectorStoreName: 'Detail Report Compilation',
+    assistantName: 'Report Assembler',
+    assistantInstructions: 'You are an expert at assembling comprehensive investment reports. Take the provided analysis reports and include them as complete sections in a single document. Do NOT summarize, condense, or synthesize - include the full content of each report as separate sections. Add an executive summary at the beginning.',
+    vectorStoreName: 'Detail Report Assembly',
     historyLabel: 'Create-DetailReport',
   },
   'diligence-questions': {
@@ -139,7 +139,8 @@ Deno.serve(async (req: Request) => {
       analysisId: requestAnalysisId,
       analysisType,
       prompt: requestPrompt,
-      documents: requestDocuments
+      documents: requestDocuments,
+      existingReports: requestExistingReports
     } = requestBody;
 
     const investorUserId = user.id;
@@ -257,12 +258,56 @@ Deno.serve(async (req: Request) => {
       console.log('Using prompt from database');
     }
 
-    // Step 4: Process documents
+    // Step 4: Process documents or existing reports
     let fileIds: string[] = [];
     
-    console.log(`Processing ${requestDocuments.length} documents...`);
-    
-    for (const doc of requestDocuments) {
+    // For scorecard, detail-report, diligence-questions, and founder-report, use existing reports if available
+    if ((analysisType === 'scorecard' || analysisType === 'detail-report' || analysisType === 'diligence-questions' || analysisType === 'founder-report') && requestExistingReports && requestExistingReports.length > 0) {
+      console.log(`Processing ${requestExistingReports.length} existing reports for ${analysisType} generation...`);
+      
+      for (const report of requestExistingReports) {
+        console.log('Processing existing report:', report.type, report.path);
+        
+        // Generate signed URL for the existing report
+        const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
+          .from('analysis-output-docs')
+          .createSignedUrl(report.path, 3600);
+
+        if (signedUrlError || !signedUrlData) {
+          console.error('Error generating signed URL for existing report:', signedUrlError);
+          throw new Error(`Failed to generate signed URL for existing report: ${report.type}`);
+        }
+
+        const signedUrl = signedUrlData.signedUrl;
+        console.log('Signed URL generated for existing report:', report.type);
+
+        // Download the existing report PDF
+        console.log('Downloading existing report PDF...');
+        const pdfResponse = await fetch(signedUrl);
+        if (!pdfResponse.ok) {
+          throw new Error(`Failed to download existing report PDF: ${pdfResponse.statusText}`);
+        }
+
+        const pdfBuffer = await pdfResponse.arrayBuffer();
+        console.log('Existing report PDF downloaded, size:', pdfBuffer.byteLength);
+
+        const filename = report.path.split('/').pop() || `${report.type}.pdf`;
+        const pdfFile = new File([pdfBuffer], filename, { type: 'application/pdf' });
+
+        // Upload to OpenAI
+        console.log('Uploading existing report to OpenAI...');
+        const file = await openai.files.create({
+          file: pdfFile,
+          purpose: 'assistants',
+        });
+        console.log('Existing report uploaded to OpenAI:', file.id);
+        fileIds.push(file.id);
+      }
+    } else {
+      // For regular analysis or when no existing reports, process documents
+      console.log(`Processing ${requestDocuments.length} documents...`);
+      
+      for (const doc of requestDocuments) {
       console.log('Generating signed URL for:', doc.path);
       const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
         .from('company-documents')
@@ -297,6 +342,7 @@ Deno.serve(async (req: Request) => {
       });
       console.log('File uploaded to OpenAI:', file.id);
       fileIds.push(file.id);
+    }
     }
 
     // Step 5: Create vector store
