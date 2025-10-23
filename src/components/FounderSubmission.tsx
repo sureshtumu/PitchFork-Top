@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, Building2, FileText, CheckCircle, AlertCircle, BarChart3, Loader } from 'lucide-react';
 import { supabase, getCurrentUser } from '../lib/supabase';
+import InvestorSelection from './InvestorSelection';
 
 interface FounderSubmissionProps {
   isDark: boolean;
@@ -19,7 +20,6 @@ interface CompanyData {
   phone: string;
   description: string;
   funding_terms: string;
-  key_team_members?: string;
   revenue?: string;
   valuation?: string;
   url?: string;
@@ -38,9 +38,10 @@ interface AnalysisResult {
 
 const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<'upload' | 'analyze' | 'company'>('upload');
+  const [currentStep, setCurrentStep] = useState<'upload' | 'analyze' | 'company' | 'investors'>('upload');
   const [pitchDeckFile, setPitchDeckFile] = useState<File | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [savedCompanyId, setSavedCompanyId] = useState<string | null>(null);
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: '',
     industry: '',
@@ -52,7 +53,6 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     phone: '',
     description: '',
     funding_terms: '',
-    key_team_members: '',
     revenue: '',
     valuation: '',
     url: ''
@@ -74,12 +74,42 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         return;
       }
 
-      // Prefill form with user registration data
-      setCompanyData(prev => ({
-        ...prev,
-        contact_name: currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
-        email: currentUser.email || ''
-      }));
+      // Get company ID from session storage
+      const companyId = sessionStorage.getItem('companyId');
+
+      if (companyId) {
+        // Fetch the company record created during registration
+        const { data: companyRecord, error: companyError } = await supabase
+          .from('companies')
+          .select('name, phone, email, contact_name')
+          .eq('id', companyId)
+          .maybeSingle();
+        
+        if (!companyError && companyRecord) {
+          // Prefill form with company data from registration
+          setCompanyData(prev => ({
+            ...prev,
+            name: companyRecord.name || '',
+            phone: companyRecord.phone || '',
+            contact_name: companyRecord.contact_name || currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
+            email: companyRecord.email || currentUser.email || ''
+          }));
+        } else {
+          // Fallback to user metadata if company record not found
+          setCompanyData(prev => ({
+            ...prev,
+            contact_name: currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
+            email: currentUser.email || ''
+          }));
+        }
+      } else {
+        // Fallback if no companyId in session
+        setCompanyData(prev => ({
+          ...prev,
+          contact_name: currentUser.user_metadata?.full_name || `${currentUser.user_metadata?.first_name || ''} ${currentUser.user_metadata?.last_name || ''}`.trim(),
+          email: currentUser.email || ''
+        }));
+      }
       
       setIsInitialized(true);
     };
@@ -93,6 +123,13 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       ...prev,
       [name]: value
     }));
+  };
+
+  // Helper function to check if field was AI-extracted
+  const isFieldExtracted = (fieldName: string) => {
+    if (!analysisResult) return false;
+    const value = analysisResult[fieldName as keyof AnalysisResult];
+    return value !== null && value !== undefined && value !== '';
   };
 
   const handlePitchDeckUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,32 +300,72 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
         return;
       }
 
-      // Fetch the company data to pass to EditCompany
-      const { data: companyRecord, error: fetchError } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', companyId)
-        .single();
+      // Call analyze-pdf edge function to extract data
+      setMessage({ type: 'success', text: 'Analyzing pitch deck with AI... This may take a minute.' });
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
-      if (fetchError || !companyRecord) {
-        console.error('Error fetching company:', fetchError);
-        setMessage({ type: 'error', text: 'Failed to fetch company data' });
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-pdf`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_path: filePath,
+          company_id: companyId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('AI extraction error:', errorData);
+        // Don't fail the whole process - just show warning and allow manual entry
+        setMessage({ type: 'error', text: 'AI extraction failed. Please fill in the form manually.' });
+        setCurrentStep('company');
         setIsAnalyzing(false);
-        setCurrentStep('upload');
         return;
       }
 
-      setMessage({ type: 'success', text: 'Pitch deck uploaded successfully!' });
+      const result = await response.json();
+      console.log('AI extraction result:', result);
 
-      // Navigate to EditCompany page with company data
-      setTimeout(() => {
-        navigate('/edit-company', { state: { company: companyRecord } });
-      }, 1000);
+      // Pre-fill company form with extracted data
+      if (result.extracted_info) {
+        const extracted = result.extracted_info;
+        
+        setCompanyData(prev => ({
+          ...prev,
+          name: extracted.company_name || prev.name,
+          industry: extracted.industry || prev.industry,
+          description: extracted.description || prev.description,
+          funding_terms: extracted.funding_terms || prev.funding_terms,
+          revenue: extracted.revenue || prev.revenue,
+          valuation: extracted.valuation || prev.valuation,
+          url: extracted.url || prev.url,
+        }));
+
+        setAnalysisResult(extracted);
+        setMessage({ 
+          type: 'success', 
+          text: 'AI extracted company information! Please review and edit as needed.' 
+        });
+      }
+
+      // Move to company form step for review
+      setCurrentStep('company');
 
     } catch (error) {
-      console.error('Upload error:', error);
-      setMessage({ type: 'error', text: 'Failed to upload pitch deck. Please try again.' });
-      setCurrentStep('upload');
+      console.error('Error in analyzePitchDeck:', error);
+      setMessage({ 
+        type: 'error', 
+        text: 'An error occurred during analysis. Please fill in the form manually.' 
+      });
+      setCurrentStep('company');
     } finally {
       setIsAnalyzing(false);
     }
@@ -316,110 +393,108 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       setIsLoading(true);
       setMessage(null);
 
-      // Check if company already exists
-      const { data: existingCompany } = await supabase
+      // Get company ID from session storage (created during signup)
+      const companyId = sessionStorage.getItem('companyId');
+      if (!companyId) {
+        setMessage({ type: 'error', text: 'Company ID not found. Please sign up again.' });
+        return;
+      }
+
+      // UPDATE existing company with edited information
+      console.log('FounderSubmission: Updating company:', companyId);
+      console.log('FounderSubmission: Update data:', {
+        name: companyData.name,
+        industry: companyData.industry,
+        email: companyData.email
+      });
+
+      const { error: updateError } = await supabase
         .from('companies')
-        .select('*')
-        .ilike('name', companyData.name.trim())
-        .maybeSingle();
+        .update({
+          name: companyData.name,
+          industry: companyData.industry,
+          address: companyData.address,
+          country: companyData.country,
+          contact_name: companyData.contact_name,
+          title: companyData.title,
+          email: companyData.email,
+          phone: companyData.phone,
+          description: companyData.description,
+          funding_terms: companyData.funding_terms,
+          revenue: companyData.revenue,
+          valuation: companyData.valuation,
+          url: companyData.url,
+        })
+        .eq('id', companyId);
 
-      let company = existingCompany;
+      if (updateError) {
+        console.error('FounderSubmission: Error updating company:', updateError);
+        console.error('FounderSubmission: Error details:', {
+          code: updateError.code,
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint
+        });
+        setMessage({ type: 'error', text: `Failed to update company information: ${updateError.message}` });
+        return;
+      }
 
-      if (!company) {
-        // Insert new company
-        const { data: newCompany, error: companyError } = await supabase
-          .from('companies')
-          .insert([companyData])
-          .select()
-          .single();
+      console.log('FounderSubmission: Company updated successfully');
 
-        if (companyError) {
-          console.error('Error adding company:', companyError);
-          setMessage({ type: 'error', text: 'Failed to add company information' });
+      // NOTE: Pitch deck was already uploaded in analyzePitchDeck function
+      // Only upload additional files here if any
+      if (additionalFiles.length > 0) {
+        const uploadPromises = [];
+        const documentRecords = [];
+
+        for (const file of additionalFiles) {
+          const filePath = `${companyId}/${file.name}`;
+          const metadata = documentMetadata[file.name] || { name: file.name, description: '' };
+
+          const uploadPromise = supabase.storage
+            .from('company-documents')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          uploadPromises.push(uploadPromise);
+          documentRecords.push({
+            company_id: companyId,
+            filename: file.name,
+            document_name: metadata.name,
+            description: metadata.description,
+            path: filePath
+          });
+        }
+
+        const uploadResults = await Promise.all(uploadPromises);
+        
+        const failedUploads = uploadResults.filter(result => result.error);
+        if (failedUploads.length > 0) {
+          console.error('Upload errors:', failedUploads);
+          setMessage({ type: 'error', text: `Failed to upload ${failedUploads.length} file(s)` });
           return;
         }
 
-        company = newCompany;
+        const { error: dbError } = await supabase
+          .from('documents')
+          .insert(documentRecords);
+
+        if (dbError) {
+          console.error('Database error:', dbError);
+          setMessage({ type: 'error', text: 'Files uploaded but failed to save records' });
+          return;
+        }
       }
 
-      // Upload pitch deck and additional files
-      const allFiles = [pitchDeckFile, ...additionalFiles];
-      const uploadPromises = [];
-      const documentRecords = [];
-
-      for (let i = 0; i < allFiles.length; i++) {
-        const file = allFiles[i];
-        const filePath = `${company.id}/${file.name}`;
-        const isPitchDeck = file === pitchDeckFile;
-        const metadata = isPitchDeck 
-          ? { name: 'Pitch Deck', description: 'Main pitch deck presentation' }
-          : documentMetadata[file.name] || { name: file.name, description: '' };
-
-        // Upload file to Supabase Storage
-        const uploadPromise = supabase.storage
-          .from('company-documents')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        uploadPromises.push(uploadPromise);
-        documentRecords.push({
-          company_id: company.id,
-          filename: file.name,
-          document_name: metadata.name,
-          description: metadata.description,
-          path: filePath
-        });
-      }
-
-      // Wait for all uploads to complete
-      const uploadResults = await Promise.all(uploadPromises);
+      setMessage({ type: 'success', text: 'Company information saved! Now select investors.' });
+      setSavedCompanyId(companyId);
       
-      // Check for upload errors
-      const failedUploads = uploadResults.filter(result => result.error);
-      if (failedUploads.length > 0) {
-        console.error('Upload errors:', failedUploads);
-        setMessage({ type: 'error', text: `Failed to upload ${failedUploads.length} file(s)` });
-        return;
-      }
-
-      // Insert document records into database
-      const { error: dbError } = await supabase
-        .from('documents')
-        .insert(documentRecords);
-
-      if (dbError) {
-        console.error('Database error:', dbError);
-        setMessage({ type: 'error', text: 'Files uploaded but failed to save records' });
-        return;
-      }
-
-      // Create welcome message for the founder
-      const currentUser = await getCurrentUser();
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert([{
-          company_id: company.id,
-          sender_type: 'system',
-          sender_id: null,
-          recipient_type: 'founder',
-          recipient_id: currentUser?.id || null,
-          message_title: 'Company Submitted',
-          message_detail: 'Thank you for submitting your company information',
-          message_status: 'unread'
-        }]);
-
-      if (messageError) {
-        console.error('Error creating welcome message:', messageError);
-      }
-
-      setMessage({ type: 'success', text: 'Pitch deck and company information submitted successfully!' });
-      
-      // Navigate back to founder dashboard after successful submission
+      // Move to investor selection step
       setTimeout(() => {
-        navigate('/founder-dashboard');
-      }, 2000);
+        setCurrentStep('investors');
+      }, 1000);
 
     } catch (error) {
       console.error('Submission error:', error);
@@ -427,6 +502,99 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const skipToManualEntry = async () => {
+    if (!pitchDeckFile) {
+      setMessage({ type: 'error', text: 'Please select a pitch deck file first' });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setMessage(null);
+
+      // Get company ID from session storage
+      const companyId = sessionStorage.getItem('companyId');
+      if (!companyId) {
+        setMessage({ type: 'error', text: 'Company ID not found. Please sign up again.' });
+        setIsLoading(false);
+        return;
+      }
+
+      // Upload pitch deck to Supabase Storage
+      const filePath = `${companyId}/${pitchDeckFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-documents')
+        .upload(filePath, pitchDeckFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        setMessage({ type: 'error', text: 'Failed to upload pitch deck. Please try again.' });
+        setIsLoading(false);
+        return;
+      }
+
+      // Save document record
+      const { error: docError } = await supabase
+        .from('documents')
+        .insert([{
+          company_id: companyId,
+          filename: pitchDeckFile.name,
+          document_name: 'Pitch Deck',
+          description: 'Main pitch deck presentation',
+          path: filePath
+        }]);
+
+      if (docError) {
+        console.error('Error saving document record:', docError);
+        setMessage({ type: 'error', text: 'Failed to save document record' });
+        setIsLoading(false);
+        return;
+      }
+
+      // Skip AI analysis and go directly to company form
+      setMessage({ type: 'success', text: 'Pitch deck uploaded! Please fill in your company information below.' });
+      setCurrentStep('company');
+
+    } catch (error) {
+      console.error('Error:', error);
+      setMessage({ type: 'error', text: 'An error occurred. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInvestorSelectionComplete = async () => {
+    // Create welcome message after investor selection
+    const companyId = savedCompanyId || sessionStorage.getItem('companyId');
+    const currentUser = await getCurrentUser();
+    
+    if (companyId && currentUser) {
+      await supabase
+        .from('messages')
+        .insert([{
+          company_id: companyId,
+          sender_type: 'system',
+          sender_id: null,
+          recipient_type: 'founder',
+          recipient_id: currentUser.id,
+          message_title: 'Pitch Deck Submitted',
+          message_detail: 'Your pitch deck has been submitted to selected investors. Our AI has analyzed your pitch deck and extracted key details.',
+          message_status: 'unread'
+        }]);
+    }
+
+    // Navigate to founder dashboard
+    navigate('/founder-dashboard');
+  };
+
+  const handleInvestorSelectionCancel = () => {
+    // Allow founder to go back and edit company info
+    setCurrentStep('company');
   };
 
   // Show loading while initializing
@@ -479,26 +647,33 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Progress Indicator */}
         <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <div className={`flex items-center ${currentStep === 'upload' ? 'text-orange-600' : currentStep === 'analyze' || currentStep === 'company' ? 'text-green-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'upload' ? 'border-orange-600 bg-orange-100' : currentStep === 'analyze' || currentStep === 'company' ? 'border-green-600 bg-green-100' : 'border-gray-300'}`}>
+          <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-4">
+            <div className={`flex items-center ${currentStep === 'upload' ? 'text-orange-600' : 'text-green-600'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'upload' ? 'border-orange-600 bg-orange-100' : 'border-green-600 bg-green-100'}`}>
                 1
               </div>
-              <span className="ml-2 font-medium">Upload Pitch Deck</span>
+              <span className="ml-2 font-medium hidden sm:inline">Upload</span>
             </div>
-            <div className={`w-8 h-1 ${currentStep === 'analyze' || currentStep === 'company' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
-            <div className={`flex items-center ${currentStep === 'analyze' ? 'text-orange-600' : currentStep === 'company' ? 'text-green-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'analyze' ? 'border-orange-600 bg-orange-100' : currentStep === 'company' ? 'border-green-600 bg-green-100' : 'border-gray-300'}`}>
+            <div className={`w-4 sm:w-8 h-1 ${currentStep === 'analyze' || currentStep === 'company' || currentStep === 'investors' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+            <div className={`flex items-center ${currentStep === 'analyze' ? 'text-orange-600' : currentStep === 'company' || currentStep === 'investors' ? 'text-green-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'analyze' ? 'border-orange-600 bg-orange-100' : currentStep === 'company' || currentStep === 'investors' ? 'border-green-600 bg-green-100' : 'border-gray-300'}`}>
                 2
               </div>
-              <span className="ml-2 font-medium">AI Analysis</span>
+              <span className="ml-2 font-medium hidden sm:inline">AI Analysis</span>
             </div>
-            <div className={`w-8 h-1 ${currentStep === 'company' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
-            <div className={`flex items-center ${currentStep === 'company' ? 'text-orange-600' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'company' ? 'border-orange-600 bg-orange-100' : 'border-gray-300'}`}>
+            <div className={`w-4 sm:w-8 h-1 ${currentStep === 'company' || currentStep === 'investors' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+            <div className={`flex items-center ${currentStep === 'company' ? 'text-orange-600' : currentStep === 'investors' ? 'text-green-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'company' ? 'border-orange-600 bg-orange-100' : currentStep === 'investors' ? 'border-green-600 bg-green-100' : 'border-gray-300'}`}>
                 3
               </div>
-              <span className="ml-2 font-medium">Company Details</span>
+              <span className="ml-2 font-medium hidden sm:inline">Details</span>
+            </div>
+            <div className={`w-4 sm:w-8 h-1 ${currentStep === 'investors' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+            <div className={`flex items-center ${currentStep === 'investors' ? 'text-orange-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentStep === 'investors' ? 'border-orange-600 bg-orange-100' : 'border-gray-300'}`}>
+                4
+              </div>
+              <span className="ml-2 font-medium hidden sm:inline">Investors</span>
             </div>
           </div>
         </div>
@@ -509,11 +684,13 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
             {currentStep === 'upload' && 'Upload Your Pitch Deck'}
             {currentStep === 'analyze' && 'Analyzing Your Pitch Deck'}
             {currentStep === 'company' && 'Complete Company Information'}
+            {currentStep === 'investors' && 'Select Investors'}
           </h1>
           <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             {currentStep === 'upload' && 'Start by uploading your pitch deck for AI analysis'}
             {currentStep === 'analyze' && 'Our AI is analyzing your pitch deck to extract company information'}
             {currentStep === 'company' && 'Review and complete your company information'}
+            {currentStep === 'investors' && 'Choose which investors you\'d like to submit your pitch deck to'}
           </p>
         </div>
 
@@ -582,14 +759,31 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
               </div>
               
               {pitchDeckFile && (
-                <div className="mt-6 text-center">
+                <div className="mt-6 text-center space-y-3">
                   <button
                     onClick={analyzePitchDeck}
-                    disabled={isAnalyzing}
+                    disabled={isAnalyzing || isLoading}
                     className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center text-lg"
                   >
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    {isAnalyzing ? 'Analyzing...' : 'Continue'}
+                    {isAnalyzing ? 'Analyzing with AI...' : 'Update with AI'}
+                  </button>
+                  
+                  <div className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    or
+                  </div>
+                  
+                  <button
+                    onClick={skipToManualEntry}
+                    disabled={isAnalyzing || isLoading}
+                    className={`px-8 py-3 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center text-lg ${
+                      isDark
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    <FileText className="w-5 h-5 mr-2" />
+                    {isLoading ? 'Uploading...' : 'Manually Update Company'}
                   </button>
                 </div>
               )}
@@ -602,10 +796,16 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'} mb-8`}>
             <div className="p-12 text-center">
               <Loader className="w-16 h-16 mx-auto mb-6 text-orange-600 animate-spin" />
-              <h3 className="text-xl font-semibold mb-4">Analyzing Your Pitch Deck</h3>
-              <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                Our AI is extracting key information from your pitch deck...
+              <h3 className="text-2xl font-bold mb-2">Analyzing Your Pitch Deck with AI</h3>
+              <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+                Our AI is reading your pitch deck and extracting key information...
               </p>
+              <div className={`max-w-md mx-auto ${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm space-y-2 mb-6`}>
+                <p>✓ Uploading pitch deck to secure storage</p>
+                <p>✓ Analyzing with GPT-4 Turbo</p>
+                <p>✓ Extracting company details</p>
+                <p className="font-semibold">⏳ This usually takes 30-60 seconds</p>
+              </div>
               <div className="flex justify-center space-x-2">
                 <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-orange-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -637,6 +837,11 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   <div>
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Company Name *
+                      {isFieldExtracted('company_name') && (
+                        <span className="ml-2 text-xs text-green-600 font-normal">
+                          ✓ AI Extracted
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
@@ -656,6 +861,11 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   <div>
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Industry
+                      {isFieldExtracted('industry') && (
+                        <span className="ml-2 text-xs text-green-600 font-normal">
+                          ✓ AI Extracted
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
@@ -768,6 +978,11 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Company Description
+                      {isFieldExtracted('description') && (
+                        <span className="ml-2 text-xs text-green-600 font-normal">
+                          ✓ AI Extracted
+                        </span>
+                      )}
                     </label>
                     <textarea
                       name="description"
@@ -786,6 +1001,11 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   <div className="md:col-span-2">
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Funding Sought
+                      {isFieldExtracted('funding_terms') && (
+                        <span className="ml-2 text-xs text-green-600 font-normal">
+                          ✓ AI Extracted
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
@@ -805,6 +1025,11 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   <div>
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Revenue
+                      {isFieldExtracted('revenue') && (
+                        <span className="ml-2 text-xs text-green-600 font-normal">
+                          ✓ AI Extracted
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
@@ -823,6 +1048,11 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                   <div>
                     <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                       Valuation
+                      {isFieldExtracted('valuation') && (
+                        <span className="ml-2 text-xs text-green-600 font-normal">
+                          ✓ AI Extracted
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
@@ -856,23 +1086,6 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
                     />
                   </div>
 
-                  <div>
-                    <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                      Key Team Members
-                    </label>
-                    <input
-                      type="text"
-                      name="key_team_members"
-                      value={companyData.key_team_members}
-                      onChange={handleInputChange}
-                      placeholder="e.g., John Doe (CEO), Jane Smith (CTO)"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                        isDark
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -999,6 +1212,15 @@ const FounderSubmission: React.FC<FounderSubmissionProps> = ({ isDark, toggleThe
               </button>
             </div>
           </form>
+        )}
+
+        {/* Step 4: Investor Selection */}
+        {currentStep === 'investors' && savedCompanyId && (
+          <InvestorSelection
+            companyId={savedCompanyId}
+            onComplete={handleInvestorSelectionComplete}
+            onCancel={handleInvestorSelectionCancel}
+          />
         )}
       </div>
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, Filter, Calendar, Building2, ChevronDown, User, FileText, Settings, HelpCircle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, Filter, Calendar, Building2, ChevronDown, User } from 'lucide-react';
 import { signOut, getCurrentUser, supabase } from '../lib/supabase';
 import { analyzeCompany, generateReportPDFs, saveAnalysisReports } from '../lib/analysisService';
 
@@ -13,21 +13,31 @@ interface Company {
   id: string;
   name: string;
   industry?: string;
-  status?: string;
-  overall_score?: number;
-  recommendation?: string;
   date_submitted: string;
   created_at: string;
+  overall_score?: number;
+  valuation_value?: number;
+  valuation_units?: string;
+  analysis?: Analysis[]; // Status and recommendation come from here
+}
+
+interface Analysis {
+  id: string;
+  investor_user_id: string;
+  status: string;
+  overall_score?: number;
+  recommendation?: string;
+  recommendation_reason?: string;
+  comments?: string;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const [filters, setFilters] = React.useState({
-    submitted: true,
+    screened: true,
     analyzed: true,
     inDiligence: true,
-    rejected: true,
-    ddRejected: true
+    rejected: true
   });
   
   const [itemsToShow, setItemsToShow] = React.useState('10');
@@ -70,19 +80,92 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   const loadCompanies = async () => {
     try {
       setIsLoadingCompanies(true);
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .order('date_submitted', { ascending: false });
 
-      if (error) {
-        console.error('Error loading companies:', error);
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        console.log('Dashboard: No current user found');
         return;
       }
 
-      setCompanies(data || []);
+      console.log('Dashboard: Loading companies for user:', currentUser.id, currentUser.email);
+
+      // Load only companies assigned to this investor (have entry in analysis table)
+      // Note: We don't join investor_details because there's no direct FK relationship
+      // between analysis and investor_details (they both link to auth.users)
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analysis')
+        .select(`
+          *,
+          companies:company_id(*)
+        `)
+        .eq('investor_user_id', currentUser.id);
+      
+      console.log('Dashboard: Raw analysis data:', analysisData);
+
+      console.log('Dashboard: Analysis query result:', { 
+        dataCount: analysisData?.length || 0, 
+        error: analysisError,
+        sampleData: analysisData?.[0]
+      });
+
+      if (analysisError) {
+        console.error('Error loading analysis:', analysisError);
+        alert(`Error loading companies: ${analysisError.message}`);
+        return;
+      }
+
+      if (!analysisData || analysisData.length === 0) {
+        console.log('Dashboard: No analysis records found for this investor');
+        setCompanies([]);
+        return;
+      }
+
+      // Transform data: extract companies and attach their analysis records
+      const companiesMap = new Map<string, Company>();
+      
+      (analysisData || []).forEach(analysis => {
+        console.log('Dashboard: Processing analysis:', {
+          analysisId: analysis.id,
+          companyId: analysis.company_id,
+          hasCompanyData: !!analysis.companies
+        });
+
+        const company = analysis.companies;
+        if (company) {
+          if (!companiesMap.has(company.id)) {
+            companiesMap.set(company.id, {
+              ...company,
+              analysis: []
+            });
+          }
+          companiesMap.get(company.id)!.analysis!.push({
+            id: analysis.id,
+            investor_user_id: analysis.investor_user_id,
+            status: analysis.status,
+            overall_score: analysis.overall_score,
+            recommendation: analysis.recommendation,
+            recommendation_reason: analysis.recommendation_reason,
+            comments: analysis.comments
+          });
+        } else {
+          console.warn('Dashboard: Analysis has no company data:', analysis.id);
+        }
+      });
+
+      // Convert map to array and sort by date_submitted
+      const companiesWithAnalysis = Array.from(companiesMap.values()).sort((a, b) => {
+        return new Date(b.date_submitted).getTime() - new Date(a.date_submitted).getTime();
+      });
+
+      console.log('Dashboard: Final companies list:', {
+        count: companiesWithAnalysis.length,
+        companies: companiesWithAnalysis.map(c => ({ id: c.id, name: c.name, analysisStatus: c.analysis?.[0]?.status }))
+      });
+
+      setCompanies(companiesWithAnalysis);
     } catch (error) {
       console.error('Error loading companies:', error);
+      alert(`Error loading companies: ${error}`);
     } finally {
       setIsLoadingCompanies(false);
     }
@@ -181,15 +264,13 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
   };
 
   // Filter companies based on selected filters
+  // Status comes from analysis table (first analysis record for this investor)
   const filteredCompanies = companies.filter(company => {
-    const status = company.status?.toLowerCase().replace('-', '').replace(' ', '') || 'submitted';
-    if (status === 'submitted' && filters.submitted) return true;
-    if (status === 'pending' && filters.pending) return true;
-    if (status === 'analyzed' && filters.analyzed) return true;
-    if (status === 'indiligence' && filters.inDiligence) return true;
-    if (status === 'rejected' && filters.rejected) return true;
-    if (status === 'ddrejected' && filters.ddRejected) return true;
-    if (status === 'invested' && filters.invested) return true;
+    const analysisStatus = company.analysis?.[0]?.status?.toLowerCase().replace('-', '').replace(' ', '') || 'screened';
+    if (analysisStatus === 'screened' && filters.screened) return true;
+    if (analysisStatus === 'analyzed' && filters.analyzed) return true;
+    if (analysisStatus === 'indiligence' && filters.inDiligence) return true;
+    if (analysisStatus === 'rejected' && filters.rejected) return true;
     return false;
   });
 
@@ -229,8 +310,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
 
   const stats = [
     { label: "Total Deals", value: companies.length.toString(), icon: <BarChart3 className="w-6 h-6" /> },
-    { label: "Investments", value: companies.filter(c => c.status === 'Invested').length.toString(), icon: <TrendingUp className="w-6 h-6" /> },
-    { label: "In Review", value: companies.filter(c => c.status === 'Pending' || c.status === 'Analyzed').length.toString(), icon: <Clock className="w-6 h-6" /> }
+    { label: "Screened", value: companies.filter(c => c.analysis?.[0]?.status === 'Screened').length.toString(), icon: <CheckCircle className="w-6 h-6" /> },
+    { label: "Analyzed", value: companies.filter(c => c.analysis?.[0]?.status === 'Analyzed').length.toString(), icon: <BarChart3 className="w-6 h-6" /> },
+    { label: "Diligence", value: companies.filter(c => c.analysis?.[0]?.status === 'In-Diligence').length.toString(), icon: <Users className="w-6 h-6" /> },
+    { label: "Rejected", value: companies.filter(c => c.analysis?.[0]?.status === 'Rejected').length.toString(), icon: <XCircle className="w-6 h-6" /> }
   ];
 
   return (
@@ -251,7 +334,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
               {/* Navigation Menu */}
               <nav className="hidden md:flex items-center space-x-6">
                 <Link to="/dashboard" className="text-gold-600 font-bold">Dashboard</Link>
-                <Link to="/reports" className={`${isDark ? 'text-silver-300 hover:text-white' : 'text-navy-700 hover:text-navy-900'} transition-colors font-semibold`}>Reports</Link>
                 
                 {/* Utilities Dropdown */}
                 <div className="relative">
@@ -263,14 +345,8 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                   </button>
                   {showUtilitiesMenu && (
                     <div className={`absolute top-full left-0 mt-2 w-48 ${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} rounded-lg shadow-financial border z-50`}>
-                      <Link to="/submit-files" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
-                        Submit Files
-                      </Link>
-                      <Link to="/company-list" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
-                        Edit Company
-                      </Link>
-                      <Link to="/investor-criteria" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
-                        Investor Criteria
+                      <Link to="/investor-preferences" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
+                        Investor Preferences
                       </Link>
                       <Link to="/edit-prompts" className={`block px-4 py-2 text-sm ${isDark ? 'text-silver-300 hover:bg-navy-700' : 'text-navy-700 hover:bg-silver-50'} transition-colors font-semibold`}>
                         Edit Prompts
@@ -350,7 +426,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
           {stats.map((stat, index) => (
             <div key={index} className={`${isDark ? 'bg-navy-800 border-navy-700' : 'bg-white border-silver-200'} p-8 rounded-xl shadow-financial border hover:shadow-gold transition-all duration-300`}>
               <div className="flex items-center justify-between">
@@ -381,11 +457,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                 <h3 className="text-sm font-bold mb-3 text-navy-800 dark:text-silver-200">Status</h3>
                 <div className="flex flex-wrap gap-4">
                   {[
-                    { key: 'submitted', label: 'Submitted' },
+                    { key: 'screened', label: 'Screened' },
                     { key: 'analyzed', label: 'Analyzed' },
                     { key: 'inDiligence', label: 'In-Diligence' },
-                    { key: 'rejected', label: 'Rejected' },
-                    { key: 'ddRejected', label: 'DD-Rejected' }
+                    { key: 'rejected', label: 'Rejected' }
                   ].map((filter) => (
                     <label key={filter.key} className="flex items-center">
                       <input
@@ -459,7 +534,10 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {sortedAndLimitedCompanies.map((company) => {
-                  const recommendation = getRecommendation(company.overall_score);
+                  // Get status and recommendation from analysis table
+                  const analysis = company.analysis?.[0];
+                  const status = analysis?.status || 'Submitted';
+                  const recommendation = analysis?.recommendation || getRecommendation(company.overall_score ?? null);
                   const isAnalyzing = analyzingCompanies.has(company.id);
                 return (
                     <div 
@@ -475,20 +553,22 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-lg font-bold text-gold-600">{company.name}</h3>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          company.status === 'Submitted' ? 'bg-silver-100 text-silver-800' :
-                          company.status === 'Pending' ? 'bg-gold-100 text-gold-800' :
-                          company.status === 'Analyzed' ? 'bg-navy-100 text-navy-800' :
-                          company.status === 'Invested' ? 'bg-success-100 text-success-800' :
-                          company.status === 'In-Diligence' ? 'bg-gold-100 text-gold-800' :
+                          status === 'submitted' || status === 'Submitted' ? 'bg-silver-100 text-silver-800' :
+                          status === 'Screened' ? 'bg-blue-100 text-blue-800' :
+                          status === 'Pending' ? 'bg-gold-100 text-gold-800' :
+                          status === 'Analyzed' ? 'bg-navy-100 text-navy-800' :
+                          status === 'Invested' ? 'bg-success-100 text-success-800' :
+                          status === 'In-Diligence' ? 'bg-gold-100 text-gold-800' :
                         'bg-danger-100 text-danger-800'
                       }`}>
-                          {company.status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
-                           company.status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
-                           company.status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
-                           company.status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :
-                           company.status === 'In-Diligence' ? <Users className="w-3 h-3 mr-1" /> :
+                          {status === 'submitted' || status === 'Submitted' ? <Clock className="w-3 h-3 mr-1" /> :
+                           status === 'Screened' ? <Filter className="w-3 h-3 mr-1" /> :
+                           status === 'Pending' ? <Clock className="w-3 h-3 mr-1" /> :
+                           status === 'Analyzed' ? <BarChart3 className="w-3 h-3 mr-1" /> :
+                           status === 'Invested' ? <CheckCircle className="w-3 h-3 mr-1" /> :
+                           status === 'In-Diligence' ? <Users className="w-3 h-3 mr-1" /> :
                          <XCircle className="w-3 h-3 mr-1" />}
-                          {company.status || 'Submitted'}
+                          {status}
                       </span>
                     </div>
 
@@ -533,21 +613,28 @@ const Dashboard: React.FC<DashboardProps> = ({ isDark, toggleTheme }) => {
                     {/* Recommendation */}
                     <div>
                       <p className={`text-xs font-semibold ${isDark ? 'text-silver-400' : 'text-navy-500'} mb-1`}>Recommendation</p>
-                        {company.recommendation && company.recommendation !== 'Pending Analysis' ? (
-                        <p className={`text-sm font-medium ${
-                            company.recommendation === 'Invest' ? 'text-success-600' :
-                            company.recommendation === 'Consider' ? 'text-gold-600' :
-                          'text-danger-600'
-                        }`}>
-                            {company.recommendation}
-                        </p>
+                        {recommendation && recommendation !== 'Pending Analysis' ? (
+                        <>
+                          <p className={`text-sm font-medium ${
+                              recommendation === 'Invest' || recommendation === 'Analyze' ? 'text-success-600' :
+                              recommendation === 'Consider' ? 'text-gold-600' :
+                            'text-danger-600'
+                          }`}>
+                              {recommendation}
+                          </p>
+                          {analysis?.recommendation_reason && (
+                            <p className={`text-xs mt-1 ${isDark ? 'text-silver-400' : 'text-navy-600'}`}>
+                              {analysis.recommendation_reason}
+                            </p>
+                          )}
+                        </>
                       ) : (
                           <p className={`text-sm ${isDark ? 'text-silver-400' : 'text-navy-500'}`}>Pending Analysis</p>
                       )}
                     </div>
 
                     {/* Analyze Button for Submitted Status */}
-                      {company.status === 'Submitted' && (
+                      {(status === 'submitted' || status === 'Submitted') && (
                       <div className="mt-4 pt-3 border-t border-silver-200 dark:border-navy-600">
                         <button
                             onClick={(e) => handleAnalyze(company.id, company.name, e)}

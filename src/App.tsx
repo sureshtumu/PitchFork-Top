@@ -11,6 +11,37 @@ import VentureDetail from './components/VentureDetail';
 import FounderDashboard from './components/FounderDashboard';
 import EditPrompts from './components/EditPrompts';
 import CompanyList from './components/CompanyList';
+import TestFiles from './components/TestFiles';
+import InvestorSelection from './components/InvestorSelection';
+import InvestorPreferences from './components/InvestorPreferences';
+import Help from './components/Help';
+import Account from './components/Account';
+import Features from './components/Features';
+import Pricing from './components/Pricing';
+import Demo from './components/Demo';
+import Privacy from './components/Privacy';
+import Terms from './components/Terms';
+import Security from './components/Security';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+function InvestorSelectionWrapper() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const companyId = location.state?.companyId;
+
+  if (!companyId) {
+    navigate('/founder-dashboard');
+    return null;
+  }
+
+  return (
+    <InvestorSelection
+      companyId={companyId}
+      onComplete={() => navigate('/founder-dashboard')}
+      onCancel={() => navigate('/founder-dashboard')}
+    />
+  );
+}
 
 function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: {
   isDark: boolean;
@@ -44,85 +75,89 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
   const benefits = [
     {
       icon: <Target className="w-8 h-8 text-gold-500" />,
-      title: "You Set Your Investor Criteria",
-      description: "Customize investment parameters to match your investment thesis and risk tolerance"
+      title: "Automated Screening",
+      description: "Set your criteria (revenue, industry, geography, stage) and automatically filter proposals before deep analysis"
     },
     {
       icon: <Zap className="w-8 h-8 text-gold-500" />,
-      title: "Fast Analysis",
-      description: "Product, Market, Team, SWOT, Valuation, and financial analysis in minutes, not days"
+      title: "4-Category AI Analysis",
+      description: "Comprehensive evaluation across Product/Service, Market, Leadership Team, and Financials with detailed subcategories"
     },
     {
       icon: <TrendingUp className="w-8 h-8 text-gold-500" />,
-      title: "Expert-Level Analysis",
-      description: "Analyze companies in fields that you are not an expert in with confidence"
+      title: "Public Data Integration",
+      description: "AI analyzes not just pitch decks, but also websites, LinkedIn profiles, publications, and public information"
     },
     {
       icon: <CheckCircle className="w-8 h-8 text-gold-500" />,
-      title: "Quick Go/No-Go Recommendation",
-      description: "Score card and dashboard to see all your deals with clear recommendations"
+      title: "Comprehensive Scoring",
+      description: "Detailed score cards with ratings across all categories plus investment recommendations and Go/No-Go guidance"
     },
     {
       icon: <BarChart3 className="w-8 h-8 text-gold-500" />,
-      title: "Scale Your Deal Flow",
-      description: "Ability to receive and analyze many more projects efficiently"
+      title: "Multiple Report Types",
+      description: "Generate scorecards, detailed analysis, diligence questions, and founder feedback reports instantly"
     },
     {
       icon: <Shield className="w-8 h-8 text-gold-500" />,
-      title: "Don't Miss Diamonds",
-      description: "Reject poor proposals while identifying hidden gems you might have missed"
+      title: "Founder Feedback Loop",
+      description: "Provide constructive feedback to entrepreneurs automatically, improving deal quality and relationships"
     }
   ];
 
   const flowSteps = [
     {
       step: "1",
-      title: "Receive & Validate",
-      description: "Receive funding proposals and automatically check for completeness and required documents"
+      title: "Founders Submit",
+      description: "Entrepreneurs upload pitch decks, financials, patents, market research—platform gathers public data automatically"
     },
     {
       step: "2",
-      title: "Filter & Screen",
-      description: "Filter based on your criteria such as industry, geography, revenue, team size, and stage"
+      title: "Automated Screening",
+      description: "AI filters proposals against your custom criteria (revenue, industry, geography, stage) before deep analysis"
     },
     {
       step: "3",
-      title: "Deep Analysis",
-      description: "Detailed AI-driven analysis of business model, market fit, team, financials, and valuation"
+      title: "4-Category Deep Dive",
+      description: "AI analyzes Product/Service fit, Market dynamics, Leadership Team capabilities, and Financial health with 16 subcategories"
     },
     {
       step: "4",
-      title: "Dashboard View",
-      description: "Results displayed in dashboard with venture statuses: Open, Reject, Diligence, Invest"
+      title: "Comprehensive Scoring",
+      description: "Generate detailed score cards with category ratings, overall scores, and investment recommendations"
     },
     {
       step: "5",
-      title: "Detailed Reports",
-      description: "Score cards, investment recommendations, and detailed analysis reports with follow-up questions"
+      title: "Diligence Questions",
+      description: "AI generates targeted questions for further investigation based on analysis findings and identified gaps"
     },
     {
       step: "6",
-      title: "Generate Reports",
-      description: "Create comprehensive reports for investees with feedback and recommendations"
+      title: "Reports & Feedback",
+      description: "Create detailed analysis reports, share constructive feedback with founders, track pipeline status"
     }
   ];
 
   const faqs = [
     {
-      question: "What criteria can be customized?",
-      answer: "You can customize industry preferences, geographic focus, revenue thresholds, team size, funding stage, risk tolerance, and specific investment thesis parameters."
+      question: "What makes PitchFork's analysis unique?",
+      answer: "PitchFork combines submitted documents (pitch decks, financials, patents) with public data (websites, LinkedIn, publications) to provide a comprehensive 4-category analysis covering 16 detailed subcategories across Product/Service, Market, Leadership Team, and Financials."
     },
     {
-      question: "What is the pricing?",
-      answer: "We offer flexible pricing tiers based on deal volume and features needed. Contact us for a customized quote that fits your investment group's needs."
+      question: "What reports can I generate?",
+      answer: "Generate four types of reports: (1) Comprehensive Score Cards with category ratings, (2) Detailed Analysis Reports with deep insights, (3) Diligence Questions for follow-up investigation, and (4) Feedback Reports to share with founders."
     },
     {
-      question: "Can you show me some sample reports?",
-      answer: "Yes! We provide detailed sample reports showing our analysis methodology, scoring system, and recommendation format. Schedule a demo to see them in action."
+      question: "How does automated screening work?",
+      answer: "Set your investment criteria (revenue thresholds, industry preferences, geography, funding stage, team size) and proposals are automatically filtered against these parameters before deep AI analysis begins, saving you time on non-matches."
+    },
+    {
+      question: "Can founders receive feedback?",
+      answer: "Yes! PitchFork automatically generates constructive feedback reports that you can share with entrepreneurs, helping them improve their pitch while building better relationships with your investment community."
     },
     {
       question: "How secure is our data?",
-      answer: "We use enterprise-grade security with end-to-end encryption, SOC 2 compliance, and strict data privacy controls to protect sensitive investment information."
+      answer: "We use enterprise-grade security with end-to-end encryption and strict data privacy controls to protect sensitive investment information and pitch materials."
     }
   ];
 
@@ -199,13 +234,14 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
             {/* Left Column - Text Content */}
             <div className="text-left relative">
               <h1 className="text-4xl md:text-5xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">
-                Welcome to Pitch Fork
+                AI-Driven VC Investment Platform
               </h1>
               <h2 className="text-2xl md:text-3xl font-inter font-bold mb-6 text-slate-900 dark:text-silver-100">
-                To Invest or Not: Decide like a VC
+                Comprehensive 4-Category Analysis + Automated Screening
               </h2>
               <p className="text-lg mb-8 text-slate-600 dark:text-silver-300 leading-relaxed font-body">
-                AI based scoring of ventures based on your custom criteria + industry standards, leading to analysis of 10x more deals in 1/10th the time, so you don't miss a Diamond, and you filter out the duds. 
+                AI analyzes ventures across Product/Service, Market, Leadership Team, and Financials using pitch decks, documents, and public data. 
+                Screen 10x more deals in 1/10th the time with automated filtering, detailed scoring, instant reports, and diligence questions—so you never miss a diamond.
               </p>
               <Link to="/login" className="bg-gold-gradient text-white px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-gold transition-all duration-300 inline-flex items-center shadow-financial">
                 Login/Sign-Up <ChevronRight className="inline w-5 h-5 ml-2" />
@@ -240,9 +276,9 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       <section className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Why Choose Pitch Fork?</h2>
+            <h2 className="text-4xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Why Choose PitchFork?</h2>
             <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-slate-600'} max-w-3xl mx-auto font-body`}>
-              Streamline your investment process with AI-powered analysis and decision support
+              Automated screening, 4-category AI analysis, public data integration, and instant reports with founder feedback
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -261,9 +297,9 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
       <section className={`py-16 ${isDark ? 'bg-navy-950' : 'bg-gradient-to-br from-gold-50 to-silver-100'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-inter font-bold mb-4 text-gold-600">How It Works</h2>
+            <h2 className="text-4xl font-inter font-bold mb-4 text-gold-600">The PitchFork Workflow</h2>
             <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-slate-600'} max-w-3xl mx-auto font-body`}>
-              From submission to investment decision in 6 simple steps
+              From founder submission to investment decision with AI-powered analysis and feedback
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -276,6 +312,83 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
                 <p className={`${isDark ? 'text-silver-300' : 'text-slate-600'} leading-relaxed font-body`}>{step.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4-Category Analysis Framework */}
+      <section className={`py-16 ${isDark ? 'bg-navy-900' : 'bg-white'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-inter font-bold mb-4 bg-gold-gradient bg-clip-text text-transparent">Comprehensive 4-Category Analysis</h2>
+            <p className={`text-xl ${isDark ? 'text-silver-300' : 'text-slate-600'} max-w-3xl mx-auto font-body`}>
+              Every venture receives deep analysis across 16 subcategories organized into four key dimensions
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Product/Service */}
+            <div className={`p-8 rounded-xl ${isDark ? 'bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-700' : 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200'} border shadow-lg`}>
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-4">1</div>
+                <h3 className="text-2xl font-bold text-blue-600">Product/Service</h3>
+              </div>
+              <ul className={`space-y-2 ${isDark ? 'text-silver-300' : 'text-slate-700'}`}>
+                <li className="flex items-start"><CheckCircle className="w-5 h-5 text-blue-600 mr-2 mt-1 flex-shrink-0" /> Problem-Solution fit</li>
+                <li className="flex items-start"><CheckCircle className="w-5 h-5 text-blue-600 mr-2 mt-1 flex-shrink-0" /> Differentiation & Defensibility</li>
+                <li className="flex items-start"><CheckCircle className="w-5 h-5 text-blue-600 mr-2 mt-1 flex-shrink-0" /> Product–Market Readiness</li>
+                <li className="flex items-start"><CheckCircle className="w-5 h-5 text-blue-600 mr-2 mt-1 flex-shrink-0" /> Commercial Traction & Validation</li>
+              </ul>
+            </div>
+
+            {/* Market */}
+            <div className={`p-8 rounded-xl ${isDark ? 'bg-gradient-to-br from-green-900/30 to-teal-900/30 border-green-700' : 'bg-gradient-to-br from-green-50 to-teal-50 border-green-200'} border shadow-lg`}>
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-4">2</div>
+                <h3 className="text-2xl font-bold text-green-600">Market</h3>
+              </div>
+              <ul className={`space-y-2 ${isDark ? 'text-silver-300' : 'text-slate-700'}`}>
+                <li className="flex items-start"><TrendingUp className="w-5 h-5 text-green-600 mr-2 mt-1 flex-shrink-0" /> Serviceable Market Size & Growth</li>
+                <li className="flex items-start"><TrendingUp className="w-5 h-5 text-green-600 mr-2 mt-1 flex-shrink-0" /> Competitive Landscape</li>
+                <li className="flex items-start"><TrendingUp className="w-5 h-5 text-green-600 mr-2 mt-1 flex-shrink-0" /> Competitive Advantage & Positioning</li>
+                <li className="flex items-start"><TrendingUp className="w-5 h-5 text-green-600 mr-2 mt-1 flex-shrink-0" /> Adoption Drivers & Risks</li>
+              </ul>
+            </div>
+
+            {/* Leadership Team */}
+            <div className={`p-8 rounded-xl ${isDark ? 'bg-gradient-to-br from-orange-900/30 to-red-900/30 border-orange-700' : 'bg-gradient-to-br from-orange-50 to-red-50 border-orange-200'} border shadow-lg`}>
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-4">3</div>
+                <h3 className="text-2xl font-bold text-orange-600">Leadership Team</h3>
+              </div>
+              <ul className={`space-y-2 ${isDark ? 'text-silver-300' : 'text-slate-700'}`}>
+                <li className="flex items-start"><Users className="w-5 h-5 text-orange-600 mr-2 mt-1 flex-shrink-0" /> Founder's experience</li>
+                <li className="flex items-start"><Users className="w-5 h-5 text-orange-600 mr-2 mt-1 flex-shrink-0" /> Go to Market leadership</li>
+                <li className="flex items-start"><Users className="w-5 h-5 text-orange-600 mr-2 mt-1 flex-shrink-0" /> Execution/Operations</li>
+                <li className="flex items-start"><Users className="w-5 h-5 text-orange-600 mr-2 mt-1 flex-shrink-0" /> Finance & Governance</li>
+              </ul>
+            </div>
+
+            {/* Financials */}
+            <div className={`p-8 rounded-xl ${isDark ? 'bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-700' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'} border shadow-lg`}>
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-4">4</div>
+                <h3 className="text-2xl font-bold text-purple-600">Financials</h3>
+              </div>
+              <ul className={`space-y-2 ${isDark ? 'text-silver-300' : 'text-slate-700'}`}>
+                <li className="flex items-start"><BarChart3 className="w-5 h-5 text-purple-600 mr-2 mt-1 flex-shrink-0" /> Revenue & Growth</li>
+                <li className="flex items-start"><BarChart3 className="w-5 h-5 text-purple-600 mr-2 mt-1 flex-shrink-0" /> Financial Health & Burn</li>
+                <li className="flex items-start"><BarChart3 className="w-5 h-5 text-purple-600 mr-2 mt-1 flex-shrink-0" /> Capital Raised & Structure</li>
+                <li className="flex items-start"><BarChart3 className="w-5 h-5 text-purple-600 mr-2 mt-1 flex-shrink-0" /> Valuation & Benchmarking</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className={`mt-12 p-8 rounded-xl ${isDark ? 'bg-gold-900/20 border-gold-700' : 'bg-gold-50 border-gold-200'} border text-center`}>
+            <p className="text-xl font-semibold mb-2 text-gold-600">Plus: Analysis includes public data from websites, LinkedIn, publications, and more</p>
+            <p className={`${isDark ? 'text-silver-300' : 'text-slate-600'}`}>
+              AI combines submitted documents with publicly available information for the most comprehensive analysis possible
+            </p>
           </div>
         </div>
       </section>
@@ -354,17 +467,17 @@ function HomePage({ isDark, setIsDark, isMobileMenuOpen, setIsMobileMenuOpen }: 
             <div>
               <h4 className="font-bold mb-4 text-gold-400">Product</h4>
               <ul className="space-y-2 text-silver-300">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Demo</a></li>
+                <li><Link to="/features" className="hover:text-white transition-colors">Features</Link></li>
+                <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link to="/demo" className="hover:text-white transition-colors">Demo</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4 text-gold-400">Legal</h4>
               <ul className="space-y-2 text-silver-300">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms & Conditions</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
+                <li><Link to="/security" className="hover:text-white transition-colors">Security</Link></li>
               </ul>
             </div>
           </div>
@@ -439,6 +552,50 @@ function App() {
         <Route
           path="/company-list"
           element={<CompanyList isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/test-files"
+          element={<TestFiles isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/investor-selection"
+          element={<InvestorSelectionWrapper />}
+        />
+        <Route
+          path="/investor-preferences"
+          element={<InvestorPreferences isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/help"
+          element={<Help isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/account"
+          element={<Account isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/features"
+          element={<Features isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/pricing"
+          element={<Pricing isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/demo"
+          element={<Demo isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/privacy"
+          element={<Privacy isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/terms"
+          element={<Terms isDark={isDark} toggleTheme={toggleTheme} />}
+        />
+        <Route
+          path="/security"
+          element={<Security isDark={isDark} toggleTheme={toggleTheme} />}
         />
       </Routes>
     </Router>
